@@ -6,11 +6,28 @@ export interface User {
   email?: string | null;
   image?: string | null; // Added for avatar
   gender?: "male" | "female" | "other" | "prefer_not_to_say" | null;
-  studentType?: 'primary_school' | 'secondary_school' | 'high_school' | 'preparatory_school' | 'college' | 'university' | null;
+  studentType?: StudentTypeFromRegistrationFormKey | null;
   institutionName?: string | null; // Stores the final name (selected, 'Other' text, school name, or generic institution)
   department?: string | null; // Stores final department (selected, 'Other' text) - primarily for university/college
   gradeLevel?: string | null; // For primary, secondary, high_school, preparatory
 }
+
+export type StudentTypeFromRegistrationForm = 
+  | "Primary School" 
+  | "Secondary School" 
+  | "High School" 
+  | "Preparatory School" 
+  | "College" 
+  | "University";
+
+export type StudentTypeFromRegistrationFormKey = 
+  | 'primary_school'
+  | 'secondary_school'
+  | 'high_school'
+  | 'preparatory_school'
+  | 'college'
+  | 'university';
+
 
 export interface NavItem {
   title: string;
@@ -118,4 +135,13 @@ export interface Institution {
   type: InstitutionType;
   context: string;
   status: InstitutionStatus;
+}
+
+export type DepartmentOrGradeType = "Department" | "School Grade";
+
+export interface DepartmentOrGradeEntry {
+  id: string;
+  name: string;
+  type: DepartmentOrGradeType;
+  // relatedTo field removed
 }
