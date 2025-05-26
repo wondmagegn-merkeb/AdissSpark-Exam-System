@@ -33,47 +33,56 @@ const baseSchema = z.object({
   }),
 });
 
+// Define each branch schema explicitly
+const universityStudentSchema = baseSchema.extend({
+  studentType: z.literal("university"),
+  institutionNameSelection: z.string({ required_error: "Please select your university." }),
+  otherInstitutionName: z.string().optional(),
+  departmentSelection: z.string({ required_error: "Please select your department." }),
+  otherDepartment: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.institutionNameSelection === "Other" && (!data.otherInstitutionName || data.otherInstitutionName.trim().length < 2)) {
+    ctx.addIssue({ path: ["otherInstitutionName"], message: "Please specify your university name (min 2 chars).", code: z.ZodIssueCode.custom });
+  }
+  if (data.departmentSelection === "Other" && (!data.otherDepartment || data.otherDepartment.trim().length < 2)) {
+    ctx.addIssue({ path: ["otherDepartment"], message: "Please specify your department name (min 2 chars).", code: z.ZodIssueCode.custom });
+  }
+});
+
+const collegeStudentSchema = baseSchema.extend({
+  studentType: z.literal("college"),
+  institutionNameSelection: z.string({ required_error: "Please select your college." }),
+  otherInstitutionName: z.string().optional(),
+  departmentSelection: z.string({ required_error: "Please select your department." }),
+  otherDepartment: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.institutionNameSelection === "Other" && (!data.otherInstitutionName || data.otherInstitutionName.trim().length < 2)) {
+    ctx.addIssue({ path: ["otherInstitutionName"], message: "Please specify your college name (min 2 chars).", code: z.ZodIssueCode.custom });
+  }
+  if (data.departmentSelection === "Other" && (!data.otherDepartment || data.otherDepartment.trim().length < 2)) {
+    ctx.addIssue({ path: ["otherDepartment"], message: "Please specify your department name (min 2 chars).", code: z.ZodIssueCode.custom });
+  }
+});
+
+const highSchoolStudentSchema = baseSchema.extend({
+  studentType: z.literal("high_school"),
+  schoolName: z.string().min(2, { message: "School name must be at least 2 characters." }),
+  gradeLevel: z.string().min(1, { message: "Grade level is required (e.g., 9, 10, 11, 12)." }),
+  className: z.string().optional(), // e.g., Section A
+});
+
+const otherLevelStudentSchema = baseSchema.extend({
+  studentType: z.literal("other_level"),
+  genericInstitutionName: z.string().min(2, { message: "Institution name must be at least 2 characters." }),
+  genericStudyDetails: z.string().min(2, { message: "Study details must be at least 2 characters." }),
+});
+
 // Using discriminated union for studentType specific fields
 const registerSchema = z.discriminatedUnion("studentType", [
-  baseSchema.extend({
-    studentType: z.literal("university"),
-    institutionNameSelection: z.string({ required_error: "Please select your university." }),
-    otherInstitutionName: z.string().optional(),
-    departmentSelection: z.string({ required_error: "Please select your department." }),
-    otherDepartment: z.string().optional(),
-  }).superRefine((data, ctx) => {
-    if (data.institutionNameSelection === "Other" && (!data.otherInstitutionName || data.otherInstitutionName.trim().length < 2)) {
-      ctx.addIssue({ path: ["otherInstitutionName"], message: "Please specify your university name (min 2 chars).", code: z.ZodIssueCode.custom });
-    }
-    if (data.departmentSelection === "Other" && (!data.otherDepartment || data.otherDepartment.trim().length < 2)) {
-      ctx.addIssue({ path: ["otherDepartment"], message: "Please specify your department name (min 2 chars).", code: z.ZodIssueCode.custom });
-    }
-  }),
-  baseSchema.extend({
-    studentType: z.literal("college"),
-    institutionNameSelection: z.string({ required_error: "Please select your college." }),
-    otherInstitutionName: z.string().optional(),
-    departmentSelection: z.string({ required_error: "Please select your department." }),
-    otherDepartment: z.string().optional(),
-  }).superRefine((data, ctx) => {
-    if (data.institutionNameSelection === "Other" && (!data.otherInstitutionName || data.otherInstitutionName.trim().length < 2)) {
-      ctx.addIssue({ path: ["otherInstitutionName"], message: "Please specify your college name (min 2 chars).", code: z.ZodIssueCode.custom });
-    }
-    if (data.departmentSelection === "Other" && (!data.otherDepartment || data.otherDepartment.trim().length < 2)) {
-      ctx.addIssue({ path: ["otherDepartment"], message: "Please specify your department name (min 2 chars).", code: z.ZodIssueCode.custom });
-    }
-  }),
-  baseSchema.extend({
-    studentType: z.literal("high_school"),
-    schoolName: z.string().min(2, { message: "School name must be at least 2 characters." }),
-    gradeLevel: z.string().min(1, { message: "Grade level is required (e.g., 9, 10, 11, 12)." }),
-    className: z.string().optional(), // e.g., Section A
-  }),
-  baseSchema.extend({
-    studentType: z.literal("other_level"),
-    genericInstitutionName: z.string().min(2, { message: "Institution name must be at least 2 characters." }),
-    genericStudyDetails: z.string().min(2, { message: "Study details must be at least 2 characters." }),
-  }),
+  universityStudentSchema,
+  collegeStudentSchema,
+  highSchoolStudentSchema,
+  otherLevelStudentSchema,
 ]);
 
 
@@ -90,6 +99,8 @@ export function RegisterForm() {
       email: '',
       password: '',
       // gender and studentType will be undefined initially, forcing user selection
+      // Explicitly add studentType to defaultValues, though undefined is fine if a select makes it required
+      studentType: undefined, 
       institutionNameSelection: undefined,
       otherInstitutionName: '',
       departmentSelection: undefined,
@@ -473,4 +484,3 @@ export function RegisterForm() {
     </Card>
   );
 }
-
