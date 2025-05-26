@@ -102,4 +102,3 @@ export interface AgentEntry {
   status: 'active' | 'inactive' | 'maintenance';
   lastUpdated: Date;
 }
-
