@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import type { NavItem } from '@/lib/types';
-import { LayoutDashboard, Library, FileText, Brain, User, Settings, LogOut, CreditCard, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Library, FileText, Brain, User, Settings, LogOut, CreditCard, MessageSquare, Building, BookCopy, ListChecks, Edit, ShieldCheck } from 'lucide-react';
 
 const mainNavItems: NavItem[] = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -29,6 +29,14 @@ const mainNavItems: NavItem[] = [
 const userNavItems: NavItem[] = [
   { title: 'Profile', href: '/dashboard/profile', icon: User },
   { title: 'Settings', href: '/dashboard/settings', icon: Settings },
+];
+
+const adminNavItems: NavItem[] = [
+  { title: 'Manage Universities', href: '/dashboard/admin/universities', icon: Building },
+  { title: 'Manage Departments', href: '/dashboard/admin/departments', icon: BookCopy }, // Represents departments/grades
+  { title: 'Manage Courses', href: '/dashboard/admin/courses', icon: ListChecks }, // Represents courses/subjects
+  { title: 'Manage Exams', href: '/dashboard/admin/exams', icon: Edit },
+  { title: 'Manage Resources', href: '/dashboard/admin/resources', icon: Library },
 ];
 
 export function DashboardSidebar() {
@@ -62,6 +70,33 @@ export function DashboardSidebar() {
           ))}
         </SidebarMenu>
         
+        <SidebarSeparator />
+        {/* Placeholder for Admin section - In a real app, this would be conditionally rendered based on user role */}
+        <SidebarMenu>
+            <SidebarMenuItem>
+                 <div className="px-2 py-1 text-xs font-semibold text-sidebar-foreground/70 flex items-center">
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                    Admin Panel
+                </div>
+            </SidebarMenuItem>
+          {adminNavItems.map((item) => (
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === item.href}
+                tooltip={item.title}
+              >
+                <Link href={item.href}>
+                  {item.icon && <item.icon />}
+                  <span>{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+        <SidebarSeparator />
+
+
         {!isSubscribed && (
           <Card className="m-2 mt-4 bg-primary/10 border-primary/30">
             <CardHeader className="p-4">
