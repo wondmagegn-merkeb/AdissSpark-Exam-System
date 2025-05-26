@@ -5,26 +5,23 @@ import type { User } from '@/lib/types';
 import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 
-// This interface will now mirror the complex RegisterFormValues from RegisterForm.tsx
-// For simplicity, we'll define a version of it here. In a larger app, this might be imported.
 export interface RegisterData {
   name: string;
   username: string;
   email: string;
-  password: string; // Not stored in User object directly in this mock
+  password: string; 
   gender: "male" | "female" | "other" | "prefer_not_to_say";
-  studentType: "university" | "college" | "high_school" | "other_level";
+  studentType: "primary_school" | "secondary_school" | "high_school" | "preparatory_school" | "university" | "college" | "other_level";
 
   // University/College specific
-  institutionNameSelection?: string; // Includes "Other"
+  institutionNameSelection?: string; 
   otherInstitutionName?: string;
-  departmentSelection?: string; // Includes "Other"
+  departmentSelection?: string; 
   otherDepartment?: string;
 
-  // High School specific
+  // Primary, Secondary, High School, Preparatory specific
   schoolName?: string;
   gradeLevel?: string;
-  className?: string;
 
   // Other Level specific
   genericInstitutionName?: string;
@@ -39,7 +36,7 @@ interface AuthContextType {
   login: (email: string) => void;
   logout: () => void;
   register: (data: RegisterData) => void;
-  toggleSubscription: () => void; // For simulating payment
+  toggleSubscription: () => void; 
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -89,7 +86,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         institutionName: existingUserDetails.institutionName,
         department: existingUserDetails.department,
         gradeLevel: existingUserDetails.gradeLevel,
-        className: existingUserDetails.className,
         studyDetails: existingUserDetails.studyDetails,
         image: existingUserDetails.image,
     };
@@ -100,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = (data: RegisterData) => {
     const newUser: User = {
-      id: Date.now().toString(), // Simple unique ID
+      id: Date.now().toString(), 
       email: data.email,
       name: data.name,
       username: data.username,
@@ -114,14 +110,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         newUser.institutionName = data.institutionNameSelection === 'Other' ? data.otherInstitutionName : data.institutionNameSelection;
         newUser.department = data.departmentSelection === 'Other' ? data.otherDepartment : data.departmentSelection;
         break;
+      case 'primary_school':
+      case 'secondary_school':
       case 'high_school':
+      case 'preparatory_school':
         newUser.institutionName = data.schoolName;
         newUser.gradeLevel = data.gradeLevel;
-        newUser.className = data.className;
         break;
       case 'other_level':
         newUser.institutionName = data.genericInstitutionName;
-        newUser.studyDetails = data.genericStudyDetails; // Using studyDetails for this generic case
+        newUser.studyDetails = data.genericStudyDetails; 
         break;
     }
 

@@ -16,7 +16,7 @@ import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 
 const GENDERS = ["male", "female", "other", "prefer_not_to_say"] as const;
-const STUDENT_TYPES = ["university", "college", "high_school", "other_level"] as const;
+const STUDENT_TYPES = ["primary_school", "secondary_school", "high_school", "preparatory_school", "university", "college", "other_level"] as const;
 
 const UNIVERSITIES = ["Addis Ababa University", "Bahir Dar University", "Mekelle University", "Jimma University", "Hawassa University", "Other"] as const;
 const COLLEGES = ["Admas University College", "Unity University", "St. Mary's University College", "CPU College", "Rift Valley University College", "Other"] as const;
@@ -33,7 +33,7 @@ const baseSchema = z.object({
   }),
 });
 
-// Define each branch schema explicitly, without superRefine for now
+// Schemas for each student type
 const universityStudentSchema = baseSchema.extend({
   studentType: z.literal("university"),
   institutionNameSelection: z.string({ required_error: "Please select your university." }),
@@ -50,11 +50,28 @@ const collegeStudentSchema = baseSchema.extend({
   otherDepartment: z.string().optional(),
 });
 
+const primarySchoolStudentSchema = baseSchema.extend({
+  studentType: z.literal("primary_school"),
+  schoolName: z.string().min(2, { message: "School name must be at least 2 characters." }),
+  gradeLevel: z.string().min(1, { message: "Grade level is required (e.g., 1-8)." }),
+});
+
+const secondarySchoolStudentSchema = baseSchema.extend({
+  studentType: z.literal("secondary_school"),
+  schoolName: z.string().min(2, { message: "School name must be at least 2 characters." }),
+  gradeLevel: z.string().min(1, { message: "Grade level is required (e.g., 7-10)." }),
+});
+
 const highSchoolStudentSchema = baseSchema.extend({
   studentType: z.literal("high_school"),
   schoolName: z.string().min(2, { message: "School name must be at least 2 characters." }),
-  gradeLevel: z.string().min(1, { message: "Grade level is required (e.g., 9, 10, 11, 12)." }),
-  className: z.string().optional(),
+  gradeLevel: z.string().min(1, { message: "Grade level is required (e.g., 9-10 or 11-12)." }),
+});
+
+const preparatorySchoolStudentSchema = baseSchema.extend({
+  studentType: z.literal("preparatory_school"),
+  schoolName: z.string().min(2, { message: "School name must be at least 2 characters." }),
+  gradeLevel: z.string().min(1, { message: "Grade level is required (e.g., 11-12)." }),
 });
 
 const otherLevelStudentSchema = baseSchema.extend({
@@ -63,17 +80,17 @@ const otherLevelStudentSchema = baseSchema.extend({
   genericStudyDetails: z.string().min(2, { message: "Study details must be at least 2 characters." }),
 });
 
-// Using discriminated union for studentType specific fields
-// Apply superRefine at the top level of the discriminated union
+
 const registerSchema = z.discriminatedUnion("studentType", [
   universityStudentSchema,
   collegeStudentSchema,
+  primarySchoolStudentSchema,
+  secondarySchoolStudentSchema,
   highSchoolStudentSchema,
+  preparatorySchoolStudentSchema,
   otherLevelStudentSchema,
 ]).superRefine((data, ctx) => {
   if (data.studentType === "university" || data.studentType === "college") {
-    // These fields are only present on university/college types, 
-    // Zod/TS should infer `data` to be the correct type here.
     if (data.institutionNameSelection === "Other" && (!data.otherInstitutionName || data.otherInstitutionName.trim().length < 2)) {
       ctx.addIssue({
         path: ["otherInstitutionName"],
@@ -96,7 +113,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const { register: registerUser } = useAuth(); // Renamed to avoid conflict
+  const { register: registerUser } = useAuth(); 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -106,28 +123,24 @@ export function RegisterForm() {
       password: '',
       gender: undefined, 
       studentType: undefined, 
-      // Explicitly set defaults for potentially undefined fields in the union
-      // to avoid React uncontrolled input warnings if not all paths set a value.
-      // @ts-expect-error - institutionNameSelection is not on all types, but RHF needs a default
+      // @ts-expect-error - RHF needs a default for all union paths
       institutionNameSelection: undefined,
       otherInstitutionName: '',
-      // @ts-expect-error - departmentSelection is not on all types
+      // @ts-expect-error
       departmentSelection: undefined,
       otherDepartment: '',
-      // @ts-expect-error - schoolName is not on all types
+      // @ts-expect-error
       schoolName: '',
-      // @ts-expect-error - gradeLevel is not on all types
+      // @ts-expect-error
       gradeLevel: '',
-      className: '',
-      // @ts-expect-error - genericInstitutionName is not on all types
+      // @ts-expect-error
       genericInstitutionName: '',
-      // @ts-expect-error - genericStudyDetails is not on all types
+      // @ts-expect-error
       genericStudyDetails: '',
     },
   });
 
   const watchedStudentType = form.watch("studentType");
-  // These watches are fine; RHF allows watching fields that might not always be active.
   const watchedInstitution = form.watch("institutionNameSelection" as any); 
   const watchedDepartment = form.watch("departmentSelection" as any);
 
@@ -399,8 +412,11 @@ export function RegisterForm() {
               </>
             )}
 
-            {/* High School Student Fields */}
-            {watchedStudentType === 'high_school' && (
+            {/* Primary, Secondary, High School, Preparatory Student Fields */}
+            {(watchedStudentType === 'primary_school' ||
+              watchedStudentType === 'secondary_school' ||
+              watchedStudentType === 'high_school' ||
+              watchedStudentType === 'preparatory_school') && (
               <>
                 <FormField
                   control={form.control}
@@ -409,7 +425,7 @@ export function RegisterForm() {
                     <FormItem>
                       <FormLabel>School Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Menelik II Senior Secondary School" {...field} value={field.value ?? ''} disabled={isLoading} />
+                        <Input placeholder="e.g., Example Primary School" {...field} value={field.value ?? ''} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -422,20 +438,7 @@ export function RegisterForm() {
                     <FormItem>
                       <FormLabel>Grade Level</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., 11 or 12" {...field} value={field.value ?? ''} disabled={isLoading} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="className"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Class / Section (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Section A, Grade 12B" {...field} value={field.value ?? ''} disabled={isLoading} />
+                        <Input placeholder="e.g., Grade 5 or 11" {...field} value={field.value ?? ''} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -494,5 +497,3 @@ export function RegisterForm() {
     </Card>
   );
 }
-
-    
