@@ -26,8 +26,9 @@ export interface NavItem {
 export interface Resource {
   id: string;
   title: string;
-  type: 'note' | 'video';
+  type: 'note' | 'video' | 'book';
   description: string;
+  subjectOrCourse: string; // This will store the subject (for school) or course/field (for uni/college)
   imageUrl?: string;
   isPremium: boolean; // True if requires subscription
   contentUrl?: string; // URL to the actual resource or a placeholder
@@ -71,3 +72,4 @@ export interface ChatMessage {
   timestamp: Date;
   // isCurrentUser: boolean; // This can be derived in the component by comparing senderId with current user's ID
 }
+
