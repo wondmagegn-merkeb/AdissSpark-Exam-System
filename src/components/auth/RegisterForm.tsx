@@ -44,7 +44,7 @@ export function RegisterForm() {
     <Card className="w-full shadow-xl">
       <CardHeader className="space-y-1 text-center">
         <CardTitle className="text-2xl">Create an Account</CardTitle>
-        <CardDescription>Enter your details to get started with Exam Prep Pro.</CardDescription>
+        <CardDescription>Enter your details to get started with ADDISSPARK.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -82,4 +82,24 @@ export function RegisterForm() {
               {...form.register('password')}
               disabled={isLoading}
             />
-            {form.formS<ctrl63>
+            {form.formState.errors.password && (
+              <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
+            )}
+          </div>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Create Account
+          </Button>
+        </form>
+      </CardContent>
+      <CardFooter className="flex flex-col items-center space-y-2">
+        <p className="text-sm text-muted-foreground">
+          Already have an account?{' '}
+          <Button variant="link" className="p-0 h-auto" asChild>
+            <Link href="/login">Log in</Link>
+          </Button>
+        </p>
+      </CardFooter>
+    </Card>
+  );
+}

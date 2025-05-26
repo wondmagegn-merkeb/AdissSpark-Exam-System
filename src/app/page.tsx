@@ -41,10 +41,10 @@ export default function HomePage() {
         <section className="py-16 md:py-24 bg-gradient-to-br from-background to-accent/20">
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-              Ace Your Exit Exams with <span className="text-primary">Exam Prep Pro</span>
+              Ace Your Exit Exams with <span className="text-primary">ADDISSPARK</span>
             </h1>
             <p className="mt-6 max-w-2xl mx-auto text-lg leading-8 text-muted-foreground">
-              Your all-in-one solution for comprehensive study materials, realistic practice exams, and AI-powered personalized study plans. Start your journey to success today!
+              Your all-in-one solution for comprehensive study materials, realistic practice exams, and AI-powered personalized study plans. Start your journey to success with ADDISSPARK today!
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Button size="lg" asChild>
@@ -57,7 +57,7 @@ export default function HomePage() {
              <div className="mt-16">
               <Image
                 src="https://placehold.co/800x450.png"
-                alt="Exam Prep Pro dashboard preview"
+                alt="ADDISSPARK dashboard preview"
                 width={800}
                 height={450}
                 className="rounded-lg shadow-xl mx-auto"
@@ -103,7 +103,7 @@ export default function HomePage() {
               Ready to start preparing?
             </h2>
             <p className="mt-4 max-w-xl mx-auto text-lg text-muted-foreground">
-              Join thousands of students who trust Exam Prep Pro for their exam success.
+              Join thousands of students who trust ADDISSPARK for their exam success.
             </p>
             <div className="mt-8">
               <Button size="lg" asChild>
@@ -116,7 +116,7 @@ export default function HomePage() {
 
       <footer className="py-8 border-t">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Exam Prep Pro. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} ADDISSPARK. All rights reserved.</p>
         </div>
       </footer>
     </div>

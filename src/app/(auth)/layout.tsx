@@ -15,7 +15,7 @@ export default function AuthLayout({
       </main>
       <footer className="py-8 border-t">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Exam Prep Pro. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} ADDISSPARK. All rights reserved.</p>
         </div>
       </footer>
     </div>

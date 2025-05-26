@@ -4,96 +4,97 @@
 
 @layer base {
   :root {
-    --background: 195 43% 92%; /* Very light blue #E1F0F4 */
-    --foreground: 210 25% 20%; /* Dark Blue-Gray */
+    --background: 210 60% 98%; /* Very light cool gray */
+    --foreground: 220 40% 20%; /* Dark Blue */
 
     --card: 0 0% 100%; /* White */
-    --card-foreground: 210 25% 20%;
+    --card-foreground: 220 40% 20%; /* Dark Blue */
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 25% 20%;
+    --popover-foreground: 220 40% 20%; /* Dark Blue */
 
-    --primary: 190 38% 44%; /* Calm blue #468B97 */
-    --primary-foreground: 0 0% 100%; /* White */
+    --primary: 45 100% 50%; /* Bright Yellow */
+    --primary-foreground: 220 40% 10%; /* Very Dark Blue (for text on yellow) */
 
-    --secondary: 197 50% 85%; /* Lighter accent or neutral */
-    --secondary-foreground: 190 38% 30%;
+    --secondary: 210 30% 90%; /* Light cool gray */
+    --secondary-foreground: 220 40% 25%; /* Slightly lighter Dark Blue */
 
-    --muted: 195 30% 88%;
-    --muted-foreground: 190 25% 45%;
+    --muted: 210 30% 80%; /* Medium cool gray */
+    --muted-foreground: 210 25% 45%; /* Grayish blue */
 
-    --accent: 197 60% 75%; /* Muted green #7EC8E3 */
-    --accent-foreground: 190 38% 30%; /* Dark blue for contrast */
+    --accent: 45 100% 65%; /* Lighter Yellow */
+    --accent-foreground: 220 40% 15%; /* Darker blue for text on accent */
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 190 30% 80%; /* Lighter calm blue/gray */
-    --input: 190 30% 88%; /* Slightly lighter than border */
-    --ring: 190 38% 54%; /* Slightly lighter primary for focus */
+    --border: 210 30% 85%; /* Light cool gray for borders */
+    --input: 210 30% 92%; /* Very light cool gray for inputs */
+    --ring: 45 100% 55%; /* Primary yellow for focus rings */
 
     --radius: 0.5rem;
 
     /* Sidebar specific theme */
-    --sidebar-background: 190 30% 35%; /* Darker shade of primary */
-    --sidebar-foreground: 195 30% 90%; /* Light text for dark sidebar */
-    --sidebar-primary: 197 60% 75%; /* Accent color for active items */
-    --sidebar-primary-foreground: 190 30% 25%; /* Dark text on accent */
-    --sidebar-accent: 190 30% 45%; /* Hover for non-active items */
-    --sidebar-accent-foreground: 195 30% 90%;
-    --sidebar-border: 190 30% 30%;
-    --sidebar-ring: 197 60% 75%; /* Accent color for focus rings */
-    --chart-1: 190 38% 44%;
-    --chart-2: 197 60% 75%;
-    --chart-3: 190 38% 64%;
-    --chart-4: 197 60% 55%;
-    --chart-5: 190 38% 34%;
+    --sidebar-background: 220 40% 15%; /* Dark Blue base for sidebar */
+    --sidebar-foreground: 210 30% 90%; /* Light text for dark sidebar */
+    --sidebar-primary: 45 100% 60%;    /* Yellow for active/primary items */
+    --sidebar-primary-foreground: 220 40% 10%; /* Dark text on yellow */
+    --sidebar-accent: 220 40% 25%;     /* Slightly Lighter Dark Blue for hover */
+    --sidebar-accent-foreground: 210 30% 90%; /* Light text on hover */
+    --sidebar-border: 220 40% 12%;
+    --sidebar-ring: 45 100% 60%;     /* Yellow for focus rings in sidebar */
+    
+    --chart-1: hsl(var(--primary)); /* Yellow */
+    --chart-2: hsl(var(--accent)); /* Lighter Yellow */
+    --chart-3: 220 40% 40%; /* Medium Blue */
+    --chart-4: 45 100% 75%; /* Very Light Yellow */
+    --chart-5: 220 40% 60%; /* Lighter Blue */
   }
 
   .dark {
-    --background: 210 25% 15%; /* Darker background for dark mode */
-    --foreground: 195 20% 90%;
+    --background: 220 40% 10%; /* Very Dark Blue */
+    --foreground: 210 30% 90%; /* Light Gray/Off-white */
 
-    --card: 210 25% 20%;
-    --card-foreground: 195 20% 90%;
+    --card: 220 40% 15%;
+    --card-foreground: 210 30% 90%;
 
-    --popover: 210 25% 18%;
-    --popover-foreground: 195 20% 90%;
+    --popover: 220 40% 12%;
+    --popover-foreground: 210 30% 90%;
 
-    --primary: 190 38% 50%; /* Slightly brighter primary for dark mode */
-    --primary-foreground: 0 0% 100%;
+    --primary: 45 100% 55%; /* Slightly less intense Yellow for dark mode */
+    --primary-foreground: 220 40% 10%; /* Very Dark Blue for text on yellow */
 
-    --secondary: 190 30% 25%;
-    --secondary-foreground: 195 20% 90%;
+    --secondary: 220 40% 25%;
+    --secondary-foreground: 210 30% 85%;
 
-    --muted: 190 30% 22%;
-    --muted-foreground: 195 20% 65%;
+    --muted: 220 40% 20%;
+    --muted-foreground: 210 30% 65%;
 
-    --accent: 197 60% 65%; /* Slightly brighter accent */
-    --accent-foreground: 190 30% 20%;
+    --accent: 45 100% 60%; /* Slightly less intense Lighter Yellow */
+    --accent-foreground: 220 40% 10%;
 
     --destructive: 0 65% 55%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 190 30% 30%;
-    --input: 190 30% 28%;
-    --ring: 190 38% 60%;
+    --border: 220 40% 30%;
+    --input: 220 40% 28%;
+    --ring: 45 100% 60%;
 
-    /* Sidebar dark theme (can be same as light if sidebar is always dark, or adjust) */
-    --sidebar-background: 190 30% 28%;
-    --sidebar-foreground: 195 30% 85%;
-    --sidebar-primary: 197 60% 70%;
-    --sidebar-primary-foreground: 190 30% 20%;
-    --sidebar-accent: 190 30% 38%;
-    --sidebar-accent-foreground: 195 30% 85%;
-    --sidebar-border: 190 30% 25%;
-    --sidebar-ring: 197 60% 70%;
+    /* Sidebar dark theme */
+    --sidebar-background: 220 40% 12%; /* Even darker blue */
+    --sidebar-foreground: 210 30% 85%;
+    --sidebar-primary: 45 100% 60%;    /* Yellow, same as light mode sidebar primary */
+    --sidebar-primary-foreground: 220 40% 10%;
+    --sidebar-accent: 220 40% 22%;
+    --sidebar-accent-foreground: 210 30% 85%;
+    --sidebar-border: 220 40% 10%;
+    --sidebar-ring: 45 100% 60%;
 
-    --chart-1: 190 38% 50%;
-    --chart-2: 197 60% 65%;
-    --chart-3: 190 38% 70%;
-    --chart-4: 197 60% 45%;
-    --chart-5: 190 38% 40%;
+    --chart-1: hsl(var(--primary)); /* Dark mode Yellow */
+    --chart-2: hsl(var(--accent)); /* Dark mode Lighter Yellow */
+    --chart-3: 220 40% 50%; /* Medium Blue (brighter for dark) */
+    --chart-4: 45 100% 70%; /* Very Light Yellow (brighter for dark) */
+    --chart-5: 220 40% 30%; /* Darker Blue, but still visible */
   }
 }
 
@@ -103,6 +104,5 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* Removed font-family: Arial, Helvetica, sans-serif; to allow Geist Sans from layout.tsx to take effect */
   }
 }

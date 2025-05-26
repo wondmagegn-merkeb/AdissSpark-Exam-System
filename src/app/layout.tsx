@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Exam Prep Pro',
-  description: 'Your ultimate platform for exam preparation.',
+  title: 'ADDISSPARK',
+  description: 'Your ultimate platform for educational resources and exam preparation with ADDISSPARK.',
 };
 
 export default function RootLayout({
