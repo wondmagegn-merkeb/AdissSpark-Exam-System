@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ArrowLeft, FileText, Clock, AlertTriangle, CheckCircle2, Target, Info, Flag, BarChart3, ListChecks } from 'lucide-react';
-import type { Exam, Question } from '@/lib/types';
+import type { Exam, Question, ExamHistoryEntry } from '@/lib/types';
 import { PieChart, Pie, Cell } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 
@@ -80,7 +80,6 @@ const mockExams: Exam[] = [
   },
 ];
 
-
 const chartConfig = {
   correct: {
     label: "Correct",
@@ -96,6 +95,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+const MAX_EXAM_HISTORY_ITEMS = 5;
 
 export default function TakeExamPage() {
   const params = useParams();
@@ -109,7 +109,6 @@ export default function TakeExamPage() {
     setExam(foundExam);
   }, [examId]);
 
-
   const [examStarted, setExamStarted] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
@@ -121,9 +120,8 @@ export default function TakeExamPage() {
   const [unansweredCount, setUnansweredCount] = useState(0);
   const [incorrectCount, setIncorrectCount] = useState(0);
 
-
   useEffect(() => {
-    if (exam && !examStarted) { // Only set initial time if exam is loaded and not started
+    if (exam && !examStarted) { 
       setTimeLeft(exam.durationMinutes * 60);
     }
   }, [exam, examStarted]);
@@ -140,6 +138,8 @@ export default function TakeExamPage() {
     const totalAnswered = Object.keys(userAnswers).length;
     const localUnansweredCount = exam.questions.length - totalAnswered;
     const localIncorrectCount = totalAnswered - correctAnswers;
+    const percentageScore = exam.questions.length > 0 ? (correctAnswers / exam.questions.length) * 100 : 0;
+
 
     setScore(correctAnswers);
     setUnansweredCount(localUnansweredCount);
@@ -149,11 +149,46 @@ export default function TakeExamPage() {
     setExamStarted(false); 
     setShowSubmitConfirm(false);
 
-    // Store results in localStorage for the detailed results page
     try {
-      localStorage.setItem(`completedExam_${exam.id}`, JSON.stringify({ exam, userAnswers, score: correctAnswers, incorrectCount: localIncorrectCount, unansweredCount: localUnansweredCount }));
+      // Store detailed results for the current exam
+      localStorage.setItem(`completedExam_${exam.id}`, JSON.stringify({ 
+        exam, 
+        userAnswers, 
+        score: correctAnswers, 
+        incorrectCount: localIncorrectCount, 
+        unansweredCount: localUnansweredCount 
+      }));
+
+      // Store summary in exam history
+      const newHistoryEntry: ExamHistoryEntry = {
+        examId: exam.id,
+        examTitle: exam.title,
+        dateCompleted: new Date().toISOString(),
+        score: correctAnswers,
+        totalQuestions: exam.questions.length,
+        percentageScore: parseFloat(percentageScore.toFixed(1)),
+      };
+
+      const existingHistoryString = localStorage.getItem('examHistory');
+      let examHistory: ExamHistoryEntry[] = [];
+      if (existingHistoryString) {
+        try {
+          examHistory = JSON.parse(existingHistoryString);
+          if (!Array.isArray(examHistory)) examHistory = []; // Ensure it's an array
+        } catch (e) {
+          console.error("Error parsing existing exam history:", e);
+          examHistory = [];
+        }
+      }
+      
+      examHistory.unshift(newHistoryEntry); // Add new entry to the beginning
+      if (examHistory.length > MAX_EXAM_HISTORY_ITEMS) {
+        examHistory = examHistory.slice(0, MAX_EXAM_HISTORY_ITEMS); // Keep only the most recent items
+      }
+      localStorage.setItem('examHistory', JSON.stringify(examHistory));
+
     } catch (error) {
-      console.error("Error saving exam results to localStorage:", error);
+      console.error("Error saving exam results or history to localStorage:", error);
     }
 
   }, [exam, userAnswers]);
@@ -290,8 +325,8 @@ export default function TakeExamPage() {
                               );
                             }}
                       >
-                        {pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} 
+                        {pieData.map((entry, index_cell) => (
+                          <Cell key={`cell-${index_cell}`} fill={entry.fill} 
                                 className="stroke-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                           />
                         ))}
@@ -313,13 +348,12 @@ export default function TakeExamPage() {
             <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 justify-center">
               <Button 
                 size="lg" 
-                variant="outline"
                 onClick={() => router.push(`/dashboard/exams/${exam.id}/results`)}
               >
                 <ListChecks className="mr-2 h-4 w-4" />
                 View Detailed Results
               </Button>
-              <Button size="lg" onClick={() => router.push('/dashboard/exams')}>
+              <Button size="lg" variant="outline" onClick={() => router.push('/dashboard/exams')}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Exams List
               </Button>

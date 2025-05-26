@@ -1,14 +1,58 @@
 
+"use client";
+
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, Edit3, Brain, UserCircle, Settings as SettingsIcon } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { BookOpen, Edit3, Brain, UserCircle, Settings as SettingsIcon, LineChart as LineChartIcon, History, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { format } from 'date-fns';
+import type { ExamHistoryEntry } from '@/lib/types';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from 'recharts';
+
+const chartConfig = {
+  score: {
+    label: "Score (%)",
+    color: "hsl(var(--primary))",
+  },
+} satisfies ChartConfig;
 
 export default function DashboardPage() {
+  const [examHistory, setExamHistory] = useState<ExamHistoryEntry[]>([]);
+  const [chartData, setChartData] = useState<Array<{ date: string; score: number }>>([]);
+
+  useEffect(() => {
+    const storedHistoryString = localStorage.getItem('examHistory');
+    if (storedHistoryString) {
+      try {
+        const parsedHistory: ExamHistoryEntry[] = JSON.parse(storedHistoryString);
+        if (Array.isArray(parsedHistory)) {
+          setExamHistory(parsedHistory);
+          // Prepare data for chart - use last 5 entries, formatted
+          const recentHistory = parsedHistory.slice(0, 5).reverse(); // Oldest first for chart
+          const formattedChartData = recentHistory.map(entry => ({
+            date: format(new Date(entry.dateCompleted), 'MMM d'),
+            score: entry.percentageScore,
+          }));
+          setChartData(formattedChartData);
+        }
+      } catch (e) {
+        console.error("Error parsing exam history from localStorage:", e);
+      }
+    }
+  }, []);
+
   return (
-    <div className="container mx-auto py-8">
-      <div className="mb-8 text-center">
+    <div className="container mx-auto py-8 space-y-8">
+      <div className="text-center">
         <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           Welcome to your <span className="text-primary">ADDISSPARK</span> Dashboard
         </h1>
@@ -17,6 +61,122 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {/* New Row for Progress Graph and Exam History */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+                <LineChartIcon className="h-8 w-8 text-primary" />
+                <CardTitle className="text-2xl">Recent Exam Performance</CardTitle>
+            </div>
+            <CardDescription>Your scores from the last few exams.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {chartData.length > 0 ? (
+              <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={chartData}
+                    margin={{
+                      top: 5,
+                      right: 10,
+                      left: -20, // Adjust to show Y-axis labels
+                      bottom: 0,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                      tickFormatter={(value) => value.slice(0, 6)} // Shorten date display
+                    />
+                    <YAxis 
+                      tickLine={false} 
+                      axisLine={false} 
+                      tickMargin={8} 
+                      domain={[0, 100]}
+                      tickFormatter={(value) => `${value}%`}
+                    />
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent indicator="line" nameKey="score" />}
+                    />
+                    <Legend />
+                    <Line
+                      dataKey="score"
+                      type="monotone"
+                      stroke={chartConfig.score.color}
+                      strokeWidth={2}
+                      dot={{
+                        fill: chartConfig.score.color,
+                      }}
+                      activeDot={{
+                        r: 6,
+                      }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[250px] text-center">
+                <LineChartIcon className="h-12 w-12 text-muted-foreground mb-2" />
+                <p className="text-muted-foreground">No exam performance data yet.</p>
+                <p className="text-sm text-muted-foreground">Take an exam to see your progress here.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+                <History className="h-8 w-8 text-primary" />
+                <CardTitle className="text-2xl">Exam History</CardTitle>
+            </div>
+            <CardDescription>Review your past exam attempts.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {examHistory.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Exam Title</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Score</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {examHistory.map((entry) => (
+                    <TableRow key={entry.examId + entry.dateCompleted}>
+                      <TableCell className="font-medium truncate max-w-xs">{entry.examTitle}</TableCell>
+                      <TableCell>{format(new Date(entry.dateCompleted), 'PPp')}</TableCell>
+                      <TableCell className="text-right">{`${entry.score}/${entry.totalQuestions}`}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/dashboard/exams/${entry.examId}/results`}>
+                            View <ExternalLink className="ml-1.5 h-3 w-3" />
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[250px] text-center">
+                <History className="h-12 w-12 text-muted-foreground mb-2" />
+                <p className="text-muted-foreground">No exam history found.</p>
+                <p className="text-sm text-muted-foreground">Your completed exams will appear here.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Existing Dashboard Cards */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
           <CardHeader>

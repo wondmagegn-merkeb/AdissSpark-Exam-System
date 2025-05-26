@@ -32,6 +32,7 @@ export interface Resource {
   imageUrl?: string;
   isPremium: boolean; // True if requires subscription
   contentUrl?: string; // URL to the actual resource or a placeholder
+  dataAiHint?: string;
 }
 
 export interface Question {
@@ -73,3 +74,11 @@ export interface ChatMessage {
   // isCurrentUser: boolean; // This can be derived in the component by comparing senderId with current user's ID
 }
 
+export interface ExamHistoryEntry {
+  examId: string;
+  examTitle: string;
+  dateCompleted: string; // ISO string
+  score: number;
+  totalQuestions: number;
+  percentageScore: number;
+}
