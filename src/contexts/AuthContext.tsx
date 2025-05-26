@@ -9,23 +9,21 @@ export interface RegisterData {
   name: string;
   username: string;
   email: string;
-  password: string; 
+  password: string;
   gender: "male" | "female" | "other" | "prefer_not_to_say";
-  studentType: "primary_school" | "secondary_school" | "high_school" | "preparatory_school" | "university" | "college" | "other_level";
+  studentType: "primary_school" | "secondary_school" | "high_school" | "preparatory_school" | "university" | "college";
 
   // University/College specific
-  institutionNameSelection?: string; 
+  institutionNameSelection?: string;
   otherInstitutionName?: string;
-  departmentSelection?: string; 
+  departmentSelection?: string;
   otherDepartment?: string;
 
   // Primary, Secondary, High School, Preparatory specific
   schoolName?: string;
   gradeLevel?: string;
 
-  // Other Level specific
-  genericInstitutionName?: string;
-  genericStudyDetails?: string;
+  // genericInstitutionName and genericStudyDetails removed as 'other_level' is removed
 }
 
 
@@ -36,7 +34,7 @@ interface AuthContextType {
   login: (email: string) => void;
   logout: () => void;
   register: (data: RegisterData) => void;
-  toggleSubscription: () => void; 
+  toggleSubscription: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -86,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         institutionName: existingUserDetails.institutionName,
         department: existingUserDetails.department,
         gradeLevel: existingUserDetails.gradeLevel,
-        studyDetails: existingUserDetails.studyDetails,
+        // studyDetails: existingUserDetails.studyDetails, // Removed
         image: existingUserDetails.image,
     };
     setUser(mockUser);
@@ -96,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = (data: RegisterData) => {
     const newUser: User = {
-      id: Date.now().toString(), 
+      id: Date.now().toString(),
       email: data.email,
       name: data.name,
       username: data.username,
@@ -117,10 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         newUser.institutionName = data.schoolName;
         newUser.gradeLevel = data.gradeLevel;
         break;
-      case 'other_level':
-        newUser.institutionName = data.genericInstitutionName;
-        newUser.studyDetails = data.genericStudyDetails; 
-        break;
+      // 'other_level' case removed
     }
 
     setUser(newUser);

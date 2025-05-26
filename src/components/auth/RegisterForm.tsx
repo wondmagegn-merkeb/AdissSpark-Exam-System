@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -10,13 +10,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 
 const GENDERS = ["male", "female", "other", "prefer_not_to_say"] as const;
-const STUDENT_TYPES = ["primary_school", "secondary_school", "high_school", "preparatory_school", "university", "college", "other_level"] as const;
+const STUDENT_TYPES = ["primary_school", "secondary_school", "high_school", "preparatory_school", "university", "college"] as const;
 
 const UNIVERSITIES = ["Addis Ababa University", "Bahir Dar University", "Mekelle University", "Jimma University", "Hawassa University", "Other"] as const;
 const COLLEGES = ["Admas University College", "Unity University", "St. Mary's University College", "CPU College", "Rift Valley University College", "Other"] as const;
@@ -74,12 +74,7 @@ const preparatorySchoolStudentSchema = baseSchema.extend({
   gradeLevel: z.string().min(1, { message: "Grade level is required (e.g., 11-12)." }),
 });
 
-const otherLevelStudentSchema = baseSchema.extend({
-  studentType: z.literal("other_level"),
-  genericInstitutionName: z.string().min(2, { message: "Institution name must be at least 2 characters." }),
-  genericStudyDetails: z.string().min(2, { message: "Study details must be at least 2 characters." }),
-});
-
+// Other Level schema removed
 
 const registerSchema = z.discriminatedUnion("studentType", [
   universityStudentSchema,
@@ -88,7 +83,7 @@ const registerSchema = z.discriminatedUnion("studentType", [
   secondarySchoolStudentSchema,
   highSchoolStudentSchema,
   preparatorySchoolStudentSchema,
-  otherLevelStudentSchema,
+  // otherLevelStudentSchema removed
 ]).superRefine((data, ctx) => {
   if (data.studentType === "university" || data.studentType === "college") {
     if (data.institutionNameSelection === "Other" && (!data.otherInstitutionName || data.otherInstitutionName.trim().length < 2)) {
@@ -113,7 +108,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const { register: registerUser } = useAuth(); 
+  const { register: registerUser } = useAuth();
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -121,8 +116,8 @@ export function RegisterForm() {
       username: '',
       email: '',
       password: '',
-      gender: undefined, 
-      studentType: undefined, 
+      gender: undefined,
+      studentType: undefined,
       // @ts-expect-error - RHF needs a default for all union paths
       institutionNameSelection: undefined,
       otherInstitutionName: '',
@@ -133,22 +128,21 @@ export function RegisterForm() {
       schoolName: '',
       // @ts-expect-error
       gradeLevel: '',
-      // @ts-expect-error
-      genericInstitutionName: '',
-      // @ts-expect-error
-      genericStudyDetails: '',
+      // genericInstitutionName and genericStudyDetails defaults removed
     },
   });
 
   const watchedStudentType = form.watch("studentType");
-  const watchedInstitution = form.watch("institutionNameSelection" as any); 
+  const watchedInstitution = form.watch("institutionNameSelection" as any);
   const watchedDepartment = form.watch("departmentSelection" as any);
 
   async function onSubmit(data: RegisterFormValues) {
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    registerUser(data as any); 
+    registerUser(data as any);
   }
+
+  const studentTypeLabel = watchedStudentType === 'university' ? "I am an..." : "I am a...";
 
   return (
     <Card className="w-full max-w-lg shadow-xl">
@@ -240,7 +234,7 @@ export function RegisterForm() {
               name="studentType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>I am a...</FormLabel>
+                  <FormLabel>{studentTypeLabel}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
                     <FormControl>
                       <SelectTrigger>
@@ -286,7 +280,7 @@ export function RegisterForm() {
                 {watchedInstitution === 'Other' && (
                   <FormField
                     control={form.control}
-                    name="otherInstitutionName" 
+                    name="otherInstitutionName"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Specify University Name</FormLabel>
@@ -447,37 +441,7 @@ export function RegisterForm() {
               </>
             )}
 
-            {/* Other Level Student Fields */}
-            {watchedStudentType === 'other_level' && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="genericInstitutionName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Institution Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter institution name" {...field} value={field.value ?? ''} disabled={isLoading} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="genericStudyDetails"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Study Details</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Vocational Training in Plumbing" {...field} value={field.value ?? ''} disabled={isLoading} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
+            {/* Other Level Student Fields Removed */}
 
             <Button type="submit" className="w-full" disabled={isLoading || !form.formState.isValid}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

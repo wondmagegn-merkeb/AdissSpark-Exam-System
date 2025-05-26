@@ -5,12 +5,12 @@ export interface User {
   username?: string | null;
   email?: string | null;
   image?: string | null; // Added for avatar
-  gender?: string | null;
-  studentType?: 'primary_school' | 'secondary_school' | 'high_school' | 'preparatory_school' | 'university' | 'college' | 'other_level' | null;
+  gender?: "male" | "female" | "other" | "prefer_not_to_say" | null;
+  studentType?: 'primary_school' | 'secondary_school' | 'high_school' | 'preparatory_school' | 'university' | 'college' | null;
   institutionName?: string | null; // Stores the final name (selected, 'Other' text, school name, or generic institution)
   department?: string | null; // Stores final department (selected, 'Other' text) - primarily for university/college
   gradeLevel?: string | null; // For primary, secondary, high_school, preparatory
-  studyDetails?: string | null; // For 'other_level' or specific details not covered
+  // studyDetails?: string | null; // Removed as 'other_level' is removed
 }
 
 export interface NavItem {
