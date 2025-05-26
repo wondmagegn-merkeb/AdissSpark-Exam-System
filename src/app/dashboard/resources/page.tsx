@@ -15,29 +15,43 @@ import Link from 'next/link';
 
 const RESOURCE_TYPES = ["note", "video", "book"] as const;
 
-// These lists are used for fallback/broad filtering if specific department isn't matched
+// General school subjects for automatic filtering for school students
 const SCHOOL_SUBJECTS = [
   "Mathematics", "English", "Physics", "Chemistry", "Biology",
-  "Amharic", "Social Studies", "Civics", "General Science", "History", "Geography"
+  "Amharic", "Social Studies", "Civics", "General Science", "History", "Geography",
+  "Grade 5 Mathematics" // Example of a more specific school subject
 ];
-const HIGHER_ED_SUBJECTS = [
-  "Engineering", "Medicine", "Business & Economics", "Computer Science",
-  "Social Sciences", "Natural Sciences", "Law", "Humanities", "Agriculture"
+
+// Specific courses for university/college students to select from
+const UNIVERSITY_COURSES = [
+  "Calculus I", "Linear Algebra", "Data Structures", "Algorithms", "Organic Chemistry", "Software Engineering",
+  "Classical Mechanics", "Electromagnetism", "Thermodynamics", "Microeconomics", "Macroeconomics",
+  "Ethiopian Law", "World History", "Database Systems", "Operating Systems", "Introduction to AI",
+  "Human Anatomy", "Physiology", "Biochemistry", "Pharmacology"
 ];
+const COLLEGE_COURSES = [
+  "Basic Accounting", "Business Communication", "Marketing Fundamentals", "Office Management",
+  "Computer Applications", "Networking Essentials", "Web Design Basics", "Customer Service", "Entrepreneurship"
+];
+
+const ALL_UNIVERSITY_COURSES_OPTION = "All University Courses";
+const ALL_COLLEGE_COURSES_OPTION = "All College Courses";
+
 
 const mockResources: Resource[] = [
   { id: 'res1', title: 'Algebra Fundamentals', type: 'note', description: 'Key concepts in basic algebra for high school students.', subjectOrCourse: 'Mathematics', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'algebra notes' },
   { id: 'res2', title: 'Introduction to Ethiopian History', type: 'video', description: 'A video series covering major periods in Ethiopian history.', subjectOrCourse: 'History', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'ethiopian history' },
-  { id: 'res3', title: 'Calculus I Workbook (Premium)', type: 'book', description: 'Comprehensive workbook with exercises for Calculus I.', subjectOrCourse: 'Engineering', isPremium: true, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'calculus workbook' },
-  { id: 'res4', title: 'Organic Chemistry Notes', type: 'note', description: 'Detailed notes on organic chemistry reactions and mechanisms.', subjectOrCourse: 'Natural Sciences', isPremium: true, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'chemistry notes' },
+  { id: 'res3', title: 'Calculus I Workbook (Premium)', type: 'book', description: 'Comprehensive workbook with exercises for Calculus I.', subjectOrCourse: 'Calculus I', isPremium: true, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'calculus workbook' },
+  { id: 'res4', title: 'Organic Chemistry Notes', type: 'note', description: 'Detailed notes on organic chemistry reactions and mechanisms.', subjectOrCourse: 'Organic Chemistry', isPremium: true, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'chemistry notes' },
   { id: 'res5', title: 'Amharic Grammar Basics', type: 'video', description: 'Learn the fundamentals of Amharic grammar.', subjectOrCourse: 'Amharic', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'amharic language' },
-  { id: 'res6', title: 'Introduction to Programming with Python', type: 'book', description: 'A beginner-friendly guide to Python programming.', subjectOrCourse: 'Computer Science', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'python programming' },
-  { id: 'res7', title: 'Cell Biology Explained (Premium)', type: 'video', description: 'Advanced video lectures on cell biology.', subjectOrCourse: 'Medicine', isPremium: true, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'cell biology' },
+  { id: 'res6', title: 'Introduction to Programming with Python', type: 'book', description: 'A beginner-friendly guide to Python programming.', subjectOrCourse: 'Data Structures', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'python programming' }, // Changed to Data Structures for demo
+  { id: 'res7', title: 'Cell Biology Explained (Premium)', type: 'video', description: 'Advanced video lectures on cell biology.', subjectOrCourse: 'Physiology', isPremium: true, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'cell biology' }, // Changed to Physiology
   { id: 'res8', title: 'Ethiopian Civics and Ethical Education', type: 'note', description: 'Notes for Civics education based on the Ethiopian curriculum.', subjectOrCourse: 'Civics', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'civics education' },
-  { id: 'res9', title: 'Microeconomics Principles', type: 'book', description: 'Core principles of microeconomics for university students.', subjectOrCourse: 'Business & Economics', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'economics textbook' },
-  { id: 'res10', title: 'General Physics I Lectures', type: 'video', description: 'University-level physics lectures covering mechanics.', subjectOrCourse: 'Engineering', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'physics lecture' },
-  { id: 'res11', title: 'Advanced Software Engineering', type: 'book', description: 'Covers advanced topics in software engineering for CS students.', subjectOrCourse: 'Computer Science', isPremium: true, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'software engineering' },
-  { id: 'res12', title: 'Ethiopian Grade 5 Mathematics', type: 'note', description: 'Notes based on Ethiopian Grade 5 curriculum.', subjectOrCourse: 'Mathematics', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'primary math' },
+  { id: 'res9', title: 'Microeconomics Principles', type: 'book', description: 'Core principles of microeconomics for university students.', subjectOrCourse: 'Microeconomics', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'economics textbook' },
+  { id: 'res10', title: 'General Physics I Lectures', type: 'video', description: 'University-level physics lectures covering mechanics.', subjectOrCourse: 'Classical Mechanics', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'physics lecture' }, // Changed to Classical Mechanics
+  { id: 'res11', title: 'Advanced Software Engineering', type: 'book', description: 'Covers advanced topics in software engineering for CS students.', subjectOrCourse: 'Software Engineering', isPremium: true, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'software engineering' },
+  { id: 'res12', title: 'Ethiopian Grade 5 Mathematics', type: 'note', description: 'Notes based on Ethiopian Grade 5 curriculum.', subjectOrCourse: 'Grade 5 Mathematics', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'primary math' },
+  { id: 'res13', title: 'Networking Essentials Guide', type: 'book', description: 'A guide for college students on networking.', subjectOrCourse: 'Networking Essentials', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'computer networking' },
 ];
 
 const getResourceTypeIcon = (type: Resource['type']) => {
@@ -53,53 +67,84 @@ export default function ResourcesPage() {
   const { user, isSubscribed } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<Resource['type'] | 'all'>('all');
+  const [selectedSubjectOrCourse, setSelectedSubjectOrCourse] = useState<string>('all'); // 'all' means show all relevant for the user's level
+
+  const relevantCoursesForUser = useMemo(() => {
+    if (user?.studentType === 'university') return [ALL_UNIVERSITY_COURSES_OPTION, ...UNIVERSITY_COURSES];
+    if (user?.studentType === 'college') return [ALL_COLLEGE_COURSES_OPTION, ...COLLEGE_COURSES];
+    return [];
+  }, [user?.studentType]);
+
+  useEffect(() => {
+    // Reset subject/course selection if student type changes and makes current selection irrelevant
+    if (user?.studentType === 'university' && !UNIVERSITY_COURSES.includes(selectedSubjectOrCourse) && selectedSubjectOrCourse !== ALL_UNIVERSITY_COURSES_OPTION) {
+      setSelectedSubjectOrCourse(ALL_UNIVERSITY_COURSES_OPTION);
+    } else if (user?.studentType === 'college' && !COLLEGE_COURSES.includes(selectedSubjectOrCourse) && selectedSubjectOrCourse !== ALL_COLLEGE_COURSES_OPTION) {
+      setSelectedSubjectOrCourse(ALL_COLLEGE_COURSES_OPTION);
+    } else if (!['university', 'college'].includes(user?.studentType || '')) {
+        // For school students, there's no specific course dropdown, so 'all' is effectively active
+        setSelectedSubjectOrCourse('all');
+    }
+  }, [user?.studentType, selectedSubjectOrCourse]);
+
 
   const filteredResources = useMemo(() => {
     return mockResources.filter(resource => {
       const typeMatch = selectedType === 'all' || resource.type === selectedType;
       
       let subjectOrCourseMatch = false;
-      if (user?.studentType === 'university' || user?.studentType === 'college') {
-        if (user.department && user.department !== 'Other') {
-          subjectOrCourseMatch = resource.subjectOrCourse === user.department;
+      if (user?.studentType === 'university') {
+        const isGenerallyRelevant = UNIVERSITY_COURSES.includes(resource.subjectOrCourse) || resource.subjectOrCourse === user.department; // Include user's department resources
+        if (selectedSubjectOrCourse === ALL_UNIVERSITY_COURSES_OPTION) {
+          subjectOrCourseMatch = isGenerallyRelevant;
         } else {
-          // Fallback for 'Other' department or if department is not set
-          subjectOrCourseMatch = HIGHER_ED_SUBJECTS.includes(resource.subjectOrCourse);
+          subjectOrCourseMatch = resource.subjectOrCourse === selectedSubjectOrCourse;
+        }
+      } else if (user?.studentType === 'college') {
+        const isGenerallyRelevant = COLLEGE_COURSES.includes(resource.subjectOrCourse) || resource.subjectOrCourse === user.department; // Include user's department resources
+        if (selectedSubjectOrCourse === ALL_COLLEGE_COURSES_OPTION) {
+          subjectOrCourseMatch = isGenerallyRelevant;
+        } else {
+          subjectOrCourseMatch = resource.subjectOrCourse === selectedSubjectOrCourse;
         }
       } else if (user?.studentType && ['primary_school', 'secondary_school', 'high_school', 'preparatory_school'].includes(user.studentType)) {
-         // For school students, check if the resource's subject is a general school subject.
-         // A more advanced filter might check grade levels if resources are tagged that way.
         subjectOrCourseMatch = SCHOOL_SUBJECTS.includes(resource.subjectOrCourse);
-      } else {
-        // If user type is not defined or doesn't fit, show all (or handle as per requirement)
-        subjectOrCourseMatch = true; 
+      } else { // Not logged in or student type not set - show nothing or everything depending on requirements
+        subjectOrCourseMatch = false; 
       }
 
       const searchTermMatch = searchTerm === '' ||
         resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        resource.description.toLowerCase().includes(searchTerm.toLowerCase());
+        resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        resource.subjectOrCourse.toLowerCase().includes(searchTerm.toLowerCase());
         
       return typeMatch && subjectOrCourseMatch && searchTermMatch;
     });
-  }, [selectedType, searchTerm, user]);
+  }, [selectedType, searchTerm, user, selectedSubjectOrCourse]);
 
   const handleClearFilters = () => {
     setSearchTerm('');
     setSelectedType('all');
+    if (user?.studentType === 'university') setSelectedSubjectOrCourse(ALL_UNIVERSITY_COURSES_OPTION);
+    else if (user?.studentType === 'college') setSelectedSubjectOrCourse(ALL_COLLEGE_COURSES_OPTION);
+    else setSelectedSubjectOrCourse('all');
   };
   
   const getRelevantSubjectContext = () => {
-    if (!user) return "all subjects";
-    if ((user.studentType === 'university' || user.studentType === 'college') && user.department && user.department !== 'Other') {
-      return `your department: ${user.department}`;
+    if (!user) return "all resources";
+    if ((user.studentType === 'university' || user.studentType === 'college') && selectedSubjectOrCourse !== 'all' && selectedSubjectOrCourse !== ALL_UNIVERSITY_COURSES_OPTION && selectedSubjectOrCourse !== ALL_COLLEGE_COURSES_OPTION) {
+      return `for ${selectedSubjectOrCourse}`;
     }
-    if (user.studentType === 'university' || user.studentType === 'college') {
-      return "higher education fields";
+    if (user.studentType === 'university') {
+      return "for university courses";
+    }
+    if (user.studentType === 'college') {
+      return "for college courses";
     }
     if (['primary_school', 'secondary_school', 'high_school', 'preparatory_school'].includes(user.studentType)) {
-        return "general school subjects";
+        return "for general school subjects";
     }
-    return "all subjects";
+    return "all resources";
   };
 
 
@@ -110,7 +155,7 @@ export default function ResourcesPage() {
           Study Resources
         </h1>
         <p className="mt-2 text-lg text-muted-foreground">
-          Find notes, videos, and books tailored to {getRelevantSubjectContext()}.
+          Find notes, videos, and books {getRelevantSubjectContext()}.
         </p>
       </div>
 
@@ -131,7 +176,7 @@ export default function ResourcesPage() {
         <CardHeader>
           <CardTitle className="text-xl">Filter Resources</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -155,7 +200,26 @@ export default function ResourcesPage() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={handleClearFilters} className="w-full lg:w-auto">
+
+          {(user?.studentType === 'university' || user?.studentType === 'college') && (
+            <Select 
+                value={selectedSubjectOrCourse} 
+                onValueChange={(value) => setSelectedSubjectOrCourse(value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={`Select ${user.studentType === 'university' ? 'University Course' : 'College Course'}`} />
+              </SelectTrigger>
+              <SelectContent>
+                {relevantCoursesForUser.map(course => (
+                  <SelectItem key={course} value={course}>
+                    {course}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          <Button variant="outline" onClick={handleClearFilters} className="w-full lg:w-auto xl:col-start-4">
             <FilterX className="mr-2 h-4 w-4" /> Clear Filters
           </Button>
         </CardContent>
@@ -166,9 +230,9 @@ export default function ResourcesPage() {
             <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-xl font-semibold text-foreground">No Resources Found</p>
             <p className="text-muted-foreground">
-                No resources currently match your profile ({getRelevantSubjectContext()}) and selected filters.
+                No resources currently match your criteria ({getRelevantSubjectContext()}).
                 <br />
-                Try adjusting your search or type filter, or check back later for new content.
+                Try adjusting your filters or check back later for new content.
             </p>
         </div>
       ) : (
@@ -226,3 +290,4 @@ export default function ResourcesPage() {
     </div>
   );
 }
+
