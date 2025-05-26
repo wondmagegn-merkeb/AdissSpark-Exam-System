@@ -5,16 +5,32 @@ import type { User } from '@/lib/types';
 import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Define the shape of the registration data, mirroring the form schema
-interface RegisterData {
+// This interface will now mirror the complex RegisterFormValues from RegisterForm.tsx
+// For simplicity, we'll define a version of it here. In a larger app, this might be imported.
+export interface RegisterData {
   name: string;
   username: string;
   email: string;
-  // Password is used for form validation but not typically stored directly in User object in this mock
-  gender: string;
-  institutionName: string;
-  studyDetails: string;
+  password: string; // Not stored in User object directly in this mock
+  gender: "male" | "female" | "other" | "prefer_not_to_say";
+  studentType: "university" | "college" | "high_school" | "other_level";
+
+  // University/College specific
+  institutionNameSelection?: string; // Includes "Other"
+  otherInstitutionName?: string;
+  departmentSelection?: string; // Includes "Other"
+  otherDepartment?: string;
+
+  // High School specific
+  schoolName?: string;
+  gradeLevel?: string;
+  className?: string;
+
+  // Other Level specific
+  genericInstitutionName?: string;
+  genericStudyDetails?: string;
 }
+
 
 interface AuthContextType {
   user: User | null;
@@ -53,50 +69,70 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (email: string) => {
-    // Try to get more details from localStorage if this email has registered before
     const storedUser = localStorage.getItem('examPrepUser');
     let existingUserDetails: Partial<User> = {};
     if (storedUser) {
-      const parsedUser: User = JSON.parse(storedUser);
-      if (parsedUser.email === email) {
-        existingUserDetails = parsedUser;
-      }
+      try {
+        const parsedUser: User = JSON.parse(storedUser);
+        if (parsedUser.email === email) {
+          existingUserDetails = parsedUser;
+        }
+      } catch (e) { console.error("Error parsing stored user for login:", e)}
     }
-    const mockUser: User = { 
-        id: '1', 
-        email, 
+    const mockUser: User = {
+        id: '1',
+        email,
         name: existingUserDetails.name || email.split('@')[0],
         username: existingUserDetails.username,
         gender: existingUserDetails.gender,
+        studentType: existingUserDetails.studentType,
         institutionName: existingUserDetails.institutionName,
+        department: existingUserDetails.department,
+        gradeLevel: existingUserDetails.gradeLevel,
+        className: existingUserDetails.className,
         studyDetails: existingUserDetails.studyDetails,
         image: existingUserDetails.image,
     };
     setUser(mockUser);
     localStorage.setItem('examPrepUser', JSON.stringify(mockUser));
-    // Forcing redirect to dashboard after state is set
     router.push('/dashboard');
   };
 
   const register = (data: RegisterData) => {
-    const mockUser: User = {
-      id: '1', // Replace with actual ID generation in a real app
+    const newUser: User = {
+      id: Date.now().toString(), // Simple unique ID
       email: data.email,
       name: data.name,
       username: data.username,
       gender: data.gender,
-      institutionName: data.institutionName,
-      studyDetails: data.studyDetails,
+      studentType: data.studentType,
     };
-    setUser(mockUser);
-    localStorage.setItem('examPrepUser', JSON.stringify(mockUser));
-     // Forcing redirect to dashboard after state is set
+
+    switch (data.studentType) {
+      case 'university':
+      case 'college':
+        newUser.institutionName = data.institutionNameSelection === 'Other' ? data.otherInstitutionName : data.institutionNameSelection;
+        newUser.department = data.departmentSelection === 'Other' ? data.otherDepartment : data.departmentSelection;
+        break;
+      case 'high_school':
+        newUser.institutionName = data.schoolName;
+        newUser.gradeLevel = data.gradeLevel;
+        newUser.className = data.className;
+        break;
+      case 'other_level':
+        newUser.institutionName = data.genericInstitutionName;
+        newUser.studyDetails = data.genericStudyDetails; // Using studyDetails for this generic case
+        break;
+    }
+
+    setUser(newUser);
+    localStorage.setItem('examPrepUser', JSON.stringify(newUser));
     router.push('/dashboard');
   };
 
   const logout = () => {
     setUser(null);
-    setIsSubscribed(false); // Reset subscription on logout
+    setIsSubscribed(false);
     localStorage.removeItem('examPrepUser');
     localStorage.removeItem('examPrepSubscription');
     router.push('/login');
