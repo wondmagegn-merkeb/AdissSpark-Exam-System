@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import type { NavItem } from '@/lib/types';
-import { LayoutDashboard, Library, FileText, Brain, User, Settings, LogOut, CreditCard, MessageSquare, Building, BookCopy, ListChecks, Edit, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Library, FileText, Brain, User, Settings, LogOut, CreditCard, MessageSquare, Building, BookCopy, ListChecks, Edit, ShieldCheck, Users } from 'lucide-react';
 
 const mainNavItems: NavItem[] = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -37,6 +37,7 @@ const adminNavItems: NavItem[] = [
   { title: 'Manage Courses', href: '/dashboard/admin/courses', icon: ListChecks }, // Represents courses/subjects
   { title: 'Manage Exams', href: '/dashboard/admin/exams', icon: Edit },
   { title: 'Manage Resources', href: '/dashboard/admin/resources', icon: Library },
+  { title: 'Manage Users', href: '/dashboard/admin/users', icon: Users },
 ];
 
 export function DashboardSidebar() {
