@@ -119,6 +119,7 @@ export interface AgentEntry {
   lastUpdated: Date;
 }
 
+// Updated InstitutionType to match registration form options
 export type InstitutionType =
   | "Primary School"
   | "Secondary School"
@@ -143,5 +144,4 @@ export interface DepartmentOrGradeEntry {
   id: string;
   name: string;
   type: DepartmentOrGradeType;
-  // relatedTo field removed
 }
