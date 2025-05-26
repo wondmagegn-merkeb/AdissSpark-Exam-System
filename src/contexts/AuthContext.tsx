@@ -20,7 +20,8 @@ export interface RegisterData {
   otherDepartment?: string;
 
   // Primary, Secondary, High School, Preparatory specific
-  schoolName?: string;
+  schoolNameSelection?: string; // Changed from schoolName
+  otherSchoolName?: string; // New field for "Other" school name
   gradeLevel?: string;
 }
 
@@ -109,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       case 'secondary_school':
       case 'high_school':
       case 'preparatory_school':
-        newUser.institutionName = data.schoolName;
+        newUser.institutionName = data.schoolNameSelection === 'Other' ? data.otherSchoolName : data.schoolNameSelection;
         newUser.gradeLevel = data.gradeLevel;
         break;
     }

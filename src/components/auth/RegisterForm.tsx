@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -14,6 +14,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
+import type { InstitutionType as AdminInstitutionType } from '@/app/dashboard/admin/universities/page';
+
 
 const GENDERS = ["male", "female", "other", "prefer_not_to_say"] as const;
 const STUDENT_TYPES = [
@@ -25,8 +27,27 @@ const STUDENT_TYPES = [
   "university", 
 ] as const;
 
-const UNIVERSITIES = ["Addis Ababa University", "Bahir Dar University", "Mekelle University", "Jimma University", "Hawassa University", "Other"] as const;
-const COLLEGES = ["Admas University College", "Unity University", "St. Mary's University College", "CPU College", "Rift Valley University College", "Other"] as const;
+// Mock data simulating schools/institutions added by an admin
+// In a real app, this would be fetched from a backend or global state.
+const MOCK_ADMIN_INSTITUTIONS: { name: string, type: AdminInstitutionType }[] = [
+  { name: "Bright Kids Primary", type: "Primary School" },
+  { name: "Future Leaders Primary", type: "Primary School" },
+  { name: "Advanced Secondary School", type: "Secondary School" },
+  { name: "City Central Secondary", type: "Secondary School" },
+  { name: "Pioneer High School", type: "High School" },
+  { name: "Regional High School", type: "High School" },
+  { name: "Elite Preparatory School", type: "Preparatory School" },
+  { name: "Top Achievers Prep", type: "Preparatory School" },
+  { name: "Addis Ababa University", type: "University" },
+  { name: "Bahir Dar University", type: "University" },
+  { name: "Mekelle University", type: "University" },
+  { name: "Admas University College", type: "College" },
+  { name: "Unity University", type: "College" },
+];
+
+
+const UNIVERSITIES = MOCK_ADMIN_INSTITUTIONS.filter(inst => inst.type === "University").map(inst => inst.name).concat("Other");
+const COLLEGES = MOCK_ADMIN_INSTITUTIONS.filter(inst => inst.type === "College").map(inst => inst.name).concat("Other");
 const DEPARTMENTS = ["Computer Science", "Software Engineering", "Electrical Engineering", "Civil Engineering", "Mechanical Engineering", "Medicine", "Nursing", "Pharmacy", "Economics", "Management", "Accounting", "Law", "Other"] as const;
 
 
@@ -43,29 +64,62 @@ const baseSchema = z.object({
   }),
 });
 
-// Schemas for each student type
+const schoolSchemaFields = {
+  schoolNameSelection: z.string({ required_error: "Please select your school." }),
+  otherSchoolName: z.string().optional(),
+  gradeLevel: z.string().min(1, { message: "Grade level is required (e.g., Grade 5 or 11)." }),
+};
+
 const primarySchoolStudentSchema = baseSchema.extend({
   studentType: z.literal("primary_school"),
-  schoolName: z.string().min(2, { message: "School name must be at least 2 characters." }),
-  gradeLevel: z.string().min(1, { message: "Grade level is required (e.g., 1-8)." }),
+  ...schoolSchemaFields,
+}).superRefine((data, ctx) => {
+  if (data.schoolNameSelection === "Other" && (!data.otherSchoolName || data.otherSchoolName.trim().length < 2)) {
+    ctx.addIssue({
+      path: ["otherSchoolName"],
+      message: "Please specify your school name (min 2 chars).",
+      code: z.ZodIssueCode.custom
+    });
+  }
 });
 
 const secondarySchoolStudentSchema = baseSchema.extend({
   studentType: z.literal("secondary_school"),
-  schoolName: z.string().min(2, { message: "School name must be at least 2 characters." }),
-  gradeLevel: z.string().min(1, { message: "Grade level is required (e.g., 7-10)." }),
+  ...schoolSchemaFields,
+}).superRefine((data, ctx) => {
+  if (data.schoolNameSelection === "Other" && (!data.otherSchoolName || data.otherSchoolName.trim().length < 2)) {
+    ctx.addIssue({
+      path: ["otherSchoolName"],
+      message: "Please specify your school name (min 2 chars).",
+      code: z.ZodIssueCode.custom
+    });
+  }
 });
 
 const highSchoolStudentSchema = baseSchema.extend({
   studentType: z.literal("high_school"),
-  schoolName: z.string().min(2, { message: "School name must be at least 2 characters." }),
-  gradeLevel: z.string().min(1, { message: "Grade level is required (e.g., 9-10 or 11-12)." }),
+  ...schoolSchemaFields,
+}).superRefine((data, ctx) => {
+  if (data.schoolNameSelection === "Other" && (!data.otherSchoolName || data.otherSchoolName.trim().length < 2)) {
+    ctx.addIssue({
+      path: ["otherSchoolName"],
+      message: "Please specify your school name (min 2 chars).",
+      code: z.ZodIssueCode.custom
+    });
+  }
 });
 
 const preparatorySchoolStudentSchema = baseSchema.extend({
   studentType: z.literal("preparatory_school"),
-  schoolName: z.string().min(2, { message: "School name must be at least 2 characters." }),
-  gradeLevel: z.string().min(1, { message: "Grade level is required (e.g., 11-12)." }),
+  ...schoolSchemaFields,
+}).superRefine((data, ctx) => {
+  if (data.schoolNameSelection === "Other" && (!data.otherSchoolName || data.otherSchoolName.trim().length < 2)) {
+    ctx.addIssue({
+      path: ["otherSchoolName"],
+      message: "Please specify your school name (min 2 chars).",
+      code: z.ZodIssueCode.custom
+    });
+  }
 });
 
 const collegeStudentSchema = baseSchema.extend({
@@ -133,15 +187,40 @@ export function RegisterForm() {
       departmentSelection: undefined,
       otherDepartment: '',
       // @ts-expect-error
-      schoolName: '',
+      schoolNameSelection: undefined, 
+      otherSchoolName: '',
       // @ts-expect-error
       gradeLevel: '',
     },
   });
 
   const watchedStudentType = form.watch("studentType");
-  const watchedInstitution = form.watch("institutionNameSelection" as any);
-  const watchedDepartment = form.watch("departmentSelection" as any);
+  const watchedInstitution = form.watch("institutionNameSelection" as any); // For University/College
+  const watchedDepartment = form.watch("departmentSelection" as any); // For University/College
+  const watchedSchoolNameSelection = form.watch("schoolNameSelection" as any); // For School levels
+
+  const studentTypeLabel = useMemo(() => {
+    if (watchedStudentType === 'university') return "I am an...";
+    return "I am a...";
+  }, [watchedStudentType]);
+
+  const relevantSchools = useMemo(() => {
+    if (!watchedStudentType) return [];
+    const typeMap = {
+        'primary_school': 'Primary School',
+        'secondary_school': 'Secondary School',
+        'high_school': 'High School',
+        'preparatory_school': 'Preparatory School',
+    };
+    const currentSchoolType = typeMap[watchedStudentType as keyof typeof typeMap];
+    if (!currentSchoolType) return [];
+    
+    return MOCK_ADMIN_INSTITUTIONS
+        .filter(inst => inst.type === currentSchoolType)
+        .map(inst => inst.name)
+        .concat("Other");
+  }, [watchedStudentType]);
+
 
   async function onSubmit(data: RegisterFormValues) {
     setIsLoading(true);
@@ -149,7 +228,6 @@ export function RegisterForm() {
     registerUser(data as any);
   }
 
-  const studentTypeLabel = watchedStudentType === 'university' ? "I am an..." : "I am a...";
 
   return (
     <Card className="w-full max-w-lg shadow-xl">
@@ -242,7 +320,17 @@ export function RegisterForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{studentTypeLabel}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+                  <Select onValueChange={(value) => {
+                      field.onChange(value);
+                      // Reset dependent fields when student type changes
+                      form.resetField("institutionNameSelection" as any);
+                      form.resetField("otherInstitutionName" as any);
+                      form.resetField("departmentSelection" as any);
+                      form.resetField("otherDepartment" as any);
+                      form.resetField("schoolNameSelection" as any);
+                      form.resetField("otherSchoolName" as any);
+                      form.resetField("gradeLevel" as any);
+                  }} defaultValue={field.value} disabled={isLoading}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select your student type" />
@@ -270,7 +358,7 @@ export function RegisterForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>University Name</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value as string} disabled={isLoading}>
+                      <Select onValueChange={field.onChange} value={field.value as string | undefined} disabled={isLoading}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select your university" />
@@ -305,7 +393,7 @@ export function RegisterForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Department</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value as string} disabled={isLoading}>
+                      <Select onValueChange={field.onChange} value={field.value as string | undefined} disabled={isLoading}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select your department" />
@@ -346,7 +434,7 @@ export function RegisterForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>College Name</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value as string} disabled={isLoading}>
+                      <Select onValueChange={field.onChange} value={field.value as string | undefined} disabled={isLoading}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select your college" />
@@ -381,7 +469,7 @@ export function RegisterForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Department</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value as string} disabled={isLoading}>
+                      <Select onValueChange={field.onChange} value={field.value as string | undefined} disabled={isLoading}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select your department" />
@@ -421,17 +509,41 @@ export function RegisterForm() {
               <>
                 <FormField
                   control={form.control}
-                  name="schoolName"
+                  name="schoolNameSelection"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>School Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Example Primary School" {...field} value={field.value ?? ''} disabled={isLoading} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} value={field.value as string | undefined} disabled={isLoading}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your school" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {relevantSchools.map(school => (
+                            <SelectItem key={school} value={school}>{school}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                {watchedSchoolNameSelection === 'Other' && (
+                   <FormField
+                    control={form.control}
+                    name="otherSchoolName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Specify School Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., My Local School" {...field} value={field.value ?? ''} disabled={isLoading} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
                 <FormField
                   control={form.control}
                   name="gradeLevel"

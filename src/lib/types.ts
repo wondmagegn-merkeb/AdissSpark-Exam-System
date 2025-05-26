@@ -102,3 +102,18 @@ export interface AgentEntry {
   status: 'active' | 'inactive' | 'maintenance';
   lastUpdated: Date;
 }
+
+export type InstitutionType = 
+  | "Primary School" 
+  | "Secondary School" 
+  | "High School" 
+  | "Preparatory School" 
+  | "College" 
+  | "University";
+
+export interface Institution {
+  id: string;
+  name: string;
+  type: InstitutionType;
+  context: string; 
+}
