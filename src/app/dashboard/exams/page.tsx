@@ -98,12 +98,11 @@ export default function ExamsPage() {
                     {exam.isPremium ? <Lock className="h-7 w-7 text-primary" /> : <FileText className="h-7 w-7 text-primary" />}
                     <CardTitle className="text-xl">{shortTitle}</CardTitle>
                   </div>
-                  {/* CardDescription removed as per request */}
                 </CardHeader>
                 <CardContent className="flex-grow">
                   <Image
                     src={`https://placehold.co/600x300.png`}
-                    alt={shortTitle} // Use short title for alt text
+                    alt={shortTitle} 
                     width={600}
                     height={300}
                     className="rounded-md mb-4 w-full object-cover aspect-[2/1]"
@@ -129,8 +128,7 @@ export default function ExamsPage() {
                 <CardFooter>
                   {canAccess ? (
                     <Button asChild className="w-full">
-                      {/* Placeholder link, eventually /dashboard/exams/${exam.id}/take */}
-                      <Link href={`/dashboard/exams/#start-${exam.id}`}>Start Exam</Link>
+                      <Link href={`/dashboard/exams/${exam.id}/take`}>Start Exam</Link>
                     </Button>
                   ) : (
                     <Button className="w-full" disabled>
