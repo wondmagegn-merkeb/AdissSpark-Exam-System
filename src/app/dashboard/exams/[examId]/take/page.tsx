@@ -1,54 +1,79 @@
 
 "use client";
 
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import Link from 'next/link';
-import { ArrowLeft, FileText, Clock } from 'lucide-react';
-import type { Exam } from '@/lib/types'; // Assuming Exam type is defined here
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { ArrowLeft, FileText, Clock, AlertTriangle, CheckCircle2, Target } from 'lucide-react';
+import type { Exam, Question } from '@/lib/types';
 
-// Mock exam data - in a real app, you would fetch this based on examId
+// Mock exam data with questions - in a real app, you would fetch this
 const mockExams: Exam[] = [
   {
     id: 'model-1',
     title: 'Model Exam 1: General Knowledge',
     description: 'A comprehensive test covering various general knowledge topics.',
-    questionCount: 50,
-    durationMinutes: 60,
+    questionCount: 3,
+    durationMinutes: 5, // Shortened for testing
     isPremium: false,
+    questions: [
+      { id: 'q1_1', text: 'What is the capital of Ethiopia?', options: ['Nairobi', 'Addis Ababa', 'Cairo', 'Lagos'], correctAnswer: 'Addis Ababa', explanation: 'Addis Ababa is the capital and largest city of Ethiopia.' },
+      { id: 'q1_2', text: 'Which river is the longest in the world?', options: ['Amazon', 'Nile', 'Yangtze', 'Mississippi'], correctAnswer: 'Nile', explanation: 'The Nile River is traditionally considered the longest river in the world.' },
+      { id: 'q1_3', text: 'Who painted the Mona Lisa?', options: ['Vincent van Gogh', 'Pablo Picasso', 'Leonardo da Vinci', 'Claude Monet'], correctAnswer: 'Leonardo da Vinci', explanation: 'The Mona Lisa was painted by the Italian Renaissance artist Leonardo da Vinci.' },
+    ],
   },
   {
     id: 'model-2',
     title: 'Model Exam 2: Verbal Reasoning',
     description: 'Focuses on verbal reasoning, comprehension, and analytical skills.',
-    questionCount: 40,
-    durationMinutes: 45,
+    questionCount: 2,
+    durationMinutes: 3, // Shortened
     isPremium: false,
+    questions: [
+      { id: 'q2_1', text: 'Choose the word that is most nearly OPPOSITE in meaning to "verbose".', options: ['Talkative', 'Concise', 'Lengthy', 'Wordy'], correctAnswer: 'Concise', explanation: 'Verbose means using more words than needed; concise means brief and comprehensive.' },
+      { id: 'q2_2', text: 'Complete the analogy: Book is to Reading as Fork is to:', options: ['Writing', 'Stirring', 'Eating', 'Drawing'], correctAnswer: 'Eating', explanation: 'A book is used for reading, and a fork is used for eating.' },
+    ],
   },
   {
     id: 'model-3',
     title: 'Model Exam 3: Quantitative Aptitude (Premium)',
     description: 'Challenging questions on quantitative aptitude.',
-    questionCount: 60,
-    durationMinutes: 90,
+    questionCount: 2,
+    durationMinutes: 4, // Shortened
     isPremium: true,
+    questions: [
+        { id: 'q3_1', text: 'If a car travels at 60 km/h, how far will it travel in 2.5 hours?', options: ['120 km', '150 km', '180 km', '200 km'], correctAnswer: '150 km', explanation: 'Distance = Speed × Time. So, 60 km/h × 2.5 h = 150 km.' },
+        { id: 'q3_2', text: 'What is 20% of 200?', options: ['20', '40', '60', '80'], correctAnswer: '40', explanation: '20% of 200 is (20/100) * 200 = 0.20 * 200 = 40.' },
+    ]
   },
-  {
+   {
     id: 'model-4',
     title: 'Model Exam 4: Logical Reasoning',
     description: 'Test your logical thinking and problem-solving abilities.',
-    questionCount: 30,
-    durationMinutes: 60,
+    questionCount: 2,
+    durationMinutes: 3,
     isPremium: false,
+    questions: [
+        { id: 'q4_1', text: 'Look at this series: 2, 1, (1/2), (1/4), ... What number should come next?', options: ['(1/3)', '(1/8)', '(2/8)', '(1/16)'], correctAnswer: '(1/8)' },
+        { id: 'q4_2', text: 'Statement: All birds lay eggs. Conclusion: Pigeons lay eggs because pigeons are birds. Is the conclusion valid?', options: ['Yes', 'No'], correctAnswer: 'Yes' },
+    ]
   },
   {
     id: 'model-5',
     title: 'Model Exam 5: Specialized Subject (Premium)',
     description: 'An in-depth exam for a specialized subject, designed by experts.',
-    questionCount: 75,
-    durationMinutes: 120,
+    questionCount: 2,
+    durationMinutes: 5,
     isPremium: true,
+    questions: [
+      { id: 'q5_1', text: 'In computer science, what does CPU stand for?', options: ['Central Processing Unit', 'Computer Personal Unit', 'Central Program Unit', 'Control Processing Unit'], correctAnswer: 'Central Processing Unit' },
+      { id: 'q5_2', text: 'What is the chemical symbol for water?', options: ['O2', 'H2O', 'CO2', 'NaCl'], correctAnswer: 'H2O' },
+    ]
   },
 ];
 
@@ -58,15 +83,54 @@ export default function TakeExamPage() {
   const router = useRouter();
   const examId = params.examId as string;
 
-  // Find the exam from mock data. In a real app, fetch from a DB or API.
   const exam = mockExams.find(e => e.id === examId);
+
+  const [examStarted, setExamStarted] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [examFinished, setExamFinished] = useState(false);
+  const [score, setScore] = useState(0);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+
+  useEffect(() => {
+    if (exam) {
+      setTimeLeft(exam.durationMinutes * 60);
+    }
+  }, [exam]);
+
+  const handleSubmitExam = useCallback(() => {
+    if (!exam) return;
+    let correctAnswers = 0;
+    exam.questions.forEach(q => {
+      if (userAnswers[q.id] === q.correctAnswer) {
+        correctAnswers++;
+      }
+    });
+    setScore(correctAnswers);
+    setExamFinished(true);
+    setExamStarted(false); // To stop the timer effect
+    setShowSubmitConfirm(false);
+  }, [exam, userAnswers]);
+
+  useEffect(() => {
+    if (examStarted && !examFinished && timeLeft > 0) {
+      const timerId = setInterval(() => {
+        setTimeLeft(prevTime => prevTime - 1);
+      }, 1000);
+      return () => clearInterval(timerId);
+    } else if (examStarted && !examFinished && timeLeft === 0) {
+      handleSubmitExam(); // Auto-submit when time is up
+    }
+  }, [examStarted, examFinished, timeLeft, handleSubmitExam]);
+
 
   if (!exam) {
     return (
       <div className="container mx-auto py-8 text-center">
         <Card className="max-w-md mx-auto shadow-lg">
           <CardHeader>
-            <CardTitle className="text-2xl text-destructive">Exam Not Found</CardTitle>
+            <CardTitle className="text-2xl text-destructive flex items-center justify-center"><AlertTriangle className="mr-2 h-6 w-6" />Exam Not Found</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-6">
@@ -82,58 +146,189 @@ export default function TakeExamPage() {
     );
   }
 
-  // For now, Start Now button is a placeholder
+  const currentQuestion = exam.questions[currentQuestionIndex];
+
   const handleStartExam = () => {
-    alert(`Starting exam: ${exam.title}`);
-    // Future: Navigate to the actual exam interface or begin the exam process
+    setExamStarted(true);
+    setCurrentQuestionIndex(0);
+    setUserAnswers({});
+    setTimeLeft(exam.durationMinutes * 60);
+    setExamFinished(false);
+    setScore(0);
   };
+
+  const handleAnswerSelect = (questionId: string, answer: string) => {
+    setUserAnswers(prev => ({ ...prev, [questionId]: answer }));
+  };
+
+  const handleNextQuestion = () => {
+    if (currentQuestionIndex < exam.questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  if (examFinished) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card className="max-w-lg mx-auto shadow-xl text-center">
+          <CardHeader>
+            <CardTitle className="text-3xl font-bold text-foreground flex items-center justify-center">
+              <CheckCircle2 className="mr-3 h-8 w-8 text-green-500" /> Exam Completed!
+            </CardTitle>
+            <CardDescription className="text-md text-muted-foreground pt-1">
+              You have completed: {exam.title}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="p-6 bg-muted/50 rounded-lg">
+              <p className="text-xl text-muted-foreground">Your Score:</p>
+              <p className="text-5xl font-bold text-primary">
+                {score} <span className="text-3xl text-muted-foreground">/ {exam.questions.length}</span>
+              </p>
+              <Progress value={(score / exam.questions.length) * 100} className="mt-4 h-3" />
+            </div>
+            <Button size="lg" onClick={() => router.push('/dashboard/exams')}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Exams List
+            </Button>
+            {/* Future: Add button for "Review Answers" */}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!examStarted) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card className="max-w-2xl mx-auto shadow-xl">
+          <CardHeader className="pb-4">
+            <Button variant="outline" size="sm" className="mb-6 w-fit" onClick={() => router.push('/dashboard/exams')}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Exams List
+            </Button>
+            <CardTitle className="text-3xl font-bold text-foreground">{exam.title}</CardTitle>
+            <CardDescription className="text-md text-muted-foreground pt-1">
+              {exam.description}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-sm">
+              <div className="flex items-center p-3 bg-muted/50 rounded-md">
+                <FileText className="mr-3 h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-semibold">{exam.questions.length} Questions</p>
+                  <p className="text-xs text-muted-foreground">Total questions in this exam.</p>
+                </div>
+              </div>
+              <div className="flex items-center p-3 bg-muted/50 rounded-md">
+                <Clock className="mr-3 h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-semibold">{exam.durationMinutes} Minutes</p>
+                  <p className="text-xs text-muted-foreground">Allocated time for this exam.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mb-6 p-4 border rounded-md bg-background">
+              <h3 className="text-lg font-semibold mb-2 text-foreground">Instructions:</h3>
+              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                <li>Read each question carefully before answering.</li>
+                <li>Ensure you have a stable internet connection.</li>
+                <li>The timer will start once you click "Start Exam Now".</li>
+                <li>Do not refresh the page or navigate away during the exam.</li>
+                <li>All questions must be answered to complete the exam.</li>
+                <li>The exam will auto-submit if the timer runs out.</li>
+              </ul>
+            </div>
+
+            <Button size="lg" className="w-full font-semibold text-lg py-6" onClick={handleStartExam}>
+              Start Exam Now
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8">
-      <Card className="max-w-2xl mx-auto shadow-xl">
-        <CardHeader className="pb-4">
-          <Button variant="outline" size="sm" className="mb-6 w-fit" onClick={() => router.push('/dashboard/exams')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Exams List
-          </Button>
-          <CardTitle className="text-3xl font-bold text-foreground">{exam.title}</CardTitle>
-          <CardDescription className="text-md text-muted-foreground pt-1">
-            {exam.description}
-          </CardDescription>
+      <Card className="max-w-3xl mx-auto shadow-xl">
+        <CardHeader className="border-b pb-4">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-2xl font-semibold text-foreground">{exam.title}</h2>
+            <div className="flex items-center text-lg font-medium text-primary">
+              <Clock className="mr-2 h-5 w-5" />
+              <span>{formatTime(timeLeft)}</span>
+            </div>
+          </div>
+          <Progress value={((currentQuestionIndex + 1) / exam.questions.length) * 100} className="w-full h-2" />
+          <p className="text-sm text-muted-foreground mt-2 text-right">
+            Question {currentQuestionIndex + 1} of {exam.questions.length}
+          </p>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-sm">
-            <div className="flex items-center p-3 bg-muted/50 rounded-md">
-              <FileText className="mr-3 h-5 w-5 text-primary" />
-              <div>
-                <p className="font-semibold">{exam.questionCount} Questions</p>
-                <p className="text-xs text-muted-foreground">Total number of questions in this exam.</p>
-              </div>
-            </div>
-            <div className="flex items-center p-3 bg-muted/50 rounded-md">
-              <Clock className="mr-3 h-5 w-5 text-primary" />
-              <div>
-                <p className="font-semibold">{exam.durationMinutes} Minutes</p>
-                <p className="text-xs text-muted-foreground">Allocated time for this exam.</p>
-              </div>
-            </div>
+        <CardContent className="py-6">
+          <div className="mb-6">
+            <p className="text-lg font-medium text-foreground mb-1">Question {currentQuestionIndex + 1}:</p>
+            <p className="text-xl text-foreground/90">{currentQuestion.text}</p>
           </div>
           
-          <div className="mb-6 p-4 border rounded-md bg-background">
-            <h3 className="text-lg font-semibold mb-2 text-foreground">Instructions:</h3>
-            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-              <li>Read each question carefully before answering.</li>
-              <li>Ensure you have a stable internet connection.</li>
-              <li>The timer will start once you click "Start Now".</li>
-              <li>Do not refresh the page or navigate away during the exam.</li>
-              <li>All questions must be answered to complete the exam.</li>
-            </ul>
-          </div>
-
-          <Button size="lg" className="w-full font-semibold text-lg py-6" onClick={handleStartExam}>
-            Start Exam Now
-          </Button>
+          <RadioGroup
+            value={userAnswers[currentQuestion.id] || ""}
+            onValueChange={(value) => handleAnswerSelect(currentQuestion.id, value)}
+            className="space-y-3 mb-8"
+          >
+            {currentQuestion.options.map((option, index) => (
+              <div key={index} className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
+                <RadioGroupItem value={option} id={`${currentQuestion.id}-option-${index}`} />
+                <Label htmlFor={`${currentQuestion.id}-option-${index}`} className="text-md flex-1 cursor-pointer">{option}</Label>
+              </div>
+            ))}
+          </RadioGroup>
         </CardContent>
+        <CardFooter className="border-t pt-6 flex justify-between items-center">
+            <Button variant="outline" onClick={() => router.push('/dashboard/exams')}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Quit Exam
+            </Button>
+          {currentQuestionIndex < exam.questions.length - 1 ? (
+            <Button onClick={handleNextQuestion} size="lg" disabled={!userAnswers[currentQuestion.id]}>
+              Next Question
+            </Button>
+          ) : (
+            <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="lg"
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                  disabled={!userAnswers[currentQuestion.id]}
+                  onClick={() => setShowSubmitConfirm(true)}
+                >
+                  <Target className="mr-2 h-5 w-5" />
+                  Submit Exam
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirm Submission</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to submit your answers? You cannot change them after submission.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleSubmitExam}>Submit</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </CardFooter>
       </Card>
     </div>
   );

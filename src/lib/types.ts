@@ -10,7 +10,6 @@ export interface User {
   institutionName?: string | null; // Stores the final name (selected, 'Other' text, school name, or generic institution)
   department?: string | null; // Stores final department (selected, 'Other' text) - primarily for university/college
   gradeLevel?: string | null; // For primary, secondary, high_school, preparatory
-  // studyDetails?: string | null; // Removed as 'other_level' is removed
 }
 
 export interface NavItem {
@@ -34,6 +33,14 @@ export interface Resource {
   contentUrl?: string; // URL to the actual resource or a placeholder
 }
 
+export interface Question {
+  id: string;
+  text: string;
+  options: string[];
+  correctAnswer: string; // The string content of the correct option
+  explanation?: string; // Optional explanation
+}
+
 export interface Exam {
   id:string;
   title: string;
@@ -41,6 +48,7 @@ export interface Exam {
   questionCount: number;
   durationMinutes: number; // Duration in minutes
   isPremium: boolean;
+  questions: Question[];
 }
 
 export interface StudyPlanData {
