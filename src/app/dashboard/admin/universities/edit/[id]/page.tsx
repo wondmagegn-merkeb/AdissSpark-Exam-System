@@ -13,11 +13,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save, AlertTriangle } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
-import type { Institution, InstitutionType } from './../page'; // Import types from list page
+import type { Institution, InstitutionType, InstitutionStatus } from '@/lib/types';
 
 const INSTITUTIONS_STORAGE_KEY = 'admin_institutions_list';
 
-const INSTITUTION_TYPES_EDIT: InstitutionType[] = [
+const INSTITUTION_TYPES_ORDERED: InstitutionType[] = [
   "Primary School",
   "Secondary School",
   "High School",
@@ -26,10 +26,13 @@ const INSTITUTION_TYPES_EDIT: InstitutionType[] = [
   "University"
 ];
 
+const INSTITUTION_STATUSES: InstitutionStatus[] = ["active", "inactive"];
+
 const institutionSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  type: z.enum(INSTITUTION_TYPES_EDIT, { required_error: "Please select a type." }),
+  type: z.enum(INSTITUTION_TYPES_ORDERED, { required_error: "Please select a type." }),
   context: z.string().min(2, { message: "Context/Location must be at least 2 characters." }),
+  status: z.enum(INSTITUTION_STATUSES, { required_error: "Please select a status." }),
 });
 
 type InstitutionFormValues = z.infer<typeof institutionSchema>;
@@ -43,7 +46,7 @@ export default function EditInstitutionPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [itemNotFound, setItemNotFound] = useState(false);
 
-  const { control, register, handleSubmit, formState: { errors }, reset, setValue } = useForm<InstitutionFormValues>({
+  const { control, register, handleSubmit, formState: { errors }, setValue } = useForm<InstitutionFormValues>({
     resolver: zodResolver(institutionSchema),
   });
 
@@ -57,6 +60,7 @@ export default function EditInstitutionPage() {
           setValue('name', itemToEdit.name);
           setValue('type', itemToEdit.type);
           setValue('context', itemToEdit.context);
+          setValue('status', itemToEdit.status);
         } else {
           setItemNotFound(true);
           toast({
@@ -66,7 +70,7 @@ export default function EditInstitutionPage() {
           });
         }
       } else {
-        setItemNotFound(true); // Or handle as no data available yet
+        setItemNotFound(true);
          toast({
             title: "Error",
             description: "No institution data found in storage.",
@@ -162,7 +166,7 @@ export default function EditInstitutionPage() {
                     <SelectValue placeholder="Select institution type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {INSTITUTION_TYPES_EDIT.map(type => (
+                    {INSTITUTION_TYPES_ORDERED.map(type => (
                        <SelectItem key={type} value={type}>{type}</SelectItem>
                     ))}
                   </SelectContent>
@@ -176,6 +180,27 @@ export default function EditInstitutionPage() {
             <Label htmlFor="context">Context/Location</Label>
             <Input id="context" {...register("context")} placeholder="e.g. Addis Ababa or National" disabled={isLoading} className="mt-1" />
             {errors.context && <p className="text-sm text-destructive mt-1">{errors.context.message}</p>}
+          </div>
+
+          <div>
+            <Label htmlFor="status">Status</Label>
+            <Controller
+              name="status"
+              control={control}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INSTITUTION_STATUSES.map(status => (
+                       <SelectItem key={status} value={status} className="capitalize">{status}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.status && <p className="text-sm text-destructive mt-1">{errors.status.message}</p>}
           </div>
 
           <div className="flex justify-end space-x-3">
@@ -196,5 +221,3 @@ export default function EditInstitutionPage() {
     </Card>
   );
 }
-
-    

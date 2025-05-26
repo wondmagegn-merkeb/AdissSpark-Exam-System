@@ -1,5 +1,4 @@
 
-
 export interface User {
   id: string;
   name?: string | null;
@@ -103,17 +102,20 @@ export interface AgentEntry {
   lastUpdated: Date;
 }
 
-export type InstitutionType = 
-  | "Primary School" 
-  | "Secondary School" 
-  | "High School" 
-  | "Preparatory School" 
-  | "College" 
+export type InstitutionType =
+  | "Primary School"
+  | "Secondary School"
+  | "High School"
+  | "Preparatory School"
+  | "College"
   | "University";
+
+export type InstitutionStatus = 'active' | 'inactive';
 
 export interface Institution {
   id: string;
   name: string;
   type: InstitutionType;
-  context: string; 
+  context: string;
+  status: InstitutionStatus;
 }

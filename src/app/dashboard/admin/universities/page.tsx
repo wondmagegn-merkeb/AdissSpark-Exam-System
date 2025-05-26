@@ -3,40 +3,26 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { PlusCircle, Edit, Trash2, ArrowUpDown, Search } from "lucide-react";
-
-export type InstitutionType =
-  | "Primary School"
-  | "Secondary School"
-  | "High School"
-  | "Preparatory School"
-  | "College"
-  | "University";
-
-export interface Institution {
-  id: string;
-  name: string;
-  type: InstitutionType;
-  context: string;
-}
+import { Badge } from "@/components/ui/badge";
+import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, Eye, EyeOff } from "lucide-react";
+import type { Institution, InstitutionType, InstitutionStatus } from '@/lib/types';
 
 const INSTITUTIONS_STORAGE_KEY = 'admin_institutions_list';
 
 // Initial seed data if localStorage is empty
 const initialSeedItems: Institution[] = [
-  { id: "uni1", name: "Addis Ababa University", type: "University", context: "Addis Ababa" },
-  { id: "uni2", name: "Bahir Dar University", type: "University", context: "Bahir Dar" },
-  { id: "col1", name: "Admas University College", type: "College", context: "Addis Ababa" },
-  { id: "hs1", name: "Menelik II High School", type: "High School", context: "Addis Ababa" },
-  { id: "ps1", name: "Bright Future Preparatory", type: "Preparatory School", context: "City Level" },
-  { id: "ss1", name: "Example Secondary School", type: "Secondary School", context: "Regional" },
-  { id: "prims1", name: "Sunshine Primary", type: "Primary School", context: "Local" },
+  { id: "uni1", name: "Addis Ababa University", type: "University", context: "Addis Ababa", status: "active" },
+  { id: "uni2", name: "Bahir Dar University", type: "University", context: "Bahir Dar", status: "active" },
+  { id: "col1", name: "Admas University College", type: "College", context: "Addis Ababa", status: "active" },
+  { id: "hs1", name: "Menelik II High School", type: "High School", context: "Addis Ababa", status: "active" },
+  { id: "ps1", name: "Bright Future Preparatory", type: "Preparatory School", context: "City Level", status: "inactive" },
+  { id: "ss1", name: "Example Secondary School", type: "Secondary School", context: "Regional", status: "active" },
+  { id: "prims1", name: "Sunshine Primary", type: "Primary School", context: "Local", status: "active" },
 ];
 
 const ITEMS_PER_PAGE = 5;
@@ -46,7 +32,6 @@ export default function ManageInstitutionsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof Institution | null; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
   const [currentPage, setCurrentPage] = useState(1);
-  const router = useRouter(); // Keep router if needed for other purposes, or remove if not.
 
   useEffect(() => {
     const storedItems = localStorage.getItem(INSTITUTIONS_STORAGE_KEY);
@@ -56,10 +41,8 @@ export default function ManageInstitutionsPage() {
       localStorage.setItem(INSTITUTIONS_STORAGE_KEY, JSON.stringify(initialSeedItems));
       setItems(initialSeedItems);
     }
-  }, []); // Load once on mount
+  }, []);
 
-  // Re-fetch from localStorage if navigated to, ensuring updates from Add/Edit pages are shown
-  // This is a simple way; more robust solutions might involve global state or custom events.
   useEffect(() => {
     const handleFocus = () => {
       const storedItems = localStorage.getItem(INSTITUTIONS_STORAGE_KEY);
@@ -67,12 +50,8 @@ export default function ManageInstitutionsPage() {
         setItems(JSON.parse(storedItems));
       }
     };
-    window.addEventListener('focus', handleFocus); // A bit of a hack to refresh on tab focus
-    // Consider more robust state management for production (Context, Zustand, Redux)
-    
-    // Initial load as well
-    handleFocus();
-
+    window.addEventListener('focus', handleFocus);
+    handleFocus(); // Initial load
     return () => {
       window.removeEventListener('focus', handleFocus);
     };
@@ -83,7 +62,8 @@ export default function ManageInstitutionsPage() {
     return items.filter(item =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.context.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.type.toLowerCase().includes(searchTerm.toLowerCase())
+      item.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.status.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [items, searchTerm]);
 
@@ -124,7 +104,6 @@ export default function ManageInstitutionsPage() {
     setItems(updatedItems);
     localStorage.setItem(INSTITUTIONS_STORAGE_KEY, JSON.stringify(updatedItems));
     
-    // Adjust current page if the last item on a page is deleted
     if (paginatedItems.length === 1 && currentPage > 1 && (sortedItems.length -1) % ITEMS_PER_PAGE === 0) {
         setCurrentPage(currentPage - 1);
     }
@@ -135,12 +114,16 @@ export default function ManageInstitutionsPage() {
     return sortConfig.direction === 'ascending' ? <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-0" /> : <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-180" />;
   };
 
+  const getStatusBadgeVariant = (status: InstitutionStatus) => {
+    return status === 'active' ? 'default' : 'secondary';
+  };
+
   return (
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle className="text-2xl">Manage Institutions</CardTitle>
         <CardDescription>
-          Add, edit, or remove educational institutions.
+          Add, edit, or remove educational institutions and manage their visibility in registration.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -174,6 +157,9 @@ export default function ManageInstitutionsPage() {
               <TableHead onClick={() => requestSort('context')} className="cursor-pointer group hover:bg-muted/50">
                 <div className="flex items-center">Context/Location {renderSortIcon('context')}</div>
               </TableHead>
+              <TableHead onClick={() => requestSort('status')} className="cursor-pointer group hover:bg-muted/50">
+                <div className="flex items-center">Status {renderSortIcon('status')}</div>
+              </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -184,6 +170,12 @@ export default function ManageInstitutionsPage() {
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.type}</TableCell>
                 <TableCell>{item.context}</TableCell>
+                <TableCell>
+                  <Badge variant={getStatusBadgeVariant(item.status)} className="capitalize">
+                    {item.status === 'active' ? <Eye className="mr-1 h-3 w-3" /> : <EyeOff className="mr-1 h-3 w-3" />}
+                    {item.status}
+                  </Badge>
+                </TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/dashboard/admin/universities/edit/${item.id}`}>
@@ -217,7 +209,7 @@ export default function ManageInstitutionsPage() {
             ))}
             {paginatedItems.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   No institutions found matching your criteria.
                 </TableCell>
               </TableRow>
@@ -258,5 +250,3 @@ export default function ManageInstitutionsPage() {
     </Card>
   );
 }
-
-    
