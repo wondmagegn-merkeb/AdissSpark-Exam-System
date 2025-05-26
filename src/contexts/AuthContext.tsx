@@ -11,7 +11,7 @@ export interface RegisterData {
   email: string;
   password: string;
   gender: "male" | "female" | "other" | "prefer_not_to_say";
-  studentType: "primary_school" | "secondary_school" | "high_school" | "preparatory_school" | "university" | "college";
+  studentType: 'primary_school' | 'secondary_school' | 'high_school' | 'preparatory_school' | 'college' | 'university';
 
   // University/College specific
   institutionNameSelection?: string;
@@ -22,8 +22,6 @@ export interface RegisterData {
   // Primary, Secondary, High School, Preparatory specific
   schoolName?: string;
   gradeLevel?: string;
-
-  // genericInstitutionName and genericStudyDetails removed as 'other_level' is removed
 }
 
 
@@ -84,7 +82,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         institutionName: existingUserDetails.institutionName,
         department: existingUserDetails.department,
         gradeLevel: existingUserDetails.gradeLevel,
-        // studyDetails: existingUserDetails.studyDetails, // Removed
         image: existingUserDetails.image,
     };
     setUser(mockUser);
@@ -115,7 +112,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         newUser.institutionName = data.schoolName;
         newUser.gradeLevel = data.gradeLevel;
         break;
-      // 'other_level' case removed
     }
 
     setUser(newUser);
@@ -153,3 +149,4 @@ export function useAuth() {
   }
   return context;
 }
+

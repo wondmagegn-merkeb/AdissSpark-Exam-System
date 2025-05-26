@@ -16,7 +16,14 @@ import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 
 const GENDERS = ["male", "female", "other", "prefer_not_to_say"] as const;
-const STUDENT_TYPES = ["primary_school", "secondary_school", "high_school", "preparatory_school", "university", "college"] as const;
+const STUDENT_TYPES = [
+  "primary_school", 
+  "secondary_school", 
+  "high_school", 
+  "preparatory_school", 
+  "college",
+  "university", 
+] as const;
 
 const UNIVERSITIES = ["Addis Ababa University", "Bahir Dar University", "Mekelle University", "Jimma University", "Hawassa University", "Other"] as const;
 const COLLEGES = ["Admas University College", "Unity University", "St. Mary's University College", "CPU College", "Rift Valley University College", "Other"] as const;
@@ -31,25 +38,12 @@ const baseSchema = z.object({
   gender: z.enum(GENDERS, {
     required_error: "Please select your gender.",
   }),
+  studentType: z.enum(STUDENT_TYPES, {
+    required_error: "Please select your student type.",
+  }),
 });
 
 // Schemas for each student type
-const universityStudentSchema = baseSchema.extend({
-  studentType: z.literal("university"),
-  institutionNameSelection: z.string({ required_error: "Please select your university." }),
-  otherInstitutionName: z.string().optional(),
-  departmentSelection: z.string({ required_error: "Please select your department." }),
-  otherDepartment: z.string().optional(),
-});
-
-const collegeStudentSchema = baseSchema.extend({
-  studentType: z.literal("college"),
-  institutionNameSelection: z.string({ required_error: "Please select your college." }),
-  otherInstitutionName: z.string().optional(),
-  departmentSelection: z.string({ required_error: "Please select your department." }),
-  otherDepartment: z.string().optional(),
-});
-
 const primarySchoolStudentSchema = baseSchema.extend({
   studentType: z.literal("primary_school"),
   schoolName: z.string().min(2, { message: "School name must be at least 2 characters." }),
@@ -74,16 +68,30 @@ const preparatorySchoolStudentSchema = baseSchema.extend({
   gradeLevel: z.string().min(1, { message: "Grade level is required (e.g., 11-12)." }),
 });
 
-// Other Level schema removed
+const collegeStudentSchema = baseSchema.extend({
+  studentType: z.literal("college"),
+  institutionNameSelection: z.string({ required_error: "Please select your college." }),
+  otherInstitutionName: z.string().optional(),
+  departmentSelection: z.string({ required_error: "Please select your department." }),
+  otherDepartment: z.string().optional(),
+});
+
+const universityStudentSchema = baseSchema.extend({
+  studentType: z.literal("university"),
+  institutionNameSelection: z.string({ required_error: "Please select your university." }),
+  otherInstitutionName: z.string().optional(),
+  departmentSelection: z.string({ required_error: "Please select your department." }),
+  otherDepartment: z.string().optional(),
+});
+
 
 const registerSchema = z.discriminatedUnion("studentType", [
-  universityStudentSchema,
-  collegeStudentSchema,
   primarySchoolStudentSchema,
   secondarySchoolStudentSchema,
   highSchoolStudentSchema,
   preparatorySchoolStudentSchema,
-  // otherLevelStudentSchema removed
+  collegeStudentSchema,
+  universityStudentSchema,
 ]).superRefine((data, ctx) => {
   if (data.studentType === "university" || data.studentType === "college") {
     if (data.institutionNameSelection === "Other" && (!data.otherInstitutionName || data.otherInstitutionName.trim().length < 2)) {
@@ -128,7 +136,6 @@ export function RegisterForm() {
       schoolName: '',
       // @ts-expect-error
       gradeLevel: '',
-      // genericInstitutionName and genericStudyDetails defaults removed
     },
   });
 
@@ -441,8 +448,6 @@ export function RegisterForm() {
               </>
             )}
 
-            {/* Other Level Student Fields Removed */}
-
             <Button type="submit" className="w-full" disabled={isLoading || !form.formState.isValid}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Account
@@ -461,3 +466,4 @@ export function RegisterForm() {
     </Card>
   );
 }
+

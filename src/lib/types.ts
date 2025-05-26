@@ -7,7 +7,7 @@ export interface User {
   email?: string | null;
   image?: string | null; // Added for avatar
   gender?: "male" | "female" | "other" | "prefer_not_to_say" | null;
-  studentType?: 'primary_school' | 'secondary_school' | 'high_school' | 'preparatory_school' | 'university' | 'college' | null;
+  studentType?: 'primary_school' | 'secondary_school' | 'high_school' | 'preparatory_school' | 'college' | 'university' | null;
   institutionName?: string | null; // Stores the final name (selected, 'Other' text, school name, or generic institution)
   department?: string | null; // Stores final department (selected, 'Other' text) - primarily for university/college
   gradeLevel?: string | null; // For primary, secondary, high_school, preparatory
@@ -67,12 +67,11 @@ export interface StudyPlanOutput {
 
 // Updated ChatMessage for user-to-user chat
 export interface ChatMessage {
-  id: string; // Firestore document ID
+  id: string; 
   text: string;
   senderId: string;
-  senderName?: string | null; // Name of the sender
+  senderName?: string | null; 
   timestamp: Date;
-  // isCurrentUser: boolean; // This can be derived in the component by comparing senderId with current user's ID
 }
 
 export interface ExamHistoryEntry {
@@ -103,3 +102,4 @@ export interface AgentEntry {
   status: 'active' | 'inactive' | 'maintenance';
   lastUpdated: Date;
 }
+
