@@ -42,8 +42,6 @@ export default function AddInstitutionPage() {
     await new Promise(resolve => setTimeout(resolve, 1000));
     console.log("New Institution/Level Data:", data); 
     // In a real app, you would send this data to your backend.
-    // For now, we'll just show a toast and redirect.
-    // The list on the main page won't update automatically without global state/backend.
     
     toast({
       title: "Item Added (Simulated)",
@@ -51,8 +49,7 @@ export default function AddInstitutionPage() {
     });
     setIsLoading(false);
     reset();
-    // Optionally redirect after adding, or offer to add another
-    router.push('/dashboard/admin/universities'); 
+    // router.push('/dashboard/admin/universities'); // Removed redirection
     // To see the new item in the list, you'd need to implement a way to share/update state,
     // or refetch from a backend if this were a real application.
   };
