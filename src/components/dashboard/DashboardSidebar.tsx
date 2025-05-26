@@ -16,13 +16,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import type { NavItem } from '@/lib/types';
-import { LayoutDashboard, Library, FileText, Brain, User, Settings, LogOut, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Library, FileText, Brain, User, Settings, LogOut, CreditCard, MessageSquare } from 'lucide-react';
 
 const mainNavItems: NavItem[] = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { title: 'Resources', href: '/dashboard/resources', icon: Library },
   { title: 'Exams', href: '/dashboard/exams', icon: FileText },
   { title: 'AI Study Plan', href: '/dashboard/study-plan', icon: Brain, requiresSubscription: true },
+  { title: 'Chat', href: '/dashboard/chat', icon: MessageSquare },
 ];
 
 const userNavItems: NavItem[] = [

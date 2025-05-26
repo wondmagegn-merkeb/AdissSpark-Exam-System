@@ -61,3 +61,11 @@ export interface StudyPlanData {
 export interface StudyPlanOutput {
   studyPlan: string;
 }
+
+export interface ChatMessage {
+  id: string;
+  text: string;
+  sender: 'user' | 'bot';
+  timestamp: Date;
+  studentType?: User['studentType']; // Optional: to show context if needed
+}
