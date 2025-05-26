@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { ArrowLeft, FileText, Clock, AlertTriangle, CheckCircle2, Target, Info } from 'lucide-react';
+import { ArrowLeft, FileText, Clock, AlertTriangle, CheckCircle2, Target, Info, Flag } from 'lucide-react';
 import type { Exam, Question } from '@/lib/types';
 
 // Mock exam data with questions - in a real app, you would fetch this
@@ -18,8 +18,8 @@ const mockExams: Exam[] = [
     id: 'model-1',
     title: 'Model Exam 1: General Knowledge',
     description: 'A comprehensive test covering various general knowledge topics.',
-    questionCount: 3,
-    durationMinutes: 5, // Shortened for testing
+    questionCount: 3, // Keep low for easy testing of all states
+    durationMinutes: 5,
     isPremium: false,
     questions: [
       { id: 'q1_1', text: 'What is the capital of Ethiopia?', options: ['Nairobi', 'Addis Ababa', 'Cairo', 'Lagos'], correctAnswer: 'Addis Ababa', explanation: 'Addis Ababa is the capital and largest city of Ethiopia.' },
@@ -31,20 +31,23 @@ const mockExams: Exam[] = [
     id: 'model-2',
     title: 'Model Exam 2: Verbal Reasoning',
     description: 'Focuses on verbal reasoning, comprehension, and analytical skills.',
-    questionCount: 2,
-    durationMinutes: 3, // Shortened
+    questionCount: 20, // Increased to test scrolling
+    durationMinutes: 20,
     isPremium: false,
-    questions: [
-      { id: 'q2_1', text: 'Choose the word that is most nearly OPPOSITE in meaning to "verbose".', options: ['Talkative', 'Concise', 'Lengthy', 'Wordy'], correctAnswer: 'Concise', explanation: 'Verbose means using more words than needed; concise means brief and comprehensive.' },
-      { id: 'q2_2', text: 'Complete the analogy: Book is to Reading as Fork is to:', options: ['Writing', 'Stirring', 'Eating', 'Drawing'], correctAnswer: 'Eating', explanation: 'A book is used for reading, and a fork is used for eating.' },
-    ],
+    questions: Array.from({ length: 20 }, (_, i) => ({
+      id: `q2_${i + 1}`,
+      text: `Verbal Reasoning Question ${i + 1}: Choose the correct synonym for "ephemeral".`,
+      options: ['Lasting', 'Temporary', 'Beautiful', 'Strong'],
+      correctAnswer: 'Temporary',
+      explanation: `Ephemeral means lasting for a very short time. So, temporary is the correct synonym. Question index ${i}`
+    })),
   },
   {
     id: 'model-3',
     title: 'Model Exam 3: Quantitative Aptitude (Premium)',
     description: 'Challenging questions on quantitative aptitude.',
     questionCount: 2,
-    durationMinutes: 4, // Shortened
+    durationMinutes: 4,
     isPremium: true,
     questions: [
         { id: 'q3_1', text: 'If a car travels at 60 km/h, how far will it travel in 2.5 hours?', options: ['120 km', '150 km', '180 km', '200 km'], correctAnswer: '150 km', explanation: 'Distance = Speed × Time. So, 60 km/h × 2.5 h = 150 km.' },
@@ -92,6 +95,8 @@ export default function TakeExamPage() {
   const [examFinished, setExamFinished] = useState(false);
   const [score, setScore] = useState(0);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [confusedQuestions, setConfusedQuestions] = useState<Record<string, boolean>>({});
+
 
   useEffect(() => {
     if (exam) {
@@ -124,6 +129,12 @@ export default function TakeExamPage() {
     }
   }, [examStarted, examFinished, timeLeft, handleSubmitExam]);
 
+  const handleToggleConfused = (questionId: string) => {
+    setConfusedQuestions(prev => ({
+      ...prev,
+      [questionId]: !prev[questionId],
+    }));
+  };
 
   if (!exam) {
     return (
@@ -152,6 +163,7 @@ export default function TakeExamPage() {
     setExamStarted(true);
     setCurrentQuestionIndex(0);
     setUserAnswers({});
+    setConfusedQuestions({});
     setTimeLeft(exam.durationMinutes * 60);
     setExamFinished(false);
     setScore(0);
@@ -282,7 +294,23 @@ export default function TakeExamPage() {
           </CardHeader>
           <CardContent className="py-6 flex-1">
             <div className="mb-6">
-              <p className="text-lg font-medium text-foreground mb-1">Question {currentQuestionIndex + 1}:</p>
+              <div className="flex justify-between items-start mb-2">
+                <p className="text-lg font-medium text-foreground">Question {currentQuestionIndex + 1}:</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleToggleConfused(currentQuestion.id)}
+                  className={`
+                    ${confusedQuestions[currentQuestion.id] ? 'text-destructive hover:bg-destructive/10 hover:text-destructive' : 'text-muted-foreground hover:text-foreground'}
+                    p-1 h-auto items-center
+                  `}
+                  aria-pressed={confusedQuestions[currentQuestion.id]}
+                  title={confusedQuestions[currentQuestion.id] ? "Unmark from review" : "Mark for review"}
+                >
+                  <Flag className={`h-4 w-4 mr-1 ${confusedQuestions[currentQuestion.id] ? 'fill-destructive text-destructive' : ''}`} />
+                  <span className="text-xs">{confusedQuestions[currentQuestion.id] ? 'Marked' : 'Review'}</span>
+                </Button>
+              </div>
               <p className="text-xl text-foreground/90">{currentQuestion.text}</p>
             </div>
             
@@ -300,10 +328,28 @@ export default function TakeExamPage() {
             </RadioGroup>
           </CardContent>
           <CardFooter className="border-t pt-6 flex justify-between items-center">
-              <Button variant="outline" onClick={() => router.push('/dashboard/exams')}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Quit Exam
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Quit Exam
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure you want to quit?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Your progress will not be saved and you will have to start over.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => router.push('/dashboard/exams')} className="bg-destructive hover:bg-destructive/90">
+                      Quit Exam
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             {currentQuestionIndex < exam.questions.length - 1 ? (
               <Button onClick={handleNextQuestion} size="lg" disabled={!userAnswers[currentQuestion.id]}>
                 Next Question
@@ -313,7 +359,7 @@ export default function TakeExamPage() {
                 <AlertDialogTrigger asChild>
                   <Button
                     size="lg"
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    className="bg-green-600 hover:bg-green-700 text-white" // Consider using theme colors if possible
                     disabled={!userAnswers[currentQuestion.id]}
                     onClick={() => setShowSubmitConfirm(true)}
                   >
@@ -340,37 +386,76 @@ export default function TakeExamPage() {
       </div>
 
       {/* Question Navigation Panel */}
-      <aside className="w-60 border-l bg-card p-4 overflow-y-auto hidden md:flex md:flex-col">
-        <h3 className="text-lg font-semibold mb-4 text-center text-foreground">Questions</h3>
-        <div className="grid grid-cols-4 gap-2 flex-1 content-start">
-          {exam.questions.map((q, index) => (
-            <Button
-              key={q.id}
-              variant={
-                index === currentQuestionIndex 
-                  ? 'default' 
-                  : userAnswers[q.id] 
-                  ? 'secondary' // Using secondary for answered, can customize further
-                  : 'outline'
-              }
-              className={`
-                aspect-square h-10 w-10 p-0
-                ${index === currentQuestionIndex ? 'ring-2 ring-primary ring-offset-2' : ''}
-                ${userAnswers[q.id] && index !== currentQuestionIndex ? 'bg-green-500 hover:bg-green-600 text-white border-green-600' : ''}
-              `}
-              onClick={() => handleQuestionNavigation(index)}
-              disabled={examFinished}
-            >
-              {index + 1}
-            </Button>
-          ))}
-        </div>
-         <div className="mt-auto pt-4 border-t">
-            <p className="text-xs text-muted-foreground"><span className="inline-block w-3 h-3 rounded-full bg-primary mr-1"></span> Current</p>
-            <p className="text-xs text-muted-foreground"><span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span> Answered</p>
-            <p className="text-xs text-muted-foreground"><span className="inline-block w-3 h-3 rounded-full border bg-background mr-1"></span> Unanswered</p>
-        </div>
+      <aside className="w-72 border-l bg-background p-3 hidden md:flex md:flex-col max-h-screen">
+        <Card className="flex-1 flex flex-col overflow-hidden shadow-md">
+            <CardHeader className="py-3 px-4 border-b">
+                <CardTitle className="text-lg text-center font-semibold text-foreground">Questions</CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-y-auto p-3">
+                <div className="grid grid-cols-5 gap-2">
+                {exam.questions.map((q, index) => {
+                    const qId = q.id;
+                    const isCurrent = index === currentQuestionIndex;
+                    const isAnswered = !!userAnswers[qId];
+                    const isConfused = !!confusedQuestions[qId];
+
+                    let combinedClassName = "aspect-square h-10 w-10 p-0 transition-all duration-150 ease-in-out text-xs";
+                    let variantStyle: "default" | "secondary" | "outline" | "destructive" = "outline";
+
+                    if (isCurrent) {
+                        variantStyle = "default";
+                        combinedClassName += " ring-2 ring-offset-background ring-primary focus:ring-primary";
+                        if (isConfused) {
+                            combinedClassName += " border-2 border-destructive"; // Red border for current & confused
+                        }
+                    } else if (isConfused) {
+                        variantStyle = "outline";
+                        combinedClassName += " border-destructive text-destructive hover:bg-destructive/10";
+                        if (isAnswered) {
+                            combinedClassName += " bg-destructive/5"; // Light red fill if answered & confused
+                        }
+                    } else if (isAnswered) {
+                        variantStyle = "default"; // Use default for theming, then style green
+                        combinedClassName += " bg-green-500 hover:bg-green-600 text-primary-foreground border-green-600";
+                    } else {
+                        // Unanswered, not confused, not current
+                        variantStyle = "outline";
+                        combinedClassName += " border-border hover:bg-muted/50";
+                    }
+
+                    return (
+                    <Button
+                        key={qId}
+                        variant={variantStyle}
+                        className={combinedClassName}
+                        onClick={() => handleQuestionNavigation(index)}
+                        disabled={examFinished}
+                    >
+                        {index + 1}
+                    </Button>
+                    );
+                })}
+                </div>
+            </CardContent>
+            <CardFooter className="py-3 px-4 border-t">
+                <div className="w-full space-y-1">
+                    <p className="text-xs text-muted-foreground flex items-center">
+                        <span className="inline-block w-3 h-3 rounded-full bg-primary mr-2 align-middle"></span> Current
+                    </p>
+                    <p className="text-xs text-muted-foreground flex items-center">
+                        <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-2 align-middle"></span> Answered
+                    </p>
+                    <p className="text-xs text-muted-foreground flex items-center">
+                        <span className="inline-block w-3 h-3 rounded-full border border-destructive mr-2 align-middle"></span> Marked for Review
+                    </p>
+                    <p className="text-xs text-muted-foreground flex items-center">
+                        <span className="inline-block w-3 h-3 rounded-full border bg-card mr-2 align-middle"></span> Unanswered
+                    </p>
+                </div>
+            </CardFooter>
+        </Card>
       </aside>
     </div>
   );
 }
+
