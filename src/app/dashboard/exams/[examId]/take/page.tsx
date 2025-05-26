@@ -84,7 +84,7 @@ const mockExams: Exam[] = [
 const chartConfig = {
   correct: {
     label: "Correct",
-    color: "hsl(var(--chart-1))", // Using theme variables for chart colors
+    color: "hsl(var(--chart-1))", 
   },
   incorrect: {
     label: "Incorrect",
@@ -102,7 +102,13 @@ export default function TakeExamPage() {
   const router = useRouter();
   const examId = params.examId as string;
 
-  const exam = mockExams.find(e => e.id === examId);
+  const [exam, setExam] = useState<Exam | undefined>(undefined);
+  
+  useEffect(() => {
+    const foundExam = mockExams.find(e => e.id === examId);
+    setExam(foundExam);
+  }, [examId]);
+
 
   const [examStarted, setExamStarted] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -117,10 +123,10 @@ export default function TakeExamPage() {
 
 
   useEffect(() => {
-    if (exam) {
+    if (exam && !examStarted) { // Only set initial time if exam is loaded and not started
       setTimeLeft(exam.durationMinutes * 60);
     }
-  }, [exam]);
+  }, [exam, examStarted]);
 
   const handleSubmitExam = useCallback(() => {
     if (!exam) return;
@@ -142,6 +148,14 @@ export default function TakeExamPage() {
     setExamFinished(true);
     setExamStarted(false); 
     setShowSubmitConfirm(false);
+
+    // Store results in localStorage for the detailed results page
+    try {
+      localStorage.setItem(`completedExam_${exam.id}`, JSON.stringify({ exam, userAnswers, score: correctAnswers, incorrectCount: localIncorrectCount, unansweredCount: localUnansweredCount }));
+    } catch (error) {
+      console.error("Error saving exam results to localStorage:", error);
+    }
+
   }, [exam, userAnswers]);
 
   useEffect(() => {
@@ -230,7 +244,7 @@ export default function TakeExamPage() {
       { name: 'Correct', value: score, fill: chartConfig.correct.color },
       { name: 'Incorrect', value: incorrectCount, fill: chartConfig.incorrect.color },
       { name: 'Unanswered', value: unansweredCount, fill: chartConfig.unanswered.color },
-    ].filter(item => item.value > 0); // Filter out zero-value segments
+    ].filter(item => item.value > 0); 
 
     return (
       <div className="container mx-auto py-8">
@@ -300,11 +314,7 @@ export default function TakeExamPage() {
               <Button 
                 size="lg" 
                 variant="outline"
-                onClick={() => {
-                  // Placeholder for future implementation
-                  alert(`Detailed results for ${exam.title} would be shown here.`);
-                  // router.push(`/dashboard/exams/${exam.id}/results`);
-                }}
+                onClick={() => router.push(`/dashboard/exams/${exam.id}/results`)}
               >
                 <ListChecks className="mr-2 h-4 w-4" />
                 View Detailed Results
@@ -393,9 +403,6 @@ export default function TakeExamPage() {
                   <span>{formatTime(timeLeft)}</span>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground mt-1 text-right">
-                Question {currentQuestionIndex + 1} of {exam.questions.length}
-              </p>
             </CardHeader>
             <CardContent className="py-6 flex-1">
               <div className="mb-6">
@@ -498,7 +505,7 @@ export default function TakeExamPage() {
         </div>
 
         {/* Question Navigation Panel */}
-        <aside className="w-80 border-l bg-background p-0 hidden md:flex md:flex-col max-h-[calc(100vh-8rem)]"> {/* Adjusted width and max-height */}
+        <aside className="w-80 border-l bg-background p-0 hidden md:flex md:flex-col max-h-[calc(100vh-8rem)]"> 
           <Card className="flex-1 flex flex-col overflow-hidden shadow-md">
               <CardHeader className="py-3 px-4 border-b">
                   <CardTitle className="text-lg text-center font-semibold text-foreground">Questions</CardTitle>
@@ -518,19 +525,15 @@ export default function TakeExamPage() {
                           variantStyle = "default";
                           combinedClassName += " ring-2 ring-offset-background ring-primary focus:ring-primary";
                           if (isConfused) {
-                              // If current and confused, primary style with destructive border is a good indicator.
-                              // Or, we could make it fully destructive if confused takes precedence.
-                              // For now, let primary (current) be dominant background.
                               combinedClassName += " border-2 border-destructive";
                           }
                       } else if (isConfused) {
                           variantStyle = "outline";
-                          // If confused AND answered, it gets a light red background, otherwise just red border
                           combinedClassName += ` border-destructive text-destructive hover:bg-destructive/10 ${isAnswered ? 'bg-destructive/5' : ''}`;
                       } else if (isAnswered) {
-                          variantStyle = "default"; // Or secondary if default is too strong for "just answered"
+                          variantStyle = "default"; 
                           combinedClassName += " bg-green-500 hover:bg-green-600 text-primary-foreground border-green-600";
-                      } else { // Unanswered and not confused
+                      } else { 
                           variantStyle = "outline";
                           combinedClassName += " border-border hover:bg-muted/50";
                       }
@@ -571,6 +574,3 @@ export default function TakeExamPage() {
     </div>
   );
 }
-
-
-    
