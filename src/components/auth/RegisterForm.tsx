@@ -33,20 +33,13 @@ const baseSchema = z.object({
   }),
 });
 
-// Define each branch schema explicitly
+// Define each branch schema explicitly, without superRefine for now
 const universityStudentSchema = baseSchema.extend({
   studentType: z.literal("university"),
   institutionNameSelection: z.string({ required_error: "Please select your university." }),
   otherInstitutionName: z.string().optional(),
   departmentSelection: z.string({ required_error: "Please select your department." }),
   otherDepartment: z.string().optional(),
-}).superRefine((data, ctx) => {
-  if (data.institutionNameSelection === "Other" && (!data.otherInstitutionName || data.otherInstitutionName.trim().length < 2)) {
-    ctx.addIssue({ path: ["otherInstitutionName"], message: "Please specify your university name (min 2 chars).", code: z.ZodIssueCode.custom });
-  }
-  if (data.departmentSelection === "Other" && (!data.otherDepartment || data.otherDepartment.trim().length < 2)) {
-    ctx.addIssue({ path: ["otherDepartment"], message: "Please specify your department name (min 2 chars).", code: z.ZodIssueCode.custom });
-  }
 });
 
 const collegeStudentSchema = baseSchema.extend({
@@ -55,20 +48,13 @@ const collegeStudentSchema = baseSchema.extend({
   otherInstitutionName: z.string().optional(),
   departmentSelection: z.string({ required_error: "Please select your department." }),
   otherDepartment: z.string().optional(),
-}).superRefine((data, ctx) => {
-  if (data.institutionNameSelection === "Other" && (!data.otherInstitutionName || data.otherInstitutionName.trim().length < 2)) {
-    ctx.addIssue({ path: ["otherInstitutionName"], message: "Please specify your college name (min 2 chars).", code: z.ZodIssueCode.custom });
-  }
-  if (data.departmentSelection === "Other" && (!data.otherDepartment || data.otherDepartment.trim().length < 2)) {
-    ctx.addIssue({ path: ["otherDepartment"], message: "Please specify your department name (min 2 chars).", code: z.ZodIssueCode.custom });
-  }
 });
 
 const highSchoolStudentSchema = baseSchema.extend({
   studentType: z.literal("high_school"),
   schoolName: z.string().min(2, { message: "School name must be at least 2 characters." }),
   gradeLevel: z.string().min(1, { message: "Grade level is required (e.g., 9, 10, 11, 12)." }),
-  className: z.string().optional(), // e.g., Section A
+  className: z.string().optional(),
 });
 
 const otherLevelStudentSchema = baseSchema.extend({
@@ -78,12 +64,32 @@ const otherLevelStudentSchema = baseSchema.extend({
 });
 
 // Using discriminated union for studentType specific fields
+// Apply superRefine at the top level of the discriminated union
 const registerSchema = z.discriminatedUnion("studentType", [
   universityStudentSchema,
   collegeStudentSchema,
   highSchoolStudentSchema,
   otherLevelStudentSchema,
-]);
+]).superRefine((data, ctx) => {
+  if (data.studentType === "university" || data.studentType === "college") {
+    // These fields are only present on university/college types, 
+    // Zod/TS should infer `data` to be the correct type here.
+    if (data.institutionNameSelection === "Other" && (!data.otherInstitutionName || data.otherInstitutionName.trim().length < 2)) {
+      ctx.addIssue({
+        path: ["otherInstitutionName"],
+        message: `Please specify your ${data.studentType} name (min 2 chars).`,
+        code: z.ZodIssueCode.custom
+      });
+    }
+    if (data.departmentSelection === "Other" && (!data.otherDepartment || data.otherDepartment.trim().length < 2)) {
+      ctx.addIssue({
+        path: ["otherDepartment"],
+        message: "Please specify your department name (min 2 chars).",
+        code: z.ZodIssueCode.custom
+      });
+    }
+  }
+});
 
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -98,33 +104,37 @@ export function RegisterForm() {
       username: '',
       email: '',
       password: '',
-      // gender and studentType will be undefined initially, forcing user selection
-      // Explicitly add studentType to defaultValues, though undefined is fine if a select makes it required
+      gender: undefined, 
       studentType: undefined, 
+      // Explicitly set defaults for potentially undefined fields in the union
+      // to avoid React uncontrolled input warnings if not all paths set a value.
+      // @ts-expect-error - institutionNameSelection is not on all types, but RHF needs a default
       institutionNameSelection: undefined,
       otherInstitutionName: '',
+      // @ts-expect-error - departmentSelection is not on all types
       departmentSelection: undefined,
       otherDepartment: '',
+      // @ts-expect-error - schoolName is not on all types
       schoolName: '',
+      // @ts-expect-error - gradeLevel is not on all types
       gradeLevel: '',
       className: '',
+      // @ts-expect-error - genericInstitutionName is not on all types
       genericInstitutionName: '',
+      // @ts-expect-error - genericStudyDetails is not on all types
       genericStudyDetails: '',
     },
   });
 
   const watchedStudentType = form.watch("studentType");
-  const watchedInstitution = form.watch("institutionNameSelection" as any); // Use any for fields that might not exist in all union types
+  // These watches are fine; RHF allows watching fields that might not always be active.
+  const watchedInstitution = form.watch("institutionNameSelection" as any); 
   const watchedDepartment = form.watch("departmentSelection" as any);
 
   async function onSubmit(data: RegisterFormValues) {
     setIsLoading(true);
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
-    // The 'data' object is already correctly typed due to discriminated union.
-    // The AuthContext's register function expects this complex type.
-    registerUser(data as any); // Cast as any because AuthContext RegisterData is slightly different, but compatible for this logic
-    // No need to setIsLoading(false) due to redirect in AuthContext
+    registerUser(data as any); 
   }
 
   return (
@@ -263,12 +273,12 @@ export function RegisterForm() {
                 {watchedInstitution === 'Other' && (
                   <FormField
                     control={form.control}
-                    name="otherInstitutionName"
+                    name="otherInstitutionName" 
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Specify University Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., Gondar University" {...field} disabled={isLoading} />
+                          <Input placeholder="e.g., Gondar University" {...field} value={field.value ?? ''} disabled={isLoading} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -303,7 +313,7 @@ export function RegisterForm() {
                       <FormItem>
                         <FormLabel>Specify Department Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., Biomedical Engineering" {...field} disabled={isLoading} />
+                          <Input placeholder="e.g., Biomedical Engineering" {...field} value={field.value ?? ''} disabled={isLoading} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -344,7 +354,7 @@ export function RegisterForm() {
                       <FormItem>
                         <FormLabel>Specify College Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., New Vision College" {...field} disabled={isLoading} />
+                          <Input placeholder="e.g., New Vision College" {...field} value={field.value ?? ''} disabled={isLoading} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -379,7 +389,7 @@ export function RegisterForm() {
                       <FormItem>
                         <FormLabel>Specify Department Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., Marketing Management" {...field} disabled={isLoading} />
+                          <Input placeholder="e.g., Marketing Management" {...field} value={field.value ?? ''} disabled={isLoading} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -399,7 +409,7 @@ export function RegisterForm() {
                     <FormItem>
                       <FormLabel>School Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Menelik II Senior Secondary School" {...field} disabled={isLoading} />
+                        <Input placeholder="e.g., Menelik II Senior Secondary School" {...field} value={field.value ?? ''} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -412,7 +422,7 @@ export function RegisterForm() {
                     <FormItem>
                       <FormLabel>Grade Level</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., 11 or 12" {...field} disabled={isLoading} />
+                        <Input placeholder="e.g., 11 or 12" {...field} value={field.value ?? ''} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -425,7 +435,7 @@ export function RegisterForm() {
                     <FormItem>
                       <FormLabel>Class / Section (Optional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Section A, Grade 12B" {...field} disabled={isLoading} />
+                        <Input placeholder="e.g., Section A, Grade 12B" {...field} value={field.value ?? ''} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -444,7 +454,7 @@ export function RegisterForm() {
                     <FormItem>
                       <FormLabel>Institution Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter institution name" {...field} disabled={isLoading} />
+                        <Input placeholder="Enter institution name" {...field} value={field.value ?? ''} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -457,7 +467,7 @@ export function RegisterForm() {
                     <FormItem>
                       <FormLabel>Study Details</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Vocational Training in Plumbing" {...field} disabled={isLoading} />
+                        <Input placeholder="e.g., Vocational Training in Plumbing" {...field} value={field.value ?? ''} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -466,7 +476,7 @@ export function RegisterForm() {
               </>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading || !form.formState.isValid}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Account
             </Button>
@@ -484,3 +494,5 @@ export function RegisterForm() {
     </Card>
   );
 }
+
+    
