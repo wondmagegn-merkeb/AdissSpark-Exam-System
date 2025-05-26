@@ -14,33 +14,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
-import type { Institution, InstitutionType as AdminInstitutionType, InstitutionStatus } from '@/lib/types';
-
-const INSTITUTIONS_STORAGE_KEY = 'admin_institutions_list'; // Same key as admin pages
+import type { Institution, InstitutionType as AdminInstitutionType } from '@/lib/types';
+import { INSTITUTIONS_STORAGE_KEY, STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM, STUDENT_TYPE_TO_ADMIN_INSTITUTION_TYPE_MAP } from '@/lib/constants';
 
 const GENDERS = ["male", "female", "other", "prefer_not_to_say"] as const;
-const STUDENT_TYPES_ORDERED = [
-  "Primary School",
-  "Secondary School",
-  "High School",
-  "Preparatory School",
-  "College",
-  "University", 
-] as const;
-
-// Map student type labels to the types used in Institution.type
-const STUDENT_TYPE_TO_INSTITUTION_TYPE_MAP: Record<typeof STUDENT_TYPES_ORDERED[number], AdminInstitutionType | null> = {
-  "Primary School": "Primary School",
-  "Secondary School": "Secondary School",
-  "High School": "High School",
-  "Preparatory School": "Preparatory School",
-  "College": "College",
-  "University": "University",
-};
-
-
 const DEPARTMENTS = ["Computer Science", "Software Engineering", "Electrical Engineering", "Civil Engineering", "Mechanical Engineering", "Medicine", "Nursing", "Pharmacy", "Economics", "Management", "Accounting", "Law", "Other"] as const;
-
 
 const baseSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -50,7 +28,7 @@ const baseSchema = z.object({
   gender: z.enum(GENDERS, {
     required_error: "Please select your gender.",
   }),
-  studentType: z.enum(STUDENT_TYPES_ORDERED, {
+  studentType: z.enum(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM, {
     required_error: "Please select your student type.",
   }),
 });
@@ -129,7 +107,6 @@ const universityStudentSchema = baseSchema.extend({
   otherDepartment: z.string().optional(),
 });
 
-
 const registerSchema = z.discriminatedUnion("studentType", [
   primarySchoolStudentSchema,
   secondarySchoolStudentSchema,
@@ -156,13 +133,12 @@ const registerSchema = z.discriminatedUnion("studentType", [
   }
 });
 
-
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const { register: registerUser } = useAuth();
-  const [allInstitutions, setAllInstitutions] = useState<Institution[]>([]);
+  const [allAdminInstitutions, setAllAdminInstitutions] = useState<Institution[]>([]);
   
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -187,43 +163,43 @@ export function RegisterForm() {
     const storedItems = localStorage.getItem(INSTITUTIONS_STORAGE_KEY);
     if (storedItems) {
       try {
-        setAllInstitutions(JSON.parse(storedItems));
+        setAllAdminInstitutions(JSON.parse(storedItems));
       } catch (e) {
         console.error("Failed to parse institutions from localStorage:", e);
-        setAllInstitutions([]); // Fallback to empty if parsing fails
+        setAllAdminInstitutions([]); 
       }
     } else {
-      setAllInstitutions([]); // Fallback if no items in localStorage
+      setAllAdminInstitutions([]); 
     }
   }, []);
 
   const watchedStudentType = form.watch("studentType");
-  const watchedInstitution = form.watch("institutionNameSelection" as any);
-  const watchedDepartment = form.watch("departmentSelection" as any);
-  const watchedSchoolNameSelection = form.watch("schoolNameSelection" as any);
+  const watchedInstitutionSelection = form.watch("institutionNameSelection" as any); // for Uni/College
+  const watchedDepartmentSelection = form.watch("departmentSelection" as any); // for Uni/College
+  const watchedSchoolNameSelection = form.watch("schoolNameSelection" as any); // for School Levels
 
   const studentTypeLabel = useMemo(() => {
     if (watchedStudentType === 'University') return "I am an...";
     return "I am a...";
   }, [watchedStudentType]);
 
-  const relevantInstitutions = useMemo(() => {
+  const relevantInstitutionsForDropdown = useMemo(() => {
     if (!watchedStudentType) return [];
-    const targetType = STUDENT_TYPE_TO_INSTITUTION_TYPE_MAP[watchedStudentType];
-    if (!targetType) return [];
+    const targetAdminType = STUDENT_TYPE_TO_ADMIN_INSTITUTION_TYPE_MAP[watchedStudentType];
+    if (!targetAdminType) return [];
     
-    return allInstitutions
-        .filter(inst => inst.type === targetType && inst.status === 'active')
+    return allAdminInstitutions
+        .filter(inst => inst.type === targetAdminType && inst.status === 'active')
         .map(inst => inst.name)
         .concat("Other");
-  }, [watchedStudentType, allInstitutions]);
+  }, [watchedStudentType, allAdminInstitutions]);
 
 
   async function onSubmit(data: RegisterFormValues) {
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    registerUser(data as any); // Cast as any due to complex discriminated union not fully inferred by AuthContext's RegisterData
-    setIsLoading(false);
+    registerUser(data); 
+    // setIsLoading(false); // Removed as registerUser redirects
   }
 
 
@@ -334,7 +310,7 @@ export function RegisterForm() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {STUDENT_TYPES_ORDERED.map(type => (
+                      {STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM.map(type => (
                          <SelectItem key={type} value={type}>
                           {type} Student
                         </SelectItem>
@@ -362,14 +338,15 @@ export function RegisterForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {relevantInstitutions.length > 0 ? relevantInstitutions.map(inst => <SelectItem key={inst} value={inst}>{inst}</SelectItem>) : <SelectItem value="none" disabled>No active {watchedStudentType?.toLowerCase()}s listed</SelectItem> }
+                          {relevantInstitutionsForDropdown.length > 1 ? relevantInstitutionsForDropdown.map(inst => <SelectItem key={inst} value={inst}>{inst}</SelectItem>) : <SelectItem value="Other" disabled={relevantInstitutionsForDropdown.length === 0}>Other</SelectItem> }
+                           {relevantInstitutionsForDropdown.length === 0 && <SelectItem value="no-active" disabled>No active {watchedStudentType?.toLowerCase()}s listed. Select Other.</SelectItem>}
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                {watchedInstitution === 'Other' && (
+                {watchedInstitutionSelection === 'Other' && (
                   <FormField
                     control={form.control}
                     name="otherInstitutionName"
@@ -404,7 +381,7 @@ export function RegisterForm() {
                     </FormItem>
                   )}
                 />
-                {watchedDepartment === 'Other' && (
+                {watchedDepartmentSelection === 'Other' && (
                   <FormField
                     control={form.control}
                     name="otherDepartment"
@@ -441,9 +418,10 @@ export function RegisterForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                           {relevantInstitutions.length > 0 ? relevantInstitutions.map(school => (
+                           {relevantInstitutionsForDropdown.length > 1 ? relevantInstitutionsForDropdown.map(school => (
                             <SelectItem key={school} value={school}>{school}</SelectItem>
-                          )) : <SelectItem value="none" disabled>No active schools listed for this level</SelectItem> }
+                          )) : <SelectItem value="Other" disabled={relevantInstitutionsForDropdown.length === 0}>Other</SelectItem> }
+                           {relevantInstitutionsForDropdown.length === 0 && <SelectItem value="no-active" disabled>No active schools listed. Select Other.</SelectItem>}
                         </SelectContent>
                       </Select>
                       <FormMessage />

@@ -11,8 +11,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, Eye, EyeOff } from "lucide-react";
 import type { Institution, InstitutionType, InstitutionStatus } from '@/lib/types';
+import { INSTITUTIONS_STORAGE_KEY } from '@/lib/constants';
 
-const INSTITUTIONS_STORAGE_KEY = 'admin_institutions_list';
 
 // Initial seed data if localStorage is empty
 const initialSeedItems: Institution[] = [
@@ -51,7 +51,7 @@ export default function ManageInstitutionsPage() {
       }
     };
     window.addEventListener('focus', handleFocus);
-    handleFocus(); // Initial load
+    handleFocus(); 
     return () => {
       window.removeEventListener('focus', handleFocus);
     };

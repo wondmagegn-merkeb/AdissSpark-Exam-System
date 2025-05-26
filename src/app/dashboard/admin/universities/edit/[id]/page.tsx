@@ -14,23 +14,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Save, AlertTriangle } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import type { Institution, InstitutionType, InstitutionStatus } from '@/lib/types';
-
-const INSTITUTIONS_STORAGE_KEY = 'admin_institutions_list';
-
-const INSTITUTION_TYPES_ORDERED: InstitutionType[] = [
-  "Primary School",
-  "Secondary School",
-  "High School",
-  "Preparatory School",
-  "College",
-  "University"
-];
+import { INSTITUTIONS_STORAGE_KEY, STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM } from '@/lib/constants';
 
 const INSTITUTION_STATUSES: InstitutionStatus[] = ["active", "inactive"];
 
 const institutionSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  type: z.enum(INSTITUTION_TYPES_ORDERED, { required_error: "Please select a type." }),
+  type: z.enum(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM, { required_error: "Please select a type." }),
   context: z.string().min(2, { message: "Context/Location must be at least 2 characters." }),
   status: z.enum(INSTITUTION_STATUSES, { required_error: "Please select a status." }),
 });
@@ -58,7 +48,7 @@ export default function EditInstitutionPage() {
         const itemToEdit = institutions.find(item => item.id === itemId);
         if (itemToEdit) {
           setValue('name', itemToEdit.name);
-          setValue('type', itemToEdit.type);
+          setValue('type', itemToEdit.type as typeof STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[number]); // Ensure type matches enum
           setValue('context', itemToEdit.context);
           setValue('status', itemToEdit.status);
         } else {
@@ -166,7 +156,7 @@ export default function EditInstitutionPage() {
                     <SelectValue placeholder="Select institution type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {INSTITUTION_TYPES_ORDERED.map(type => (
+                    {STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM.map(type => (
                        <SelectItem key={type} value={type}>{type}</SelectItem>
                     ))}
                   </SelectContent>
