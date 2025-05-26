@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
@@ -13,12 +13,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
+
+  // Regex to match /dashboard/exams/[examId]/take
+  const isExamTakingPage = /^\/dashboard\/exams\/[^/]+\/take$/.test(pathname);
 
   if (loading || !user) {
     return (
@@ -45,6 +49,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
       </div>
     );
+  }
+
+  if (isExamTakingPage) {
+    // Render only children for the exam taking page, providing a distraction-free view
+    return <div className="min-h-screen bg-background">{children}</div>;
   }
 
   return (

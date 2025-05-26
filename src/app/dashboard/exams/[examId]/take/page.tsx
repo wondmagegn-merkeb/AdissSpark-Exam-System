@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { ArrowLeft, FileText, Clock, AlertTriangle, CheckCircle2, Target } from 'lucide-react';
+import { ArrowLeft, FileText, Clock, AlertTriangle, CheckCircle2, Target, Info } from 'lucide-react';
 import type { Exam, Question } from '@/lib/types';
 
 // Mock exam data with questions - in a real app, you would fetch this
@@ -109,7 +109,7 @@ export default function TakeExamPage() {
     });
     setScore(correctAnswers);
     setExamFinished(true);
-    setExamStarted(false); // To stop the timer effect
+    setExamStarted(false); 
     setShowSubmitConfirm(false);
   }, [exam, userAnswers]);
 
@@ -120,7 +120,7 @@ export default function TakeExamPage() {
       }, 1000);
       return () => clearInterval(timerId);
     } else if (examStarted && !examFinished && timeLeft === 0) {
-      handleSubmitExam(); // Auto-submit when time is up
+      handleSubmitExam(); 
     }
   }, [examStarted, examFinished, timeLeft, handleSubmitExam]);
 
@@ -167,6 +167,12 @@ export default function TakeExamPage() {
     }
   };
 
+  const handleQuestionNavigation = (index: number) => {
+    if (!examFinished) {
+      setCurrentQuestionIndex(index);
+    }
+  };
+
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -197,7 +203,6 @@ export default function TakeExamPage() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Exams List
             </Button>
-            {/* Future: Add button for "Review Answers" */}
           </CardContent>
         </Card>
       </div>
@@ -237,13 +242,13 @@ export default function TakeExamPage() {
             </div>
             
             <div className="mb-6 p-4 border rounded-md bg-background">
-              <h3 className="text-lg font-semibold mb-2 text-foreground">Instructions:</h3>
+              <h3 className="text-lg font-semibold mb-2 text-foreground flex items-center"><Info className="mr-2 h-5 w-5 text-primary"/>Instructions:</h3>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                 <li>Read each question carefully before answering.</li>
                 <li>Ensure you have a stable internet connection.</li>
                 <li>The timer will start once you click "Start Exam Now".</li>
                 <li>Do not refresh the page or navigate away during the exam.</li>
-                <li>All questions must be answered to complete the exam.</li>
+                <li>You can navigate between questions using the panel on the right.</li>
                 <li>The exam will auto-submit if the timer runs out.</li>
               </ul>
             </div>
@@ -258,78 +263,114 @@ export default function TakeExamPage() {
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <Card className="max-w-3xl mx-auto shadow-xl">
-        <CardHeader className="border-b pb-4">
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-2xl font-semibold text-foreground">{exam.title}</h2>
-            <div className="flex items-center text-lg font-medium text-primary">
-              <Clock className="mr-2 h-5 w-5" />
-              <span>{formatTime(timeLeft)}</span>
-            </div>
-          </div>
-          <Progress value={((currentQuestionIndex + 1) / exam.questions.length) * 100} className="w-full h-2" />
-          <p className="text-sm text-muted-foreground mt-2 text-right">
-            Question {currentQuestionIndex + 1} of {exam.questions.length}
-          </p>
-        </CardHeader>
-        <CardContent className="py-6">
-          <div className="mb-6">
-            <p className="text-lg font-medium text-foreground mb-1">Question {currentQuestionIndex + 1}:</p>
-            <p className="text-xl text-foreground/90">{currentQuestion.text}</p>
-          </div>
-          
-          <RadioGroup
-            value={userAnswers[currentQuestion.id] || ""}
-            onValueChange={(value) => handleAnswerSelect(currentQuestion.id, value)}
-            className="space-y-3 mb-8"
-          >
-            {currentQuestion.options.map((option, index) => (
-              <div key={index} className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
-                <RadioGroupItem value={option} id={`${currentQuestion.id}-option-${index}`} />
-                <Label htmlFor={`${currentQuestion.id}-option-${index}`} className="text-md flex-1 cursor-pointer">{option}</Label>
+    <div className="flex h-screen">
+      {/* Main Exam Content Area */}
+      <div className="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <Card className="w-full shadow-xl flex-1 flex flex-col">
+          <CardHeader className="border-b pb-4">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-2xl font-semibold text-foreground">{exam.title}</h2>
+              <div className="flex items-center text-lg font-medium text-primary">
+                <Clock className="mr-2 h-5 w-5" />
+                <span>{formatTime(timeLeft)}</span>
               </div>
-            ))}
-          </RadioGroup>
-        </CardContent>
-        <CardFooter className="border-t pt-6 flex justify-between items-center">
-            <Button variant="outline" onClick={() => router.push('/dashboard/exams')}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Quit Exam
+            </div>
+            <Progress value={((currentQuestionIndex + 1) / exam.questions.length) * 100} className="w-full h-2" />
+            <p className="text-sm text-muted-foreground mt-2 text-right">
+              Question {currentQuestionIndex + 1} of {exam.questions.length}
+            </p>
+          </CardHeader>
+          <CardContent className="py-6 flex-1">
+            <div className="mb-6">
+              <p className="text-lg font-medium text-foreground mb-1">Question {currentQuestionIndex + 1}:</p>
+              <p className="text-xl text-foreground/90">{currentQuestion.text}</p>
+            </div>
+            
+            <RadioGroup
+              value={userAnswers[currentQuestion.id] || ""}
+              onValueChange={(value) => handleAnswerSelect(currentQuestion.id, value)}
+              className="space-y-3 mb-8"
+            >
+              {currentQuestion.options.map((option, index) => (
+                <div key={index} className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value={option} id={`${currentQuestion.id}-option-${index}`} />
+                  <Label htmlFor={`${currentQuestion.id}-option-${index}`} className="text-md flex-1 cursor-pointer">{option}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </CardContent>
+          <CardFooter className="border-t pt-6 flex justify-between items-center">
+              <Button variant="outline" onClick={() => router.push('/dashboard/exams')}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Quit Exam
+              </Button>
+            {currentQuestionIndex < exam.questions.length - 1 ? (
+              <Button onClick={handleNextQuestion} size="lg" disabled={!userAnswers[currentQuestion.id]}>
+                Next Question
+              </Button>
+            ) : (
+              <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="lg"
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    disabled={!userAnswers[currentQuestion.id]}
+                    onClick={() => setShowSubmitConfirm(true)}
+                  >
+                    <Target className="mr-2 h-5 w-5" />
+                    Submit Exam
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirm Submission</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to submit your answers? You cannot change them after submission.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleSubmitExam}>Submit</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </CardFooter>
+        </Card>
+      </div>
+
+      {/* Question Navigation Panel */}
+      <aside className="w-60 border-l bg-card p-4 overflow-y-auto hidden md:flex md:flex-col">
+        <h3 className="text-lg font-semibold mb-4 text-center text-foreground">Questions</h3>
+        <div className="grid grid-cols-4 gap-2 flex-1 content-start">
+          {exam.questions.map((q, index) => (
+            <Button
+              key={q.id}
+              variant={
+                index === currentQuestionIndex 
+                  ? 'default' 
+                  : userAnswers[q.id] 
+                  ? 'secondary' // Using secondary for answered, can customize further
+                  : 'outline'
+              }
+              className={`
+                aspect-square h-10 w-10 p-0
+                ${index === currentQuestionIndex ? 'ring-2 ring-primary ring-offset-2' : ''}
+                ${userAnswers[q.id] && index !== currentQuestionIndex ? 'bg-green-500 hover:bg-green-600 text-white border-green-600' : ''}
+              `}
+              onClick={() => handleQuestionNavigation(index)}
+              disabled={examFinished}
+            >
+              {index + 1}
             </Button>
-          {currentQuestionIndex < exam.questions.length - 1 ? (
-            <Button onClick={handleNextQuestion} size="lg" disabled={!userAnswers[currentQuestion.id]}>
-              Next Question
-            </Button>
-          ) : (
-            <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
-              <AlertDialogTrigger asChild>
-                <Button
-                  size="lg"
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                  disabled={!userAnswers[currentQuestion.id]}
-                  onClick={() => setShowSubmitConfirm(true)}
-                >
-                  <Target className="mr-2 h-5 w-5" />
-                  Submit Exam
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Confirm Submission</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to submit your answers? You cannot change them after submission.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleSubmitExam}>Submit</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-        </CardFooter>
-      </Card>
+          ))}
+        </div>
+         <div className="mt-auto pt-4 border-t">
+            <p className="text-xs text-muted-foreground"><span className="inline-block w-3 h-3 rounded-full bg-primary mr-1"></span> Current</p>
+            <p className="text-xs text-muted-foreground"><span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span> Answered</p>
+            <p className="text-xs text-muted-foreground"><span className="inline-block w-3 h-3 rounded-full border bg-background mr-1"></span> Unanswered</p>
+        </div>
+      </aside>
     </div>
   );
 }
