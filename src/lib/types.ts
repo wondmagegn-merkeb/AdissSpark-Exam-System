@@ -62,10 +62,12 @@ export interface StudyPlanOutput {
   studyPlan: string;
 }
 
+// Updated ChatMessage for user-to-user chat
 export interface ChatMessage {
-  id: string;
+  id: string; // Firestore document ID
   text: string;
-  sender: 'user' | 'bot';
+  senderId: string;
+  senderName?: string | null; // Name of the sender
   timestamp: Date;
-  studentType?: User['studentType']; // Optional: to show context if needed
+  // isCurrentUser: boolean; // This can be derived in the component by comparing senderId with current user's ID
 }
