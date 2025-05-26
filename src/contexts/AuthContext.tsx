@@ -1,8 +1,20 @@
+
 "use client";
 
 import type { User } from '@/lib/types';
 import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react';
 import { useRouter } from 'next/navigation';
+
+// Define the shape of the registration data, mirroring the form schema
+interface RegisterData {
+  name: string;
+  username: string;
+  email: string;
+  // Password is used for form validation but not typically stored directly in User object in this mock
+  gender: string;
+  institutionName: string;
+  studyDetails: string;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -10,7 +22,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string) => void;
   logout: () => void;
-  register: (name: string, email: string) => void;
+  register: (data: RegisterData) => void;
   toggleSubscription: () => void; // For simulating payment
 }
 
@@ -41,15 +53,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (email: string) => {
-    const mockUser: User = { id: '1', email, name: email.split('@')[0] };
+    // Try to get more details from localStorage if this email has registered before
+    const storedUser = localStorage.getItem('examPrepUser');
+    let existingUserDetails: Partial<User> = {};
+    if (storedUser) {
+      const parsedUser: User = JSON.parse(storedUser);
+      if (parsedUser.email === email) {
+        existingUserDetails = parsedUser;
+      }
+    }
+    const mockUser: User = { 
+        id: '1', 
+        email, 
+        name: existingUserDetails.name || email.split('@')[0],
+        username: existingUserDetails.username,
+        gender: existingUserDetails.gender,
+        institutionName: existingUserDetails.institutionName,
+        studyDetails: existingUserDetails.studyDetails,
+        image: existingUserDetails.image,
+    };
     setUser(mockUser);
     localStorage.setItem('examPrepUser', JSON.stringify(mockUser));
     // Forcing redirect to dashboard after state is set
     router.push('/dashboard');
   };
 
-  const register = (name: string, email: string) => {
-    const mockUser: User = { id: '1', email, name };
+  const register = (data: RegisterData) => {
+    const mockUser: User = {
+      id: '1', // Replace with actual ID generation in a real app
+      email: data.email,
+      name: data.name,
+      username: data.username,
+      gender: data.gender,
+      institutionName: data.institutionName,
+      studyDetails: data.studyDetails,
+    };
     setUser(mockUser);
     localStorage.setItem('examPrepUser', JSON.stringify(mockUser));
      // Forcing redirect to dashboard after state is set

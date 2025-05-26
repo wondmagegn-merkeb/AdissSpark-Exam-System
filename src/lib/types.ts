@@ -2,8 +2,12 @@
 export interface User {
   id: string;
   name?: string | null;
+  username?: string | null;
   email?: string | null;
   image?: string | null; // Added for avatar
+  gender?: string | null;
+  institutionName?: string | null;
+  studyDetails?: string | null;
 }
 
 export interface NavItem {
