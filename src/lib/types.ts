@@ -1,4 +1,5 @@
 
+
 export interface User {
   id: string;
   name?: string | null;
@@ -81,4 +82,24 @@ export interface ExamHistoryEntry {
   score: number;
   totalQuestions: number;
   percentageScore: number;
+}
+
+export interface FeedbackEntry {
+  id: string;
+  userId: string;
+  userName?: string | null;
+  userEmail?: string | null;
+  subject: string;
+  message: string;
+  submittedAt: Date;
+  status: 'new' | 'in_progress' | 'resolved' | 'archived';
+}
+
+export interface AgentEntry {
+  id: string;
+  name: string;
+  description: string;
+  type: 'faq_bot' | 'support_chat' | 'study_planner';
+  status: 'active' | 'inactive' | 'maintenance';
+  lastUpdated: Date;
 }

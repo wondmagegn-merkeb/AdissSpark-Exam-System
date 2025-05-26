@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import type { NavItem } from '@/lib/types';
-import { LayoutDashboard, Library, FileText, Brain, User, Settings, LogOut, CreditCard, MessageSquare, Building, BookCopy, ListChecks, Edit, ShieldCheck, Users } from 'lucide-react';
+import { LayoutDashboard, Library, FileText, Brain, User, Settings, LogOut, CreditCard, MessageSquare, Building, BookCopy, ListChecks, Edit, ShieldCheck, Users, MessageSquarePlus, Bot, Cpu, Archive } from 'lucide-react';
 
 const mainNavItems: NavItem[] = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -24,6 +24,8 @@ const mainNavItems: NavItem[] = [
   { title: 'Exams', href: '/dashboard/exams', icon: FileText },
   { title: 'AI Study Plan', href: '/dashboard/study-plan', icon: Brain, requiresSubscription: true },
   { title: 'Chat', href: '/dashboard/chat', icon: MessageSquare },
+  { title: 'Submit Feedback', href: '/dashboard/feedback', icon: MessageSquarePlus },
+  { title: 'AI Agent', href: '/dashboard/agent', icon: Bot },
 ];
 
 const userNavItems: NavItem[] = [
@@ -32,12 +34,14 @@ const userNavItems: NavItem[] = [
 ];
 
 const adminNavItems: NavItem[] = [
+  { title: 'Manage Users', href: '/dashboard/admin/users', icon: Users },
   { title: 'Manage Universities', href: '/dashboard/admin/universities', icon: Building },
   { title: 'Manage Departments', href: '/dashboard/admin/departments', icon: BookCopy }, // Represents departments/grades
   { title: 'Manage Courses', href: '/dashboard/admin/courses', icon: ListChecks }, // Represents courses/subjects
   { title: 'Manage Exams', href: '/dashboard/admin/exams', icon: Edit },
   { title: 'Manage Resources', href: '/dashboard/admin/resources', icon: Library },
-  { title: 'Manage Users', href: '/dashboard/admin/users', icon: Users },
+  { title: 'Manage Agents', href: '/dashboard/admin/agents', icon: Cpu },
+  { title: 'Manage Feedback', href: '/dashboard/admin/feedback', icon: Archive },
 ];
 
 export function DashboardSidebar() {
