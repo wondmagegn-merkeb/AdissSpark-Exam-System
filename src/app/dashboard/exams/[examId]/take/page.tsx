@@ -179,6 +179,12 @@ export default function TakeExamPage() {
     }
   };
 
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+    }
+  };
+
   const handleQuestionNavigation = (index: number) => {
     if (!examFinished) {
       setCurrentQuestionIndex(index);
@@ -350,37 +356,44 @@ export default function TakeExamPage() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-            {currentQuestionIndex < exam.questions.length - 1 ? (
-              <Button onClick={handleNextQuestion} size="lg" disabled={!userAnswers[currentQuestion.id]}>
-                Next Question
-              </Button>
-            ) : (
-              <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    size="lg"
-                    className="bg-green-600 hover:bg-green-700 text-white" // Consider using theme colors if possible
-                    disabled={!userAnswers[currentQuestion.id]}
-                    onClick={() => setShowSubmitConfirm(true)}
-                  >
-                    <Target className="mr-2 h-5 w-5" />
-                    Submit Exam
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Confirm Submission</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to submit your answers? You cannot change them after submission.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleSubmitExam}>Submit</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
+            
+            <div className="flex items-center space-x-2">
+              {currentQuestionIndex > 0 && (
+                <Button onClick={handlePreviousQuestion} variant="outline" size="lg">
+                  Previous Question
+                </Button>
+              )}
+              {currentQuestionIndex < exam.questions.length - 1 ? (
+                <Button onClick={handleNextQuestion} size="lg">
+                  Next Question
+                </Button>
+              ) : (
+                <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="lg"
+                      className="bg-green-600 hover:bg-green-700 text-white" 
+                      onClick={() => setShowSubmitConfirm(true)}
+                    >
+                      <Target className="mr-2 h-5 w-5" />
+                      Submit Exam
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirm Submission</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to submit your answers? You cannot change them after submission.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleSubmitExam}>Submit</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
           </CardFooter>
         </Card>
       </div>
