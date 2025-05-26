@@ -3,11 +3,11 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Exam } from '@/lib/types';
 import { useAuth } from '@/hooks/useAuth';
-import { FileText, Clock, ShieldAlert, Lock, Sparkles } from 'lucide-react';
+import { FileText, Clock, Lock, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 
 const mockExams: Exam[] = [
@@ -54,7 +54,11 @@ const mockExams: Exam[] = [
 ];
 
 export default function ExamsPage() {
-  const { isSubscribed, user } = useAuth();
+  const { isSubscribed } = useAuth();
+
+  const getShortTitle = (title: string) => {
+    return title.split(':')[0];
+  };
 
   return (
     <div className="container mx-auto py-8">
@@ -86,19 +90,20 @@ export default function ExamsPage() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {mockExams.map((exam) => {
             const canAccess = !exam.isPremium || (exam.isPremium && isSubscribed);
+            const shortTitle = getShortTitle(exam.title);
             return (
               <Card key={exam.id} className={`flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300 ${!canAccess ? 'opacity-70 bg-muted/30' : ''}`}>
                 <CardHeader>
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-3 mb-1">
                     {exam.isPremium ? <Lock className="h-7 w-7 text-primary" /> : <FileText className="h-7 w-7 text-primary" />}
-                    <CardTitle className="text-xl">{exam.title}</CardTitle>
+                    <CardTitle className="text-xl">{shortTitle}</CardTitle>
                   </div>
-                  <CardDescription>{exam.description}</CardDescription>
+                  {/* CardDescription removed as per request */}
                 </CardHeader>
                 <CardContent className="flex-grow">
                   <Image
                     src={`https://placehold.co/600x300.png`}
-                    alt={exam.title}
+                    alt={shortTitle} // Use short title for alt text
                     width={600}
                     height={300}
                     className="rounded-md mb-4 w-full object-cover aspect-[2/1]"
