@@ -14,13 +14,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Save, AlertTriangle } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import type { DepartmentOrGradeEntry, DepartmentOrGradeType } from '@/lib/types';
-import { DEPARTMENTS_GRADES_STORAGE_KEY } from '@/lib/constants';
-
-const ITEM_TYPES: DepartmentOrGradeType[] = ["Department", "School Grade"];
+import { DEPARTMENTS_GRADES_STORAGE_KEY, STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM } from '@/lib/constants';
 
 const itemSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  type: z.enum(ITEM_TYPES, { required_error: "Please select a type." }),
+  name: z.string().min(2, { message: "Name must be at least 2 characters (e.g., Grade 9 or Computer Science)." }),
+  type: z.enum(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM, { required_error: "Please select the associated educational level." }),
 });
 
 type ItemFormValues = z.infer<typeof itemSchema>;
@@ -46,7 +44,7 @@ export default function EditDepartmentOrGradePage() {
         const itemToEdit = items.find(item => item.id === itemId);
         if (itemToEdit) {
           setValue('name', itemToEdit.name);
-          setValue('type', itemToEdit.type);
+          setValue('type', itemToEdit.type as typeof STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[number]); // Ensure type matches enum
         } else {
           setItemNotFound(true);
           toast({
@@ -78,7 +76,7 @@ export default function EditDepartmentOrGradePage() {
         localStorage.setItem(DEPARTMENTS_GRADES_STORAGE_KEY, JSON.stringify(items));
         toast({
           title: "Item Updated",
-          description: `${data.name} (${data.type}) has been updated.`,
+          description: `${data.name} (Level: ${data.type}) has been updated.`,
         });
         router.push('/dashboard/admin/departments');
       } else {
@@ -130,29 +128,29 @@ export default function EditDepartmentOrGradePage() {
           </Button>
         </div>
         <CardDescription>
-          Modify the details for the department or grade level. Click save when you're done.
+          Modify the details for the department or grade. Associate it with the correct educational level. Click save when you're done.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div>
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" {...register("name")} disabled={isLoading} className="mt-1" placeholder="e.g., Computer Science or Grade 9"/>
+            <Label htmlFor="name">Name (e.g., Computer Science or Grade 9)</Label>
+            <Input id="name" {...register("name")} disabled={isLoading} className="mt-1" placeholder="Department Name or Grade Name"/>
             {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
           </div>
 
           <div>
-            <Label htmlFor="type">Type</Label>
+            <Label htmlFor="type">Associated Educational Level</Label>
             <Controller
               name="type"
               control={control}
               render={({ field }) => (
                 <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
                   <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue placeholder="Select educational level" />
                   </SelectTrigger>
                   <SelectContent>
-                    {ITEM_TYPES.map(type => (
+                    {STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM.map(type => (
                        <SelectItem key={type} value={type}>{type}</SelectItem>
                     ))}
                   </SelectContent>

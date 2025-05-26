@@ -13,12 +13,14 @@ import type { DepartmentOrGradeEntry, DepartmentOrGradeType } from '@/lib/types'
 import { DEPARTMENTS_GRADES_STORAGE_KEY } from '@/lib/constants';
 
 const initialSeedItems: DepartmentOrGradeEntry[] = [
-  { id: "dept1", name: "Computer Science", type: "Department" },
-  { id: "dept2", name: "Marketing Management", type: "Department" },
-  { id: "grade1", name: "Grade 9", type: "School Grade" },
-  { id: "grade2", name: "Grade 12", type: "School Grade" },
-  { id: "dept3", name: "Electrical Engineering", type: "Department" },
-  { id: "grade3", name: "Grade 5", type: "School Grade" },
+  { id: "dept1", name: "Computer Science", type: "University" },
+  { id: "dept2", name: "Marketing Management", type: "College" },
+  { id: "grade1", name: "Grade 9", type: "Secondary School" },
+  { id: "grade2", name: "Grade 12", type: "High School" },
+  { id: "dept3", name: "Electrical Engineering", type: "University" },
+  { id: "grade3", name: "Grade 5", type: "Primary School" },
+  { id: "dept4", name: "Accounting", type: "College" },
+  { id: "grade4", name: "Grade 11 (Preparatory)", type: "Preparatory School" },
 ];
 
 const ITEMS_PER_PAGE = 5;
@@ -32,7 +34,21 @@ export default function ManageDepartmentsAndGradesPage() {
   useEffect(() => {
     const storedItems = localStorage.getItem(DEPARTMENTS_GRADES_STORAGE_KEY);
     if (storedItems) {
-      setItems(JSON.parse(storedItems));
+      try {
+        const parsedItems = JSON.parse(storedItems);
+        // Basic validation to ensure it's an array of expected-like objects
+        if (Array.isArray(parsedItems) && parsedItems.every(item => typeof item.id === 'string' && typeof item.name === 'string' && typeof item.type === 'string')) {
+          setItems(parsedItems);
+        } else {
+          console.warn("Invalid data found in localStorage for departments/grades, using seed.");
+          localStorage.setItem(DEPARTMENTS_GRADES_STORAGE_KEY, JSON.stringify(initialSeedItems));
+          setItems(initialSeedItems);
+        }
+      } catch (error) {
+        console.error("Error parsing departments/grades from localStorage:", error);
+        localStorage.setItem(DEPARTMENTS_GRADES_STORAGE_KEY, JSON.stringify(initialSeedItems));
+        setItems(initialSeedItems);
+      }
     } else {
       localStorage.setItem(DEPARTMENTS_GRADES_STORAGE_KEY, JSON.stringify(initialSeedItems));
       setItems(initialSeedItems);
@@ -43,11 +59,19 @@ export default function ManageDepartmentsAndGradesPage() {
     const handleFocus = () => {
       const storedItems = localStorage.getItem(DEPARTMENTS_GRADES_STORAGE_KEY);
       if (storedItems) {
-        setItems(JSON.parse(storedItems));
+        try {
+          const parsedItems = JSON.parse(storedItems);
+           if (Array.isArray(parsedItems) && parsedItems.every(item => typeof item.id === 'string' && typeof item.name === 'string' && typeof item.type === 'string')) {
+            setItems(parsedItems);
+          }
+        } catch (error) {
+          console.error("Error refreshing departments/grades from localStorage on focus:", error);
+        }
       }
     };
     window.addEventListener('focus', handleFocus);
-    handleFocus();
+    // Initial load on component mount as well
+    handleFocus(); 
     return () => {
       window.removeEventListener('focus', handleFocus);
     };
@@ -141,7 +165,7 @@ export default function ManageDepartmentsAndGradesPage() {
                 <div className="flex items-center">Name {renderSortIcon('name')}</div>
               </TableHead>
               <TableHead onClick={() => requestSort('type')} className="cursor-pointer group hover:bg-muted/50">
-                <div className="flex items-center">Type {renderSortIcon('type')}</div>
+                <div className="flex items-center">Associated Level {renderSortIcon('type')}</div>
               </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -169,7 +193,7 @@ export default function ManageDepartmentsAndGradesPage() {
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
                           This action cannot be undone. This will permanently delete the item:
-                          <br /><strong>{item.name} ({item.type})</strong>.
+                          <br /><strong>{item.name} (Level: {item.type})</strong>.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
