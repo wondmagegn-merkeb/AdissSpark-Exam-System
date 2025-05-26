@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -7,25 +6,25 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PlusCircle } from "lucide-react";
 
 export default function ManageDepartmentsPage() {
-  // Mock data for departments/grades
+  // Mock data for departments
   const items = [
     { id: "dept1", name: "Computer Science", type: "University Department", relatedTo: "Addis Ababa University" },
-    { id: "grade1", name: "Grade 10", type: "School Grade Level", relatedTo: "General High School" },
     { id: "dept2", name: "Marketing Management", type: "College Department", relatedTo: "Admas University College" },
+    { id: "dept3", name: "Electrical Engineering", type: "University Department", relatedTo: "Bahir Dar University" },
   ];
 
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle className="text-2xl">Manage Departments & Grades</CardTitle>
+        <CardTitle className="text-2xl">Manage University/College Departments</CardTitle>
         <CardDescription>
-          Add, edit, or remove university/college departments or school grade levels.
+          Add, edit, or remove university or college departments.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="mb-4">
           <Button>
-            <PlusCircle className="mr-2 h-4 w-4" /> Add New Item
+            <PlusCircle className="mr-2 h-4 w-4" /> Add New Department
           </Button>
         </div>
         <Table>
@@ -34,7 +33,7 @@ export default function ManageDepartmentsPage() {
               <TableHead>ID</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Type</TableHead>
-              <TableHead>Related Institution/Context</TableHead>
+              <TableHead>Related Institution</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -54,7 +53,7 @@ export default function ManageDepartmentsPage() {
             {items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground">
-                  No departments or grades found.
+                  No departments found.
                 </TableCell>
               </TableRow>
             )}
