@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -12,20 +13,22 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
-import type { InstitutionType as AdminInstitutionType } from './../page'; // Import type from list page
+import type { Institution, InstitutionType } from './../page'; // Import types from list page
 
-const INSTITUTION_TYPES: AdminInstitutionType[] = [
-  "Primary School", 
-  "Secondary School", 
-  "High School", 
-  "Preparatory School", 
-  "College", 
+const INSTITUTIONS_STORAGE_KEY = 'admin_institutions_list';
+
+const INSTITUTION_TYPES_ADD: InstitutionType[] = [
+  "Primary School",
+  "Secondary School",
+  "High School",
+  "Preparatory School",
+  "College",
   "University"
 ];
 
 const institutionSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  type: z.enum(INSTITUTION_TYPES, { required_error: "Please select a type." }),
+  type: z.enum(INSTITUTION_TYPES_ADD, { required_error: "Please select a type." }),
   context: z.string().min(2, { message: "Context/Location must be at least 2 characters." }),
 });
 
@@ -40,25 +43,41 @@ export default function AddInstitutionPage() {
     resolver: zodResolver(institutionSchema),
     defaultValues: {
       name: '',
-      type: undefined,
+      type: undefined, // Ensure it's undefined initially for the placeholder to show
       context: '',
     },
   });
 
   const onSubmit = async (data: InstitutionFormValues) => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    console.log("New Institution Data:", data); 
-    // In a real app, you would send this data to your backend and update the list on the main page.
-    
-    toast({
-      title: "Institution Added (Simulated)",
-      description: `${data.name} (${data.type}) has been added.`,
-    });
-    setIsLoading(false);
-    reset();
-    // router.push('/dashboard/admin/universities'); // User requested not to redirect
+
+    try {
+      const storedItems = localStorage.getItem(INSTITUTIONS_STORAGE_KEY);
+      let institutions: Institution[] = storedItems ? JSON.parse(storedItems) : [];
+      
+      const newInstitution: Institution = {
+        id: `inst-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`, // More robust ID
+        ...data,
+      };
+      institutions.push(newInstitution);
+      localStorage.setItem(INSTITUTIONS_STORAGE_KEY, JSON.stringify(institutions));
+
+      toast({
+        title: "Institution Added",
+        description: `${data.name} (${data.type}) has been successfully added.`,
+      });
+      reset(); 
+      // No redirect as per previous request, user stays on page to add more.
+    } catch (error) {
+      console.error("Error saving institution to localStorage:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add institution. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -66,7 +85,7 @@ export default function AddInstitutionPage() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl">Add New Institution</CardTitle>
-          <Button variant="outline" size="sm" onClick={() => router.back()}>
+          <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/admin/universities')}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to List
           </Button>
@@ -89,12 +108,12 @@ export default function AddInstitutionPage() {
               name="type"
               control={control}
               render={({ field }) => (
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+                <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
                   <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue placeholder="Select institution type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {INSTITUTION_TYPES.map(type => (
+                    {INSTITUTION_TYPES_ADD.map(type => (
                        <SelectItem key={type} value={type}>{type}</SelectItem>
                     ))}
                   </SelectContent>
@@ -106,12 +125,12 @@ export default function AddInstitutionPage() {
 
           <div>
             <Label htmlFor="context">Context/Location</Label>
-            <Input id="context" {...register("context")} placeholder="e.g. Addis Ababa or Preparatory" disabled={isLoading} className="mt-1" />
+            <Input id="context" {...register("context")} placeholder="e.g. Addis Ababa or National" disabled={isLoading} className="mt-1" />
             {errors.context && <p className="text-sm text-destructive mt-1">{errors.context.message}</p>}
           </div>
 
           <div className="flex justify-end space-x-3">
-            <Button type="button" variant="outline" onClick={() => router.back()} disabled={isLoading}>
+            <Button type="button" variant="outline" onClick={() => router.push('/dashboard/admin/universities')} disabled={isLoading}>
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>
@@ -128,3 +147,5 @@ export default function AddInstitutionPage() {
     </Card>
   );
 }
+
+    

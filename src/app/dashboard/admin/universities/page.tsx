@@ -11,47 +11,72 @@ import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { PlusCircle, Edit, Trash2, ArrowUpDown, Search } from "lucide-react";
 
-// Updated type to match registration form options
-export type InstitutionType = 
-  | "Primary School" 
-  | "Secondary School" 
-  | "High School" 
-  | "Preparatory School" 
-  | "College" 
+export type InstitutionType =
+  | "Primary School"
+  | "Secondary School"
+  | "High School"
+  | "Preparatory School"
+  | "College"
   | "University";
 
-interface Institution {
+export interface Institution {
   id: string;
   name: string;
   type: InstitutionType;
-  context: string; // e.g., Location for University/College, Associated School Type for Grade Level
+  context: string;
 }
 
-// Mock data - updated to reflect new types
-const initialItems: Institution[] = [
+const INSTITUTIONS_STORAGE_KEY = 'admin_institutions_list';
+
+// Initial seed data if localStorage is empty
+const initialSeedItems: Institution[] = [
   { id: "uni1", name: "Addis Ababa University", type: "University", context: "Addis Ababa" },
   { id: "uni2", name: "Bahir Dar University", type: "University", context: "Bahir Dar" },
   { id: "col1", name: "Admas University College", type: "College", context: "Addis Ababa" },
-  { id: "sch1", name: "Generic High School Example", type: "High School", context: "National" },
-  { id: "sch2", name: "Example Secondary School", type: "Secondary School", context: "Regional" },
-  { id: "sch3", name: "Bright Future Preparatory", type: "Preparatory School", context: "City Level" },
-  { id: "sch4", name: "Sunshine Primary", type: "Primary School", context: "Local" },
-  { id: "uni3", name: "Mekelle University", type: "University", context: "Mekelle" },
-  { id: "col2", name: "Unity University", type: "College", context: "Addis Ababa" },
+  { id: "hs1", name: "Menelik II High School", type: "High School", context: "Addis Ababa" },
+  { id: "ps1", name: "Bright Future Preparatory", type: "Preparatory School", context: "City Level" },
+  { id: "ss1", name: "Example Secondary School", type: "Secondary School", context: "Regional" },
+  { id: "prims1", name: "Sunshine Primary", type: "Primary School", context: "Local" },
 ];
 
 const ITEMS_PER_PAGE = 5;
 
 export default function ManageInstitutionsPage() {
-  const [items, setItems] = useState<Institution[]>(initialItems);
+  const [items, setItems] = useState<Institution[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof Institution | null; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
   const [currentPage, setCurrentPage] = useState(1);
-  const router = useRouter();
+  const router = useRouter(); // Keep router if needed for other purposes, or remove if not.
 
   useEffect(() => {
-    // In a real app with a backend or global state, you might refetch or update items here.
-  }, [router]);
+    const storedItems = localStorage.getItem(INSTITUTIONS_STORAGE_KEY);
+    if (storedItems) {
+      setItems(JSON.parse(storedItems));
+    } else {
+      localStorage.setItem(INSTITUTIONS_STORAGE_KEY, JSON.stringify(initialSeedItems));
+      setItems(initialSeedItems);
+    }
+  }, []); // Load once on mount
+
+  // Re-fetch from localStorage if navigated to, ensuring updates from Add/Edit pages are shown
+  // This is a simple way; more robust solutions might involve global state or custom events.
+  useEffect(() => {
+    const handleFocus = () => {
+      const storedItems = localStorage.getItem(INSTITUTIONS_STORAGE_KEY);
+      if (storedItems) {
+        setItems(JSON.parse(storedItems));
+      }
+    };
+    window.addEventListener('focus', handleFocus); // A bit of a hack to refresh on tab focus
+    // Consider more robust state management for production (Context, Zustand, Redux)
+    
+    // Initial load as well
+    handleFocus();
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
 
   const filteredItems = useMemo(() => {
@@ -95,7 +120,11 @@ export default function ManageInstitutionsPage() {
   };
 
   const handleDelete = (itemId: string) => {
-    setItems(prevItems => prevItems.filter(item => item.id !== itemId));
+    const updatedItems = items.filter(item => item.id !== itemId);
+    setItems(updatedItems);
+    localStorage.setItem(INSTITUTIONS_STORAGE_KEY, JSON.stringify(updatedItems));
+    
+    // Adjust current page if the last item on a page is deleted
     if (paginatedItems.length === 1 && currentPage > 1 && (sortedItems.length -1) % ITEMS_PER_PAGE === 0) {
         setCurrentPage(currentPage - 1);
     }
@@ -111,7 +140,7 @@ export default function ManageInstitutionsPage() {
       <CardHeader>
         <CardTitle className="text-2xl">Manage Institutions</CardTitle>
         <CardDescription>
-          Add, edit, or remove educational institutions (universities, colleges, schools of various levels).
+          Add, edit, or remove educational institutions.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -120,7 +149,7 @@ export default function ManageInstitutionsPage() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search..."
+              placeholder="Search institutions..."
               className="pl-8 w-full"
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
@@ -143,7 +172,7 @@ export default function ManageInstitutionsPage() {
                 <div className="flex items-center">Type {renderSortIcon('type')}</div>
               </TableHead>
               <TableHead onClick={() => requestSort('context')} className="cursor-pointer group hover:bg-muted/50">
-                <div className="flex items-center">Location/Context {renderSortIcon('context')}</div>
+                <div className="flex items-center">Context/Location {renderSortIcon('context')}</div>
               </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -171,7 +200,7 @@ export default function ManageInstitutionsPage() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the item:
+                          This action cannot be undone. This will permanently delete the institution:
                           <br /><strong>{item.name} ({item.type})</strong>.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
@@ -189,7 +218,7 @@ export default function ManageInstitutionsPage() {
             {paginatedItems.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                  No items found matching your criteria.
+                  No institutions found matching your criteria.
                 </TableCell>
               </TableRow>
             )}
@@ -229,3 +258,5 @@ export default function ManageInstitutionsPage() {
     </Card>
   );
 }
+
+    

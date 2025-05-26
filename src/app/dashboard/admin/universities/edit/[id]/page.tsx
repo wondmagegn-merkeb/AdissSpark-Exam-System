@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -12,28 +13,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save, AlertTriangle } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
-import type { InstitutionType as AdminInstitutionType } from './../page'; // Import type from list page
+import type { Institution, InstitutionType } from './../page'; // Import types from list page
 
-// Mock data - in a real app, this would come from a database or global state
-// This data should be consistent with the main list page's mock data for editing to make sense.
-const initialItems = [
-  { id: "uni1", name: "Addis Ababa University", type: "University", context: "Addis Ababa" },
-  { id: "uni2", name: "Bahir Dar University", type: "University", context: "Bahir Dar" },
-  { id: "col1", name: "Admas University College", type: "College", context: "Addis Ababa" },
-  { id: "sch1", name: "Generic High School Example", type: "High School", context: "National" },
-  { id: "sch2", name: "Example Secondary School", type: "Secondary School", context: "Regional" },
-  { id: "sch3", name: "Bright Future Preparatory", type: "Preparatory School", context: "City Level" },
-  { id: "sch4", name: "Sunshine Primary", type: "Primary School", context: "Local" },
-  { id: "uni3", name: "Mekelle University", type: "University", context: "Mekelle" },
-  { id: "col2", name: "Unity University", type: "College", context: "Addis Ababa" },
-] as const;
+const INSTITUTIONS_STORAGE_KEY = 'admin_institutions_list';
 
-const INSTITUTION_TYPES_EDIT: AdminInstitutionType[] = [
-  "Primary School", 
-  "Secondary School", 
-  "High School", 
-  "Preparatory School", 
-  "College", 
+const INSTITUTION_TYPES_EDIT: InstitutionType[] = [
+  "Primary School",
+  "Secondary School",
+  "High School",
+  "Preparatory School",
+  "College",
   "University"
 ];
 
@@ -60,36 +49,66 @@ export default function EditInstitutionPage() {
 
   useEffect(() => {
     if (itemId) {
-      const itemToEdit = initialItems.find(item => item.id === itemId);
-      if (itemToEdit) {
-        setValue('name', itemToEdit.name);
-        setValue('type', itemToEdit.type as AdminInstitutionType); 
-        setValue('context', itemToEdit.context);
+      const storedItems = localStorage.getItem(INSTITUTIONS_STORAGE_KEY);
+      if (storedItems) {
+        const institutions: Institution[] = JSON.parse(storedItems);
+        const itemToEdit = institutions.find(item => item.id === itemId);
+        if (itemToEdit) {
+          setValue('name', itemToEdit.name);
+          setValue('type', itemToEdit.type);
+          setValue('context', itemToEdit.context);
+        } else {
+          setItemNotFound(true);
+          toast({
+            title: "Error",
+            description: "Institution not found in storage.",
+            variant: "destructive",
+          });
+        }
       } else {
-        setItemNotFound(true);
-        toast({
-          title: "Error",
-          description: "Institution not found.",
-          variant: "destructive",
-        });
+        setItemNotFound(true); // Or handle as no data available yet
+         toast({
+            title: "Error",
+            description: "No institution data found in storage.",
+            variant: "destructive",
+          });
       }
     }
   }, [itemId, setValue, toast]);
 
   const onSubmit = async (data: InstitutionFormValues) => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    console.log("Updated Institution Data (ID: " + itemId + "):", data);
-    // In a real app, you would send this data to your backend.
-    // The list on the main page won't update automatically without global state/backend.
-
-    toast({
-      title: "Institution Updated (Simulated)",
-      description: `${data.name} (${data.type}) has been updated.`,
-    });
-    setIsLoading(false);
-    router.push('/dashboard/admin/universities');
+    try {
+      const storedItems = localStorage.getItem(INSTITUTIONS_STORAGE_KEY);
+      let institutions: Institution[] = storedItems ? JSON.parse(storedItems) : [];
+      
+      const itemIndex = institutions.findIndex(item => item.id === itemId);
+      if (itemIndex > -1) {
+        institutions[itemIndex] = { ...institutions[itemIndex], ...data };
+        localStorage.setItem(INSTITUTIONS_STORAGE_KEY, JSON.stringify(institutions));
+        toast({
+          title: "Institution Updated",
+          description: `${data.name} (${data.type}) has been updated.`,
+        });
+        router.push('/dashboard/admin/universities');
+      } else {
+         toast({
+          title: "Error",
+          description: "Could not find institution to update.",
+          variant: "destructive",
+        });
+        setItemNotFound(true);
+      }
+    } catch (error) {
+      console.error("Error updating institution in localStorage:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update institution. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (itemNotFound) {
@@ -97,11 +116,11 @@ export default function EditInstitutionPage() {
       <Card className="shadow-lg max-w-md mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center text-destructive">
-            <AlertTriangle className="mr-2 h-6 w-6" /> Item Not Found
+            <AlertTriangle className="mr-2 h-6 w-6" /> Institution Not Found
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">The item you are trying to edit does not exist or could not be loaded.</p>
+          <p className="text-muted-foreground">The institution you are trying to edit does not exist or could not be loaded.</p>
           <Button onClick={() => router.push('/dashboard/admin/universities')} className="mt-4">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to List
           </Button>
@@ -115,7 +134,7 @@ export default function EditInstitutionPage() {
       <CardHeader>
          <div className="flex items-center justify-between">
           <CardTitle className="text-2xl">Edit Institution</CardTitle>
-          <Button variant="outline" size="sm" onClick={() => router.back()}>
+          <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/admin/universities')}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to List
           </Button>
@@ -140,7 +159,7 @@ export default function EditInstitutionPage() {
               render={({ field }) => (
                 <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
                   <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue placeholder="Select institution type" />
                   </SelectTrigger>
                   <SelectContent>
                     {INSTITUTION_TYPES_EDIT.map(type => (
@@ -155,12 +174,12 @@ export default function EditInstitutionPage() {
 
           <div>
             <Label htmlFor="context">Context/Location</Label>
-            <Input id="context" {...register("context")} placeholder="e.g. Addis Ababa or Preparatory" disabled={isLoading} className="mt-1" />
+            <Input id="context" {...register("context")} placeholder="e.g. Addis Ababa or National" disabled={isLoading} className="mt-1" />
             {errors.context && <p className="text-sm text-destructive mt-1">{errors.context.message}</p>}
           </div>
 
           <div className="flex justify-end space-x-3">
-             <Button type="button" variant="outline" onClick={() => router.back()} disabled={isLoading}>
+             <Button type="button" variant="outline" onClick={() => router.push('/dashboard/admin/universities')} disabled={isLoading}>
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>
@@ -177,3 +196,5 @@ export default function EditInstitutionPage() {
     </Card>
   );
 }
+
+    
