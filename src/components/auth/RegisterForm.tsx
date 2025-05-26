@@ -14,8 +14,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
-import type { Institution, InstitutionType as AdminInstitutionType } from '@/lib/types';
-import { INSTITUTIONS_STORAGE_KEY, STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM, STUDENT_TYPE_TO_ADMIN_INSTITUTION_TYPE_MAP } from '@/lib/constants';
+import type { Institution } from '@/lib/types';
+import { INSTITUTIONS_STORAGE_KEY, STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM, STUDENT_TYPE_TO_ADMIN_INSTITUTION_TYPE_MAP, type StudentTypeFromRegistrationForm } from '@/lib/constants';
 
 const GENDERS = ["male", "female", "other", "prefer_not_to_say"] as const;
 const DEPARTMENTS = ["Computer Science", "Software Engineering", "Electrical Engineering", "Civil Engineering", "Mechanical Engineering", "Medicine", "Nursing", "Pharmacy", "Economics", "Management", "Accounting", "Law", "Other"] as const;
@@ -28,9 +28,7 @@ const baseSchema = z.object({
   gender: z.enum(GENDERS, {
     required_error: "Please select your gender.",
   }),
-  studentType: z.enum(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM, {
-    required_error: "Please select your student type.",
-  }),
+  // studentType field removed from baseSchema to be defined as literal in each union part
 });
 
 const schoolSchemaFields = {
@@ -40,7 +38,7 @@ const schoolSchemaFields = {
 };
 
 const primarySchoolStudentSchema = baseSchema.extend({
-  studentType: z.literal("Primary School"),
+  studentType: z.literal(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[0]), // "Primary School"
   ...schoolSchemaFields,
 }).superRefine((data, ctx) => {
   if (data.schoolNameSelection === "Other" && (!data.otherSchoolName || data.otherSchoolName.trim().length < 2)) {
@@ -53,7 +51,7 @@ const primarySchoolStudentSchema = baseSchema.extend({
 });
 
 const secondarySchoolStudentSchema = baseSchema.extend({
-  studentType: z.literal("Secondary School"),
+  studentType: z.literal(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[1]), // "Secondary School"
   ...schoolSchemaFields,
 }).superRefine((data, ctx) => {
   if (data.schoolNameSelection === "Other" && (!data.otherSchoolName || data.otherSchoolName.trim().length < 2)) {
@@ -66,7 +64,7 @@ const secondarySchoolStudentSchema = baseSchema.extend({
 });
 
 const highSchoolStudentSchema = baseSchema.extend({
-  studentType: z.literal("High School"),
+  studentType: z.literal(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[2]), // "High School"
   ...schoolSchemaFields,
 }).superRefine((data, ctx) => {
   if (data.schoolNameSelection === "Other" && (!data.otherSchoolName || data.otherSchoolName.trim().length < 2)) {
@@ -79,7 +77,7 @@ const highSchoolStudentSchema = baseSchema.extend({
 });
 
 const preparatorySchoolStudentSchema = baseSchema.extend({
-  studentType: z.literal("Preparatory School"),
+  studentType: z.literal(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[3]), // "Preparatory School"
   ...schoolSchemaFields,
 }).superRefine((data, ctx) => {
   if (data.schoolNameSelection === "Other" && (!data.otherSchoolName || data.otherSchoolName.trim().length < 2)) {
@@ -92,7 +90,7 @@ const preparatorySchoolStudentSchema = baseSchema.extend({
 });
 
 const collegeStudentSchema = baseSchema.extend({
-  studentType: z.literal("College"),
+  studentType: z.literal(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[4]), // "College"
   institutionNameSelection: z.string({ required_error: "Please select your college." }),
   otherInstitutionName: z.string().optional(),
   departmentSelection: z.string({ required_error: "Please select your department." }),
@@ -100,13 +98,14 @@ const collegeStudentSchema = baseSchema.extend({
 });
 
 const universityStudentSchema = baseSchema.extend({
-  studentType: z.literal("University"),
+  studentType: z.literal(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[5]), // "University"
   institutionNameSelection: z.string({ required_error: "Please select your university." }),
   otherInstitutionName: z.string().optional(),
   departmentSelection: z.string({ required_error: "Please select your department." }),
   otherDepartment: z.string().optional(),
 });
 
+// Using discriminated union for studentType specific fields
 const registerSchema = z.discriminatedUnion("studentType", [
   primarySchoolStudentSchema,
   secondarySchoolStudentSchema,
@@ -114,7 +113,13 @@ const registerSchema = z.discriminatedUnion("studentType", [
   preparatorySchoolStudentSchema,
   collegeStudentSchema,
   universityStudentSchema,
-]).superRefine((data, ctx) => {
+], { errorMap: (issue, ctx) => {
+    if (issue.code === z.ZodIssueCode.invalid_union_discriminator) {
+      // This means the studentType was not one of the expected literals
+      return { message: 'Please select your student type.' };
+    }
+    return { message: ctx.defaultError };
+  }}).superRefine((data, ctx) => {
   if (data.studentType === "University" || data.studentType === "College") {
     if (data.institutionNameSelection === "Other" && (!data.otherInstitutionName || data.otherInstitutionName.trim().length < 2)) {
       ctx.addIssue({
@@ -148,11 +153,13 @@ export function RegisterForm() {
       email: '',
       password: '',
       gender: undefined,
-      studentType: undefined,
+      studentType: undefined, // Important: studentType starts as undefined
+      // Fields for University/College
       institutionNameSelection: undefined,
       otherInstitutionName: '',
       departmentSelection: undefined,
       otherDepartment: '',
+      // Fields for School types
       schoolNameSelection: undefined, 
       otherSchoolName: '',
       gradeLevel: '',
@@ -174,18 +181,18 @@ export function RegisterForm() {
   }, []);
 
   const watchedStudentType = form.watch("studentType");
-  const watchedInstitutionSelection = form.watch("institutionNameSelection" as any); // for Uni/College
-  const watchedDepartmentSelection = form.watch("departmentSelection" as any); // for Uni/College
-  const watchedSchoolNameSelection = form.watch("schoolNameSelection" as any); // for School Levels
+  const watchedInstitutionSelection = form.watch("institutionNameSelection" as keyof RegisterFormValues);
+  const watchedDepartmentSelection = form.watch("departmentSelection" as keyof RegisterFormValues);
+  const watchedSchoolNameSelection = form.watch("schoolNameSelection" as keyof RegisterFormValues);
 
   const studentTypeLabel = useMemo(() => {
-    if (watchedStudentType === 'University') return "I am an...";
+    if (watchedStudentType === STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[5]) return "I am an..."; // University
     return "I am a...";
   }, [watchedStudentType]);
 
   const relevantInstitutionsForDropdown = useMemo(() => {
     if (!watchedStudentType) return [];
-    const targetAdminType = STUDENT_TYPE_TO_ADMIN_INSTITUTION_TYPE_MAP[watchedStudentType];
+    const targetAdminType = STUDENT_TYPE_TO_ADMIN_INSTITUTION_TYPE_MAP[watchedStudentType as StudentTypeFromRegistrationForm]; // Cast needed as watchedStudentType can be undefined initially
     if (!targetAdminType) return [];
     
     return allAdminInstitutions
@@ -197,8 +204,11 @@ export function RegisterForm() {
 
   async function onSubmit(data: RegisterFormValues) {
     setIsLoading(true);
+    console.log("Registration Data:", data);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    registerUser(data); 
+    // Casting data because the registerUser function in AuthContext expects a slightly different shape for studentType.
+    // This assumes registerUser handles the conversion if necessary, or its type needs to align with RegisterFormValues.
+    registerUser(data as any); 
     // setIsLoading(false); // Removed as registerUser redirects
   }
 
@@ -295,14 +305,16 @@ export function RegisterForm() {
                 <FormItem>
                   <FormLabel>{studentTypeLabel}</FormLabel>
                   <Select onValueChange={(value) => {
-                      field.onChange(value);
-                      form.resetField("institutionNameSelection" as any);
-                      form.resetField("otherInstitutionName" as any);
-                      form.resetField("departmentSelection" as any);
-                      form.resetField("otherDepartment" as any);
-                      form.resetField("schoolNameSelection" as any);
-                      form.resetField("otherSchoolName" as any);
-                      form.resetField("gradeLevel" as any);
+                      field.onChange(value as StudentTypeFromRegistrationForm); // Ensure value is of the correct type
+                      // Reset dependent fields when student type changes
+                      form.setValue("institutionNameSelection" as any, undefined);
+                      form.setValue("otherInstitutionName" as any, '');
+                      form.setValue("departmentSelection" as any, undefined);
+                      form.setValue("otherDepartment" as any, '');
+                      form.setValue("schoolNameSelection" as any, undefined);
+                      form.setValue("otherSchoolName" as any, '');
+                      form.setValue("gradeLevel" as any, '');
+                      form.clearErrors(); // Clear all errors to re-evaluate
                   }} value={field.value} disabled={isLoading}>
                     <FormControl>
                       <SelectTrigger>
@@ -323,11 +335,13 @@ export function RegisterForm() {
             />
 
             {/* University or College Fields */}
-            {(watchedStudentType === 'University' || watchedStudentType === 'College') && (
+            {(watchedStudentType === STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[5] || // University
+              watchedStudentType === STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[4]    // College
+            ) && form.getValues().studentType && ( // Ensure studentType is defined before rendering these
               <>
                 <FormField
                   control={form.control}
-                  name="institutionNameSelection"
+                  name={"institutionNameSelection" as any}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{watchedStudentType} Name</FormLabel>
@@ -338,8 +352,10 @@ export function RegisterForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {relevantInstitutionsForDropdown.length > 1 ? relevantInstitutionsForDropdown.map(inst => <SelectItem key={inst} value={inst}>{inst}</SelectItem>) : <SelectItem value="Other" disabled={relevantInstitutionsForDropdown.length === 0}>Other</SelectItem> }
-                           {relevantInstitutionsForDropdown.length === 0 && <SelectItem value="no-active" disabled>No active {watchedStudentType?.toLowerCase()}s listed. Select Other.</SelectItem>}
+                          {relevantInstitutionsForDropdown.length > 1 || (relevantInstitutionsForDropdown.length === 1 && relevantInstitutionsForDropdown[0] !== "Other") 
+                            ? relevantInstitutionsForDropdown.map(inst => <SelectItem key={inst} value={inst}>{inst}</SelectItem>) 
+                            : <SelectItem value="Other" disabled={relevantInstitutionsForDropdown.length === 0 && relevantInstitutionsForDropdown[0] !== "Other"}>Other</SelectItem> }
+                           {(relevantInstitutionsForDropdown.length === 0 || (relevantInstitutionsForDropdown.length === 1 && relevantInstitutionsForDropdown[0] === "Other")) && <SelectItem value="no-active" disabled>No active {watchedStudentType?.toLowerCase()}s listed. Select Other.</SelectItem>}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -349,7 +365,7 @@ export function RegisterForm() {
                 {watchedInstitutionSelection === 'Other' && (
                   <FormField
                     control={form.control}
-                    name="otherInstitutionName"
+                    name={"otherInstitutionName" as any}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Specify {watchedStudentType} Name</FormLabel>
@@ -363,7 +379,7 @@ export function RegisterForm() {
                 )}
                 <FormField
                   control={form.control}
-                  name="departmentSelection"
+                  name={"departmentSelection" as any}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Department</FormLabel>
@@ -384,7 +400,7 @@ export function RegisterForm() {
                 {watchedDepartmentSelection === 'Other' && (
                   <FormField
                     control={form.control}
-                    name="otherDepartment"
+                    name={"otherDepartment" as any}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Specify Department Name</FormLabel>
@@ -400,14 +416,15 @@ export function RegisterForm() {
             )}
 
             {/* Primary, Secondary, High School, Preparatory Student Fields */}
-            {(watchedStudentType === 'Primary School' ||
-              watchedStudentType === 'Secondary School' ||
-              watchedStudentType === 'High School' ||
-              watchedStudentType === 'Preparatory School') && (
+            {(watchedStudentType === STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[0] || // Primary
+              watchedStudentType === STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[1] || // Secondary
+              watchedStudentType === STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[2] || // High School
+              watchedStudentType === STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[3]    // Preparatory
+            ) && form.getValues().studentType && ( // Ensure studentType is defined
               <>
                 <FormField
                   control={form.control}
-                  name="schoolNameSelection"
+                  name={"schoolNameSelection" as any}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>School Name</FormLabel>
@@ -418,10 +435,10 @@ export function RegisterForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                           {relevantInstitutionsForDropdown.length > 1 ? relevantInstitutionsForDropdown.map(school => (
-                            <SelectItem key={school} value={school}>{school}</SelectItem>
-                          )) : <SelectItem value="Other" disabled={relevantInstitutionsForDropdown.length === 0}>Other</SelectItem> }
-                           {relevantInstitutionsForDropdown.length === 0 && <SelectItem value="no-active" disabled>No active schools listed. Select Other.</SelectItem>}
+                           {relevantInstitutionsForDropdown.length > 1 || (relevantInstitutionsForDropdown.length === 1 && relevantInstitutionsForDropdown[0] !== "Other") 
+                            ? relevantInstitutionsForDropdown.map(school => (<SelectItem key={school} value={school}>{school}</SelectItem>)) 
+                            : <SelectItem value="Other" disabled={relevantInstitutionsForDropdown.length === 0 && relevantInstitutionsForDropdown[0] !== "Other"}>Other</SelectItem> }
+                           {(relevantInstitutionsForDropdown.length === 0 || (relevantInstitutionsForDropdown.length === 1 && relevantInstitutionsForDropdown[0] === "Other")) && <SelectItem value="no-active" disabled>No active schools listed. Select Other.</SelectItem>}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -431,7 +448,7 @@ export function RegisterForm() {
                 {watchedSchoolNameSelection === 'Other' && (
                    <FormField
                     control={form.control}
-                    name="otherSchoolName"
+                    name={"otherSchoolName" as any}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Specify School Name</FormLabel>
@@ -445,7 +462,7 @@ export function RegisterForm() {
                 )}
                 <FormField
                   control={form.control}
-                  name="gradeLevel"
+                  name={"gradeLevel" as any}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Grade Level</FormLabel>
@@ -477,3 +494,6 @@ export function RegisterForm() {
     </Card>
   );
 }
+
+
+    
