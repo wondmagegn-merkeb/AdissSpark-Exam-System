@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -13,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save, AlertTriangle } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
+import type { InstitutionType as AdminInstitutionType } from './../page'; // Import type from list page
 
 // Mock data - in a real app, this would come from a database or global state
 // This data should be consistent with the main list page's mock data for editing to make sense.
@@ -20,22 +20,26 @@ const initialItems = [
   { id: "uni1", name: "Addis Ababa University", type: "University", context: "Addis Ababa" },
   { id: "uni2", name: "Bahir Dar University", type: "University", context: "Bahir Dar" },
   { id: "col1", name: "Admas University College", type: "College", context: "Addis Ababa" },
-  { id: "sch1", name: "Generic High School Example", type: "School", context: "National" },
-  { id: "grade1", name: "Grade 9", type: "Grade Level", context: "Secondary School" },
-  { id: "grade2", name: "Grade 10", type: "Grade Level", context: "Secondary School" },
-  { id: "grade3", name: "Grade 12", type: "Grade Level", context: "Preparatory School" },
+  { id: "sch1", name: "Generic High School Example", type: "High School", context: "National" },
+  { id: "sch2", name: "Example Secondary School", type: "Secondary School", context: "Regional" },
+  { id: "sch3", name: "Bright Future Preparatory", type: "Preparatory School", context: "City Level" },
+  { id: "sch4", name: "Sunshine Primary", type: "Primary School", context: "Local" },
   { id: "uni3", name: "Mekelle University", type: "University", context: "Mekelle" },
   { id: "col2", name: "Unity University", type: "College", context: "Addis Ababa" },
-  { id: "sch2", name: "ABC Primary School", type: "School", context: "Regional" },
-  { id: "grade4", name: "Grade 1", type: "Grade Level", context: "Primary School" },
-  { id: "grade5", name: "Grade 11", type: "Grade Level", context: "Preparatory School" },
-] as const; // Use 'as const' to infer literal types for 'type' if needed elsewhere, though Zod enum handles it.
+] as const;
 
-type InstitutionType = typeof initialItems[number]['type'];
+const INSTITUTION_TYPES_EDIT: AdminInstitutionType[] = [
+  "Primary School", 
+  "Secondary School", 
+  "High School", 
+  "Preparatory School", 
+  "College", 
+  "University"
+];
 
 const institutionSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  type: z.enum(["University", "College", "School", "Grade Level"], { required_error: "Please select a type." }),
+  type: z.enum(INSTITUTION_TYPES_EDIT, { required_error: "Please select a type." }),
   context: z.string().min(2, { message: "Context/Location must be at least 2 characters." }),
 });
 
@@ -59,13 +63,13 @@ export default function EditInstitutionPage() {
       const itemToEdit = initialItems.find(item => item.id === itemId);
       if (itemToEdit) {
         setValue('name', itemToEdit.name);
-        setValue('type', itemToEdit.type as InstitutionType); // Cast if necessary for Zod enum
+        setValue('type', itemToEdit.type as AdminInstitutionType); 
         setValue('context', itemToEdit.context);
       } else {
         setItemNotFound(true);
         toast({
           title: "Error",
-          description: "Institution/Level not found.",
+          description: "Institution not found.",
           variant: "destructive",
         });
       }
@@ -76,12 +80,12 @@ export default function EditInstitutionPage() {
     setIsLoading(true);
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
-    console.log("Updated Institution/Level Data (ID: " + itemId + "):", data);
+    console.log("Updated Institution Data (ID: " + itemId + "):", data);
     // In a real app, you would send this data to your backend.
     // The list on the main page won't update automatically without global state/backend.
 
     toast({
-      title: "Item Updated (Simulated)",
+      title: "Institution Updated (Simulated)",
       description: `${data.name} (${data.type}) has been updated.`,
     });
     setIsLoading(false);
@@ -110,14 +114,14 @@ export default function EditInstitutionPage() {
     <Card className="shadow-lg max-w-2xl mx-auto">
       <CardHeader>
          <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl">Edit Institution or Level</CardTitle>
+          <CardTitle className="text-2xl">Edit Institution</CardTitle>
           <Button variant="outline" size="sm" onClick={() => router.back()}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to List
           </Button>
         </div>
         <CardDescription>
-          Modify the details for the item. Click save when you're done.
+          Modify the details for the institution. Click save when you're done.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -139,10 +143,9 @@ export default function EditInstitutionPage() {
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="University">University</SelectItem>
-                    <SelectItem value="College">College</SelectItem>
-                    <SelectItem value="School">School</SelectItem>
-                    <SelectItem value="Grade Level">Grade Level</SelectItem>
+                    {INSTITUTION_TYPES_EDIT.map(type => (
+                       <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               )}
@@ -166,7 +169,7 @@ export default function EditInstitutionPage() {
               ) : (
                 <Save className="mr-2 h-4 w-4" />
               )}
-              Save Changes
+              Save
             </Button>
           </div>
         </form>

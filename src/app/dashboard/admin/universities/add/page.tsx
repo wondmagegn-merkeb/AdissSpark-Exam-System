@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -13,10 +12,20 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
+import type { InstitutionType as AdminInstitutionType } from './../page'; // Import type from list page
+
+const INSTITUTION_TYPES: AdminInstitutionType[] = [
+  "Primary School", 
+  "Secondary School", 
+  "High School", 
+  "Preparatory School", 
+  "College", 
+  "University"
+];
 
 const institutionSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  type: z.enum(["University", "College", "School", "Grade Level"], { required_error: "Please select a type." }),
+  type: z.enum(INSTITUTION_TYPES, { required_error: "Please select a type." }),
   context: z.string().min(2, { message: "Context/Location must be at least 2 characters." }),
 });
 
@@ -40,32 +49,30 @@ export default function AddInstitutionPage() {
     setIsLoading(true);
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
-    console.log("New Institution/Level Data:", data); 
-    // In a real app, you would send this data to your backend.
+    console.log("New Institution Data:", data); 
+    // In a real app, you would send this data to your backend and update the list on the main page.
     
     toast({
-      title: "Item Added (Simulated)",
+      title: "Institution Added (Simulated)",
       description: `${data.name} (${data.type}) has been added.`,
     });
     setIsLoading(false);
     reset();
-    // router.push('/dashboard/admin/universities'); // Removed redirection
-    // To see the new item in the list, you'd need to implement a way to share/update state,
-    // or refetch from a backend if this were a real application.
+    // router.push('/dashboard/admin/universities'); // User requested not to redirect
   };
 
   return (
     <Card className="shadow-lg max-w-2xl mx-auto">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl">Add New Institution or Level</CardTitle>
+          <CardTitle className="text-2xl">Add New Institution</CardTitle>
           <Button variant="outline" size="sm" onClick={() => router.back()}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to List
           </Button>
         </div>
         <CardDescription>
-          Fill in the details for the new item. Click save when you're done.
+          Fill in the details for the new institution. Click save when you're done.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -87,10 +94,9 @@ export default function AddInstitutionPage() {
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="University">University</SelectItem>
-                    <SelectItem value="College">College</SelectItem>
-                    <SelectItem value="School">School</SelectItem>
-                    <SelectItem value="Grade Level">Grade Level</SelectItem>
+                    {INSTITUTION_TYPES.map(type => (
+                       <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               )}
@@ -114,7 +120,7 @@ export default function AddInstitutionPage() {
               ) : (
                 <Save className="mr-2 h-4 w-4" />
               )}
-              Save Item
+              Save
             </Button>
           </div>
         </form>

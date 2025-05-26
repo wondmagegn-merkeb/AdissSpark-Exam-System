@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -11,7 +10,14 @@ import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { PlusCircle, Edit, Trash2, ArrowUpDown, Search } from "lucide-react";
 
-type InstitutionType = "University" | "College" | "School" | "Grade Level";
+// Updated type to match registration form options
+export type InstitutionType = 
+  | "Primary School" 
+  | "Secondary School" 
+  | "High School" 
+  | "Preparatory School" 
+  | "College" 
+  | "University";
 
 interface Institution {
   id: string;
@@ -20,38 +26,30 @@ interface Institution {
   context: string; // e.g., Location for University/College, Associated School Type for Grade Level
 }
 
-// Mock data - in a real app, this would come from a database or global state
+// Mock data - updated to reflect new types
 const initialItems: Institution[] = [
   { id: "uni1", name: "Addis Ababa University", type: "University", context: "Addis Ababa" },
   { id: "uni2", name: "Bahir Dar University", type: "University", context: "Bahir Dar" },
   { id: "col1", name: "Admas University College", type: "College", context: "Addis Ababa" },
-  { id: "sch1", name: "Generic High School Example", type: "School", context: "National" },
-  { id: "grade1", name: "Grade 9", type: "Grade Level", context: "Secondary School" },
-  { id: "grade2", name: "Grade 10", type: "Grade Level", context: "Secondary School" },
-  { id: "grade3", name: "Grade 12", type: "Grade Level", context: "Preparatory School" },
+  { id: "sch1", name: "Generic High School Example", type: "High School", context: "National" },
+  { id: "sch2", name: "Example Secondary School", type: "Secondary School", context: "Regional" },
+  { id: "sch3", name: "Bright Future Preparatory", type: "Preparatory School", context: "City Level" },
+  { id: "sch4", name: "Sunshine Primary", type: "Primary School", context: "Local" },
   { id: "uni3", name: "Mekelle University", type: "University", context: "Mekelle" },
   { id: "col2", name: "Unity University", type: "College", context: "Addis Ababa" },
-  { id: "sch2", name: "ABC Primary School", type: "School", context: "Regional" },
-  { id: "grade4", name: "Grade 1", type: "Grade Level", context: "Primary School" },
-  { id: "grade5", name: "Grade 11", type: "Grade Level", context: "Preparatory School" },
 ];
 
 const ITEMS_PER_PAGE = 5;
 
-export default function ManageInstitutionsAndLevelsPage() {
+export default function ManageInstitutionsPage() {
   const [items, setItems] = useState<Institution[]>(initialItems);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof Institution | null; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
 
-  // Effect to potentially refresh data if items are added/edited on other pages and stored globally or via query params
-  // For now, this list is self-contained.
   useEffect(() => {
     // In a real app with a backend or global state, you might refetch or update items here.
-    // For example, if a new item was added, you could check a query param:
-    // const { itemAdded } = router.query;
-    // if (itemAdded) { /* refetch items */ }
   }, [router]);
 
 
@@ -97,7 +95,6 @@ export default function ManageInstitutionsAndLevelsPage() {
 
   const handleDelete = (itemId: string) => {
     setItems(prevItems => prevItems.filter(item => item.id !== itemId));
-    // If on last page and it becomes empty, go to previous page
     if (paginatedItems.length === 1 && currentPage > 1 && (sortedItems.length -1) % ITEMS_PER_PAGE === 0) {
         setCurrentPage(currentPage - 1);
     }
@@ -111,9 +108,9 @@ export default function ManageInstitutionsAndLevelsPage() {
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle className="text-2xl">Manage Institutions & Levels</CardTitle>
+        <CardTitle className="text-2xl">Manage Institutions</CardTitle>
         <CardDescription>
-          Add, edit, or remove educational institutions (universities, colleges, schools) or school levels.
+          Add, edit, or remove educational institutions (universities, colleges, schools of various levels).
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -130,7 +127,7 @@ export default function ManageInstitutionsAndLevelsPage() {
           </div>
           <Button asChild>
             <Link href="/dashboard/admin/universities/add">
-              <PlusCircle className="mr-2 h-4 w-4" /> Add New Institution/Level
+              <PlusCircle className="mr-2 h-4 w-4" /> Add New Institution
             </Link>
           </Button>
         </div>

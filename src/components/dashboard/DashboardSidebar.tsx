@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -35,7 +34,7 @@ const userNavItems: NavItem[] = [
 
 const adminNavItems: NavItem[] = [
   { title: 'Manage Users', href: '/dashboard/admin/users', icon: Users },
-  { title: 'Manage Institutions & Levels', href: '/dashboard/admin/universities', icon: Building },
+  { title: 'Manage Institutions', href: '/dashboard/admin/universities', icon: Building },
   { title: 'Manage Departments & Grades', href: '/dashboard/admin/departments', icon: BookCopy },
   { title: 'Manage Courses & Subjects', href: '/dashboard/admin/courses', icon: ListChecks },
   { title: 'Manage Exams', href: '/dashboard/admin/exams', icon: Edit },
