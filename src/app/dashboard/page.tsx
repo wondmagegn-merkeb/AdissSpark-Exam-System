@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { BookOpen, Edit3, Brain, UserCircle, Settings as SettingsIcon, LineChart as LineChartIcon, History, ExternalLink } from 'lucide-react';
+import { BookOpen, Edit3, Brain, UserCircle, Settings as SettingsIcon, LineChart as LineChartIcon, History, ExternalLink, Activity, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { format } from 'date-fns';
@@ -25,9 +25,14 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+const PASS_THRESHOLD_PERCENTAGE = 50;
+
 export default function DashboardPage() {
   const [examHistory, setExamHistory] = useState<ExamHistoryEntry[]>([]);
   const [chartData, setChartData] = useState<Array<{ date: string; score: number }>>([]);
+  const [totalExamsTaken, setTotalExamsTaken] = useState(0);
+  const [examsPassed, setExamsPassed] = useState(0);
+  const [examsFailed, setExamsFailed] = useState(0);
 
   useEffect(() => {
     const storedHistoryString = localStorage.getItem('examHistory');
@@ -36,6 +41,7 @@ export default function DashboardPage() {
         const parsedHistory: ExamHistoryEntry[] = JSON.parse(storedHistoryString);
         if (Array.isArray(parsedHistory)) {
           setExamHistory(parsedHistory);
+          
           // Prepare data for chart - use last 5 entries, formatted
           const recentHistory = parsedHistory.slice(0, 5).reverse(); // Oldest first for chart
           const formattedChartData = recentHistory.map(entry => ({
@@ -43,6 +49,21 @@ export default function DashboardPage() {
             score: entry.percentageScore,
           }));
           setChartData(formattedChartData);
+
+          // Calculate summary statistics
+          setTotalExamsTaken(parsedHistory.length);
+          let passedCount = 0;
+          let failedCount = 0;
+          parsedHistory.forEach(entry => {
+            if (entry.percentageScore >= PASS_THRESHOLD_PERCENTAGE) {
+              passedCount++;
+            } else {
+              failedCount++;
+            }
+          });
+          setExamsPassed(passedCount);
+          setExamsFailed(failedCount);
+
         }
       } catch (e) {
         console.error("Error parsing exam history from localStorage:", e);
@@ -61,7 +82,48 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* New Row for Progress Graph and Exam History */}
+      {/* Summary Statistics Row */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Card className="shadow-md hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Exams Taken</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalExamsTaken}</div>
+            <p className="text-xs text-muted-foreground">
+              {totalExamsTaken > 0 ? 'Keep up the great work!' : 'Start taking exams to see your stats.'}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-md hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Exams Passed</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{examsPassed}</div>
+             <p className="text-xs text-muted-foreground">
+              {totalExamsTaken > 0 ? `Scored ${PASS_THRESHOLD_PERCENTAGE}% or higher` : 'Your passed exams will show here.'}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-md hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Exams Failed</CardTitle>
+            <XCircle className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{examsFailed}</div>
+             <p className="text-xs text-muted-foreground">
+              {totalExamsTaken > 0 ? `Scored below ${PASS_THRESHOLD_PERCENTAGE}%` : 'Your failed exams will show here.'}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+
+      {/* Progress Graph and Exam History */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
           <CardHeader>
@@ -151,9 +213,9 @@ export default function DashboardPage() {
                 <TableBody>
                   {examHistory.map((entry) => (
                     <TableRow key={entry.examId + entry.dateCompleted}>
-                      <TableCell className="font-medium truncate max-w-xs">{entry.examTitle}</TableCell>
+                      <TableCell className="font-medium truncate max-w-[200px] sm:max-w-xs">{entry.examTitle}</TableCell>
                       <TableCell>{format(new Date(entry.dateCompleted), 'PPp')}</TableCell>
-                      <TableCell className="text-right">{`${entry.score}/${entry.totalQuestions}`}</TableCell>
+                      <TableCell className="text-right">{`${entry.score}/${entry.totalQuestions} (${entry.percentageScore}%)`}</TableCell>
                       <TableCell className="text-right">
                         <Button variant="outline" size="sm" asChild>
                           <Link href={`/dashboard/exams/${entry.examId}/results`}>
@@ -306,3 +368,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
