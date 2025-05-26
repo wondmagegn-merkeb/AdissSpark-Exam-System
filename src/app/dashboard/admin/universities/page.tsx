@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -127,7 +128,7 @@ export default function ManageInstitutionsPage() {
           </div>
           <Button asChild>
             <Link href="/dashboard/admin/universities/add">
-              <PlusCircle className="mr-2 h-4 w-4" /> Add New Institution
+              <PlusCircle className="mr-2 h-4 w-4" /> Add
             </Link>
           </Button>
         </div>
