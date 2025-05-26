@@ -8,8 +8,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { ArrowLeft, FileText, Clock, AlertTriangle, CheckCircle2, Target, Info, Flag } from 'lucide-react';
+import { ArrowLeft, FileText, Clock, AlertTriangle, CheckCircle2, Target, Info, Flag, BarChart3, ListChecks } from 'lucide-react';
 import type { Exam, Question } from '@/lib/types';
+import { PieChart, Pie, Cell } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 
 // Mock exam data with questions
 const mockExams: Exam[] = [
@@ -18,7 +20,7 @@ const mockExams: Exam[] = [
     title: 'Model Exam 1: General Knowledge',
     description: 'A comprehensive test covering various general knowledge topics.',
     questionCount: 3,
-    durationMinutes: 5,
+    durationMinutes: 5, // Shortened for testing
     isPremium: false,
     questions: [
       { id: 'q1_1', text: 'What is the capital of Ethiopia?', options: ['Nairobi', 'Addis Ababa', 'Cairo', 'Lagos'], correctAnswer: 'Addis Ababa', explanation: 'Addis Ababa is the capital and largest city of Ethiopia.' },
@@ -30,8 +32,8 @@ const mockExams: Exam[] = [
     id: 'model-2',
     title: 'Model Exam 2: Verbal Reasoning',
     description: 'Focuses on verbal reasoning, comprehension, and analytical skills.',
-    questionCount: 100, // Increased to test scrolling
-    durationMinutes: 120, // Adjusted duration
+    questionCount: 100, 
+    durationMinutes: 12, // Adjusted duration for 100 questions (120/10)
     questions: Array.from({ length: 100 }, (_, i) => ({
       id: `q2_${i + 1}`,
       text: `Verbal Reasoning Question ${i + 1}: Choose the correct synonym for "ephemeral". This is a longer question text to see how it wraps and if the layout holds up with more content. The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.`,
@@ -45,7 +47,7 @@ const mockExams: Exam[] = [
     title: 'Model Exam 3: Quantitative Aptitude (Premium)',
     description: 'Challenging questions on quantitative aptitude.',
     questionCount: 2,
-    durationMinutes: 4,
+    durationMinutes: 1, // Shortened for testing
     isPremium: true,
     questions: [
         { id: 'q3_1', text: 'If a car travels at 60 km/h, how far will it travel in 2.5 hours?', options: ['120 km', '150 km', '180 km', '200 km'], correctAnswer: '150 km', explanation: 'Distance = Speed × Time. So, 60 km/h × 2.5 h = 150 km.' },
@@ -57,7 +59,7 @@ const mockExams: Exam[] = [
     title: 'Model Exam 4: Logical Reasoning',
     description: 'Test your logical thinking and problem-solving abilities.',
     questionCount: 2,
-    durationMinutes: 3,
+    durationMinutes: 1, // Shortened for testing
     isPremium: false,
     questions: [
         { id: 'q4_1', text: 'Look at this series: 2, 1, (1/2), (1/4), ... What number should come next?', options: ['(1/3)', '(1/8)', '(2/8)', '(1/16)'], correctAnswer: '(1/8)' },
@@ -69,7 +71,7 @@ const mockExams: Exam[] = [
     title: 'Model Exam 5: Specialized Subject (Premium)',
     description: 'An in-depth exam for a specialized subject, designed by experts.',
     questionCount: 2,
-    durationMinutes: 5,
+    durationMinutes: 1, // Shortened for testing
     isPremium: true,
     questions: [
       { id: 'q5_1', text: 'In computer science, what does CPU stand for?', options: ['Central Processing Unit', 'Computer Personal Unit', 'Central Program Unit', 'Control Processing Unit'], correctAnswer: 'Central Processing Unit' },
@@ -77,6 +79,22 @@ const mockExams: Exam[] = [
     ]
   },
 ];
+
+
+const chartConfig = {
+  correct: {
+    label: "Correct",
+    color: "hsl(var(--chart-1))", // Using theme variables for chart colors
+  },
+  incorrect: {
+    label: "Incorrect",
+    color: "hsl(var(--destructive))",
+  },
+  unanswered: {
+    label: "Unanswered",
+    color: "hsl(var(--muted))",
+  },
+} satisfies ChartConfig;
 
 
 export default function TakeExamPage() {
@@ -94,6 +112,8 @@ export default function TakeExamPage() {
   const [score, setScore] = useState(0);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [confusedQuestions, setConfusedQuestions] = useState<Record<string, boolean>>({});
+  const [unansweredCount, setUnansweredCount] = useState(0);
+  const [incorrectCount, setIncorrectCount] = useState(0);
 
 
   useEffect(() => {
@@ -110,7 +130,15 @@ export default function TakeExamPage() {
         correctAnswers++;
       }
     });
+
+    const totalAnswered = Object.keys(userAnswers).length;
+    const localUnansweredCount = exam.questions.length - totalAnswered;
+    const localIncorrectCount = totalAnswered - correctAnswers;
+
     setScore(correctAnswers);
+    setUnansweredCount(localUnansweredCount);
+    setIncorrectCount(localIncorrectCount);
+
     setExamFinished(true);
     setExamStarted(false); 
     setShowSubmitConfirm(false);
@@ -165,6 +193,8 @@ export default function TakeExamPage() {
     setTimeLeft(exam.durationMinutes * 60);
     setExamFinished(false);
     setScore(0);
+    setUnansweredCount(0);
+    setIncorrectCount(0);
   };
 
   const handleAnswerSelect = (questionId: string, answer: string) => {
@@ -196,6 +226,12 @@ export default function TakeExamPage() {
   };
 
   if (examFinished) {
+    const pieData = [
+      { name: 'Correct', value: score, fill: chartConfig.correct.color },
+      { name: 'Incorrect', value: incorrectCount, fill: chartConfig.incorrect.color },
+      { name: 'Unanswered', value: unansweredCount, fill: chartConfig.unanswered.color },
+    ].filter(item => item.value > 0); // Filter out zero-value segments
+
     return (
       <div className="container mx-auto py-8">
         <Card className="max-w-lg mx-auto shadow-xl text-center">
@@ -213,12 +249,71 @@ export default function TakeExamPage() {
               <p className="text-5xl font-bold text-primary">
                 {score} <span className="text-3xl text-muted-foreground">/ {exam.questions.length}</span>
               </p>
-              {/* <Progress value={(score / exam.questions.length) * 100} className="mt-4 h-3" /> */}
             </div>
-            <Button size="lg" onClick={() => router.push('/dashboard/exams')}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Exams List
-            </Button>
+
+            {pieData.length > 0 && (
+              <Card className="p-4">
+                <CardHeader>
+                    <CardTitle className="text-xl flex items-center justify-center">
+                        <BarChart3 className="mr-2 h-6 w-6 text-primary" />
+                        Results Summary
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[250px]">
+                    <PieChart>
+                      <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
+                      <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} labelLine={false} 
+                           label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+                              const RADIAN = Math.PI / 180;
+                              const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                              const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                              const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                              return (
+                                <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-medium">
+                                  {`${(percent * 100).toFixed(0)}%`}
+                                </text>
+                              );
+                            }}
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} 
+                                className="stroke-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                          />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ChartContainer>
+                   <div className="mt-4 flex justify-center space-x-4 text-sm text-muted-foreground">
+                    {pieData.map((entry) => (
+                      <div key={entry.name} className="flex items-center">
+                        <span style={{ backgroundColor: entry.fill }} className="w-3 h-3 rounded-full mr-2"></span>
+                        {entry.name}: {entry.value}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
+            <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 justify-center">
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => {
+                  // Placeholder for future implementation
+                  alert(`Detailed results for ${exam.title} would be shown here.`);
+                  // router.push(`/dashboard/exams/${exam.id}/results`);
+                }}
+              >
+                <ListChecks className="mr-2 h-4 w-4" />
+                View Detailed Results
+              </Button>
+              <Button size="lg" onClick={() => router.push('/dashboard/exams')}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Exams List
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -298,7 +393,6 @@ export default function TakeExamPage() {
                   <span>{formatTime(timeLeft)}</span>
                 </div>
               </div>
-              {/* Progress bar removed here */}
               <p className="text-sm text-muted-foreground mt-1 text-right">
                 Question {currentQuestionIndex + 1} of {exam.questions.length}
               </p>
@@ -410,32 +504,33 @@ export default function TakeExamPage() {
                   <CardTitle className="text-lg text-center font-semibold text-foreground">Questions</CardTitle>
               </CardHeader>
               <CardContent className="flex-1 overflow-y-auto p-3">
-                  <div className="grid grid-cols-6 gap-1.5"> {/* Changed to 6 columns, reduced gap */}
+                  <div className="grid grid-cols-6 gap-1.5"> 
                   {exam.questions.map((q, index) => {
                       const qId = q.id;
                       const isCurrent = index === currentQuestionIndex;
                       const isAnswered = !!userAnswers[qId];
                       const isConfused = !!confusedQuestions[qId];
 
-                      let combinedClassName = "aspect-square h-9 w-9 p-0 transition-all duration-150 ease-in-out text-xs"; // Reduced size
+                      let combinedClassName = "aspect-square h-9 w-9 p-0 transition-all duration-150 ease-in-out text-xs"; 
                       let variantStyle: "default" | "secondary" | "outline" | "destructive" = "outline";
 
                       if (isCurrent) {
                           variantStyle = "default";
                           combinedClassName += " ring-2 ring-offset-background ring-primary focus:ring-primary";
                           if (isConfused) {
+                              // If current and confused, primary style with destructive border is a good indicator.
+                              // Or, we could make it fully destructive if confused takes precedence.
+                              // For now, let primary (current) be dominant background.
                               combinedClassName += " border-2 border-destructive";
                           }
                       } else if (isConfused) {
                           variantStyle = "outline";
-                          combinedClassName += " border-destructive text-destructive hover:bg-destructive/10";
-                          if (isAnswered) {
-                              combinedClassName += " bg-destructive/5"; 
-                          }
+                          // If confused AND answered, it gets a light red background, otherwise just red border
+                          combinedClassName += ` border-destructive text-destructive hover:bg-destructive/10 ${isAnswered ? 'bg-destructive/5' : ''}`;
                       } else if (isAnswered) {
-                          variantStyle = "default"; 
+                          variantStyle = "default"; // Or secondary if default is too strong for "just answered"
                           combinedClassName += " bg-green-500 hover:bg-green-600 text-primary-foreground border-green-600";
-                      } else {
+                      } else { // Unanswered and not confused
                           variantStyle = "outline";
                           combinedClassName += " border-border hover:bg-muted/50";
                       }
@@ -465,7 +560,7 @@ export default function TakeExamPage() {
                       <p className="text-xs text-muted-foreground flex items-center">
                           <span className="inline-block w-3 h-3 rounded-full border border-destructive mr-2 align-middle"></span> Marked for Review
                       </p>
-                      <p className="text-xs text-muted-foreground flex items-center">
+                       <p className="text-xs text-muted-foreground flex items-center">
                           <span className="inline-block w-3 h-3 rounded-full border bg-card mr-2 align-middle"></span> Unanswered
                       </p>
                   </div>
@@ -476,3 +571,6 @@ export default function TakeExamPage() {
     </div>
   );
 }
+
+
+    
