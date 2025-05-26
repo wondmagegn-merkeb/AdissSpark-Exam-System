@@ -5,28 +5,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PlusCircle } from "lucide-react";
 
-export default function ManageInstitutionsAndLevelsPage() {
-  // Mock data for institutions and school levels
+export default function ManageInstitutionsPage() {
+  // Mock data for institutions
   const items = [
     { id: "uni1", name: "Addis Ababa University", type: "University", context: "Addis Ababa" },
     { id: "uni2", name: "Bahir Dar University", type: "University", context: "Bahir Dar" },
     { id: "col1", name: "Admas University College", type: "College", context: "Addis Ababa" },
-    { id: "sl1", name: "Grade 10", type: "School Level", context: "High School" },
-    { id: "sl2", name: "Grade 12", type: "School Level", context: "Preparatory" },
+    { id: "sch1", name: "Generic High School Example", type: "School", context: "National" },
   ];
 
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle className="text-2xl">Manage Institutions & School Levels</CardTitle>
+        <CardTitle className="text-2xl">Manage Institutions</CardTitle>
         <CardDescription>
-          Add, edit, or remove educational institutions (universities, colleges, schools) and general school grade levels.
+          Add, edit, or remove educational institutions (universities, colleges, schools).
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="mb-4">
           <Button>
-            <PlusCircle className="mr-2 h-4 w-4" /> Add New Item
+            <PlusCircle className="mr-2 h-4 w-4" /> Add New Institution
           </Button>
         </div>
         <Table>
@@ -55,7 +54,7 @@ export default function ManageInstitutionsAndLevelsPage() {
              {items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground">
-                  No items found.
+                  No institutions found.
                 </TableCell>
               </TableRow>
             )}

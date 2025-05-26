@@ -34,8 +34,8 @@ const userNavItems: NavItem[] = [
 
 const adminNavItems: NavItem[] = [
   { title: 'Manage Users', href: '/dashboard/admin/users', icon: Users },
-  { title: 'Manage Institutions & Levels', href: '/dashboard/admin/universities', icon: Building },
-  { title: 'Manage Departments', href: '/dashboard/admin/departments', icon: BookCopy },
+  { title: 'Manage Institutions', href: '/dashboard/admin/universities', icon: Building },
+  { title: 'Manage Departments & Grades', href: '/dashboard/admin/departments', icon: BookCopy },
   { title: 'Manage Courses & Subjects', href: '/dashboard/admin/courses', icon: ListChecks },
   { title: 'Manage Exams', href: '/dashboard/admin/exams', icon: Edit },
   { title: 'Manage Resources', href: '/dashboard/admin/resources', icon: Library },
@@ -193,4 +193,3 @@ const CardDescription = ({ className, ...props }: React.HTMLAttributes<HTMLParag
 const CardContent = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={`${className}`} {...props} />
 );
-
