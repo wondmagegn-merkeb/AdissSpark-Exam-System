@@ -31,6 +31,11 @@ const initialItems: Institution[] = [
   { id: "grade1", name: "Grade 9", type: "Grade Level", context: "Secondary School" },
   { id: "grade2", name: "Grade 10", type: "Grade Level", context: "Secondary School" },
   { id: "grade3", name: "Grade 12", type: "Grade Level", context: "Preparatory School" },
+  { id: "uni3", name: "Mekelle University", type: "University", context: "Mekelle" },
+  { id: "col2", name: "Unity University", type: "College", context: "Addis Ababa" },
+  { id: "sch2", name: "ABC Primary School", type: "School", context: "Regional" },
+  { id: "grade4", name: "Grade 1", type: "Grade Level", context: "Primary School" },
+  { id: "grade5", name: "Grade 11", type: "Grade Level", context: "Preparatory School" },
 ];
 
 const institutionSchema = z.object({
@@ -41,12 +46,12 @@ const institutionSchema = z.object({
 
 type InstitutionFormValues = z.infer<typeof institutionSchema>;
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 5; // Updated to 5 rows per page
 
 export default function ManageInstitutionsAndLevelsPage() {
   const [items, setItems] = useState<Institution[]>(initialItems);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: keyof Institution | null; direction: 'ascending' | 'descending' }>({ key: null, direction: 'ascending' });
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Institution | null; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' }); // Default sort by name
   const [currentPage, setCurrentPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -58,7 +63,8 @@ export default function ManageInstitutionsAndLevelsPage() {
   const filteredItems = useMemo(() => {
     return items.filter(item =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.context.toLowerCase().includes(searchTerm.toLowerCase())
+      item.context.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.type.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [items, searchTerm]);
 
@@ -91,6 +97,7 @@ export default function ManageInstitutionsAndLevelsPage() {
       direction = 'descending';
     }
     setSortConfig({ key, direction });
+    setCurrentPage(1); // Reset to first page on sort
   };
 
   const onSubmit = (data: InstitutionFormValues) => {
@@ -103,9 +110,9 @@ export default function ManageInstitutionsAndLevelsPage() {
     setIsDialogOpen(false);
   };
 
-  const renderSortArrow = (columnKey: keyof Institution) => {
-    if (sortConfig.key !== columnKey) return null;
-    return sortConfig.direction === 'ascending' ? '🔼' : '🔽';
+  const renderSortIcon = (columnKey: keyof Institution) => {
+    if (sortConfig.key !== columnKey) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30 group-hover:opacity-100" />;
+    return sortConfig.direction === 'ascending' ? <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-0" /> : <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-180" />;
   };
 
   return (
@@ -122,7 +129,7 @@ export default function ManageInstitutionsAndLevelsPage() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search by name or context..."
+              placeholder="Search..."
               className="pl-8 w-full"
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
@@ -131,14 +138,14 @@ export default function ManageInstitutionsAndLevelsPage() {
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
-                <PlusCircle className="mr-2 h-4 w-4" /> Add New Item
+                <PlusCircle className="mr-2 h-4 w-4" /> Add New Institution/Level
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
-                <DialogTitle>Add New Item</DialogTitle>
+                <DialogTitle>Add New Institution or Level</DialogTitle>
                 <DialogDescription>
-                  Fill in the details for the new institution or level.
+                  Fill in the details for the new item. Click save when you're done.
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit(onSubmit)}>
@@ -173,12 +180,12 @@ export default function ManageInstitutionsAndLevelsPage() {
 
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="context" className="text-right">Context/Location</Label>
-                    <Input id="context" {...register("context")} className="col-span-3" placeholder="e.g. Addis Ababa or Secondary School"/>
+                    <Input id="context" {...register("context")} className="col-span-3" placeholder="e.g. Addis Ababa or Preparatory"/>
                   </div>
                    {errors.context && <p className="text-sm text-destructive col-start-2 col-span-3">{errors.context.message}</p>}
                 </div>
                 <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                  <Button type="button" variant="outline" onClick={() => { setIsDialogOpen(false); reset(); }}>Cancel</Button>
                   <Button type="submit">Save Item</Button>
                 </DialogFooter>
               </form>
@@ -189,14 +196,14 @@ export default function ManageInstitutionsAndLevelsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
-              <TableHead onClick={() => requestSort('name')} className="cursor-pointer hover:bg-muted/50">
-                Name {renderSortArrow('name')}
+              <TableHead onClick={() => requestSort('name')} className="cursor-pointer group hover:bg-muted/50">
+                <div className="flex items-center">Name {renderSortIcon('name')}</div>
               </TableHead>
-              <TableHead onClick={() => requestSort('type')} className="cursor-pointer hover:bg-muted/50">
-                Type {renderSortArrow('type')}
+              <TableHead onClick={() => requestSort('type')} className="cursor-pointer group hover:bg-muted/50">
+                <div className="flex items-center">Type {renderSortIcon('type')}</div>
               </TableHead>
-              <TableHead onClick={() => requestSort('context')} className="cursor-pointer hover:bg-muted/50">
-                Location/Context {renderSortArrow('context')}
+              <TableHead onClick={() => requestSort('context')} className="cursor-pointer group hover:bg-muted/50">
+                <div className="flex items-center">Location/Context {renderSortIcon('context')}</div>
               </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -204,7 +211,7 @@ export default function ManageInstitutionsAndLevelsPage() {
           <TableBody>
             {paginatedItems.map((item) => (
               <TableRow key={item.id}>
-                <TableCell>{item.id}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{item.id}</TableCell>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.type}</TableCell>
                 <TableCell>{item.context}</TableCell>
@@ -220,15 +227,15 @@ export default function ManageInstitutionsAndLevelsPage() {
             ))}
             {paginatedItems.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground">
-                  No items found.
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  No items found matching your criteria.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
         {totalPages > 1 && (
-          <div className="flex justify-center items-center space-x-2 mt-4">
+          <div className="flex justify-center items-center space-x-2 mt-6">
             <Button
               variant="outline"
               size="sm"
@@ -261,3 +268,4 @@ export default function ManageInstitutionsAndLevelsPage() {
     </Card>
   );
 }
+
