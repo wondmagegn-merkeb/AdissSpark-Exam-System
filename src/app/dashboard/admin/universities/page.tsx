@@ -1,18 +1,15 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { PlusCircle, Edit, Trash2, ArrowUpDown, Search } from "lucide-react";
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 
 type InstitutionType = "University" | "College" | "School" | "Grade Level";
 
@@ -23,6 +20,7 @@ interface Institution {
   context: string; // e.g., Location for University/College, Associated School Type for Grade Level
 }
 
+// Mock data - in a real app, this would come from a database or global state
 const initialItems: Institution[] = [
   { id: "uni1", name: "Addis Ababa University", type: "University", context: "Addis Ababa" },
   { id: "uni2", name: "Bahir Dar University", type: "University", context: "Bahir Dar" },
@@ -38,27 +36,24 @@ const initialItems: Institution[] = [
   { id: "grade5", name: "Grade 11", type: "Grade Level", context: "Preparatory School" },
 ];
 
-const institutionSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  type: z.enum(["University", "College", "School", "Grade Level"], { required_error: "Please select a type." }),
-  context: z.string().min(2, { message: "Context/Location must be at least 2 characters." }),
-});
-
-type InstitutionFormValues = z.infer<typeof institutionSchema>;
-
-const ITEMS_PER_PAGE = 5; // Updated to 5 rows per page
+const ITEMS_PER_PAGE = 5;
 
 export default function ManageInstitutionsAndLevelsPage() {
   const [items, setItems] = useState<Institution[]>(initialItems);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: keyof Institution | null; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' }); // Default sort by name
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Institution | null; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
   const [currentPage, setCurrentPage] = useState(1);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const router = useRouter();
 
-  const { register, handleSubmit, control, formState: { errors }, reset } = useForm<InstitutionFormValues>({
-    resolver: zodResolver(institutionSchema),
-    defaultValues: { name: '', type: undefined, context: '' }
-  });
+  // Effect to potentially refresh data if items are added/edited on other pages and stored globally or via query params
+  // For now, this list is self-contained.
+  useEffect(() => {
+    // In a real app with a backend or global state, you might refetch or update items here.
+    // For example, if a new item was added, you could check a query param:
+    // const { itemAdded } = router.query;
+    // if (itemAdded) { /* refetch items */ }
+  }, [router]);
+
 
   const filteredItems = useMemo(() => {
     return items.filter(item =>
@@ -97,17 +92,15 @@ export default function ManageInstitutionsAndLevelsPage() {
       direction = 'descending';
     }
     setSortConfig({ key, direction });
-    setCurrentPage(1); // Reset to first page on sort
+    setCurrentPage(1);
   };
 
-  const onSubmit = (data: InstitutionFormValues) => {
-    const newItem: Institution = {
-      id: `item_${Date.now()}`,
-      ...data,
-    };
-    setItems(prevItems => [newItem, ...prevItems]);
-    reset();
-    setIsDialogOpen(false);
+  const handleDelete = (itemId: string) => {
+    setItems(prevItems => prevItems.filter(item => item.id !== itemId));
+    // If on last page and it becomes empty, go to previous page
+    if (paginatedItems.length === 1 && currentPage > 1 && (sortedItems.length -1) % ITEMS_PER_PAGE === 0) {
+        setCurrentPage(currentPage - 1);
+    }
   };
 
   const renderSortIcon = (columnKey: keyof Institution) => {
@@ -135,62 +128,11 @@ export default function ManageInstitutionsAndLevelsPage() {
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
             />
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" /> Add New Institution/Level
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add New Institution or Level</DialogTitle>
-                <DialogDescription>
-                  Fill in the details for the new item. Click save when you're done.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit(onSubmit)}>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="name" className="text-right">Name</Label>
-                    <Input id="name" {...register("name")} className="col-span-3" />
-                  </div>
-                  {errors.name && <p className="text-sm text-destructive col-start-2 col-span-3">{errors.name.message}</p>}
-                  
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="type" className="text-right">Type</Label>
-                    <Controller
-                      name="type"
-                      control={control}
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder="Select type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="University">University</SelectItem>
-                            <SelectItem value="College">College</SelectItem>
-                            <SelectItem value="School">School</SelectItem>
-                            <SelectItem value="Grade Level">Grade Level</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  </div>
-                   {errors.type && <p className="text-sm text-destructive col-start-2 col-span-3">{errors.type.message}</p>}
-
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="context" className="text-right">Context/Location</Label>
-                    <Input id="context" {...register("context")} className="col-span-3" placeholder="e.g. Addis Ababa or Preparatory"/>
-                  </div>
-                   {errors.context && <p className="text-sm text-destructive col-start-2 col-span-3">{errors.context.message}</p>}
-                </div>
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => { setIsDialogOpen(false); reset(); }}>Cancel</Button>
-                  <Button type="submit">Save Item</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <Button asChild>
+            <Link href="/dashboard/admin/universities/add">
+              <PlusCircle className="mr-2 h-4 w-4" /> Add New Institution/Level
+            </Link>
+          </Button>
         </div>
         <Table>
           <TableHeader>
@@ -215,13 +157,34 @@ export default function ManageInstitutionsAndLevelsPage() {
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.type}</TableCell>
                 <TableCell>{item.context}</TableCell>
-                <TableCell className="text-right">
-                  <Button variant="outline" size="sm" className="mr-2">
-                    <Edit className="mr-1 h-3 w-3" /> Edit
+                <TableCell className="text-right space-x-2">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/dashboard/admin/universities/edit/${item.id}`}>
+                      <Edit className="mr-1 h-3 w-3" /> Edit
+                    </Link>
                   </Button>
-                  <Button variant="destructive" size="sm" onClick={() => setItems(prev => prev.filter(i => i.id !== item.id))}>
-                    <Trash2 className="mr-1 h-3 w-3" /> Delete
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                        <Trash2 className="mr-1 h-3 w-3" /> Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the item:
+                          <br /><strong>{item.name} ({item.type})</strong>.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(item.id)}>
+                          Yes, delete it
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </TableCell>
               </TableRow>
             ))}
@@ -268,4 +231,3 @@ export default function ManageInstitutionsAndLevelsPage() {
     </Card>
   );
 }
-
