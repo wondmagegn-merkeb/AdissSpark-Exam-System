@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { Resource } from '@/lib/types';
+import type { Resource, User } from '@/lib/types';
 import { useAuth } from '@/hooks/useAuth';
 import { BookOpen, Video, FileText, Lock, Search, FilterX, Sparkles, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
@@ -15,6 +15,7 @@ import Link from 'next/link';
 
 const RESOURCE_TYPES = ["note", "video", "book"] as const;
 
+// These lists are used for fallback/broad filtering if specific department isn't matched
 const SCHOOL_SUBJECTS = [
   "Mathematics", "English", "Physics", "Chemistry", "Biology",
   "Amharic", "Social Studies", "Civics", "General Science", "History", "Geography"
@@ -35,6 +36,8 @@ const mockResources: Resource[] = [
   { id: 'res8', title: 'Ethiopian Civics and Ethical Education', type: 'note', description: 'Notes for Civics education based on the Ethiopian curriculum.', subjectOrCourse: 'Civics', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'civics education' },
   { id: 'res9', title: 'Microeconomics Principles', type: 'book', description: 'Core principles of microeconomics for university students.', subjectOrCourse: 'Business & Economics', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'economics textbook' },
   { id: 'res10', title: 'General Physics I Lectures', type: 'video', description: 'University-level physics lectures covering mechanics.', subjectOrCourse: 'Engineering', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'physics lecture' },
+  { id: 'res11', title: 'Advanced Software Engineering', type: 'book', description: 'Covers advanced topics in software engineering for CS students.', subjectOrCourse: 'Computer Science', isPremium: true, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'software engineering' },
+  { id: 'res12', title: 'Ethiopian Grade 5 Mathematics', type: 'note', description: 'Notes based on Ethiopian Grade 5 curriculum.', subjectOrCourse: 'Mathematics', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'primary math' },
 ];
 
 const getResourceTypeIcon = (type: Resource['type']) => {
@@ -50,32 +53,55 @@ export default function ResourcesPage() {
   const { user, isSubscribed } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<Resource['type'] | 'all'>('all');
-  const [selectedSubject, setSelectedSubject] = useState<string>('all');
-
-  const availableSubjectsOrCourses = useMemo(() => {
-    if (!user || !user.studentType) return [];
-    if (['university', 'college'].includes(user.studentType)) {
-      return HIGHER_ED_SUBJECTS;
-    }
-    return SCHOOL_SUBJECTS;
-  }, [user]);
 
   const filteredResources = useMemo(() => {
     return mockResources.filter(resource => {
       const typeMatch = selectedType === 'all' || resource.type === selectedType;
-      const subjectMatch = selectedSubject === 'all' || resource.subjectOrCourse === selectedSubject;
+      
+      let subjectOrCourseMatch = false;
+      if (user?.studentType === 'university' || user?.studentType === 'college') {
+        if (user.department && user.department !== 'Other') {
+          subjectOrCourseMatch = resource.subjectOrCourse === user.department;
+        } else {
+          // Fallback for 'Other' department or if department is not set
+          subjectOrCourseMatch = HIGHER_ED_SUBJECTS.includes(resource.subjectOrCourse);
+        }
+      } else if (user?.studentType && ['primary_school', 'secondary_school', 'high_school', 'preparatory_school'].includes(user.studentType)) {
+         // For school students, check if the resource's subject is a general school subject.
+         // A more advanced filter might check grade levels if resources are tagged that way.
+        subjectOrCourseMatch = SCHOOL_SUBJECTS.includes(resource.subjectOrCourse);
+      } else {
+        // If user type is not defined or doesn't fit, show all (or handle as per requirement)
+        subjectOrCourseMatch = true; 
+      }
+
       const searchTermMatch = searchTerm === '' ||
         resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         resource.description.toLowerCase().includes(searchTerm.toLowerCase());
-      return typeMatch && subjectMatch && searchTermMatch;
+        
+      return typeMatch && subjectOrCourseMatch && searchTermMatch;
     });
-  }, [selectedType, selectedSubject, searchTerm]);
+  }, [selectedType, searchTerm, user]);
 
   const handleClearFilters = () => {
     setSearchTerm('');
     setSelectedType('all');
-    setSelectedSubject('all');
   };
+  
+  const getRelevantSubjectContext = () => {
+    if (!user) return "all subjects";
+    if ((user.studentType === 'university' || user.studentType === 'college') && user.department && user.department !== 'Other') {
+      return `your department: ${user.department}`;
+    }
+    if (user.studentType === 'university' || user.studentType === 'college') {
+      return "higher education fields";
+    }
+    if (['primary_school', 'secondary_school', 'high_school', 'preparatory_school'].includes(user.studentType)) {
+        return "general school subjects";
+    }
+    return "all subjects";
+  };
+
 
   return (
     <div className="container mx-auto py-8">
@@ -84,7 +110,7 @@ export default function ResourcesPage() {
           Study Resources
         </h1>
         <p className="mt-2 text-lg text-muted-foreground">
-          Find notes, videos, and books to aid your learning.
+          Find notes, videos, and books tailored to {getRelevantSubjectContext()}.
         </p>
       </div>
 
@@ -105,7 +131,7 @@ export default function ResourcesPage() {
         <CardHeader>
           <CardTitle className="text-xl">Filter Resources</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -129,17 +155,6 @@ export default function ResourcesPage() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Subject/Course" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Subjects/Courses</SelectItem>
-              {availableSubjectsOrCourses.map(subject => (
-                <SelectItem key={subject} value={subject}>{subject}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
           <Button variant="outline" onClick={handleClearFilters} className="w-full lg:w-auto">
             <FilterX className="mr-2 h-4 w-4" /> Clear Filters
           </Button>
@@ -151,7 +166,9 @@ export default function ResourcesPage() {
             <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-xl font-semibold text-foreground">No Resources Found</p>
             <p className="text-muted-foreground">
-                Try adjusting your filters or check back later for new content.
+                No resources currently match your profile ({getRelevantSubjectContext()}) and selected filters.
+                <br />
+                Try adjusting your search or type filter, or check back later for new content.
             </p>
         </div>
       ) : (
@@ -209,4 +226,3 @@ export default function ResourcesPage() {
     </div>
   );
 }
-
