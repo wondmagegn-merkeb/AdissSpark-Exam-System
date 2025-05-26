@@ -7,18 +7,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ArrowLeft, FileText, Clock, AlertTriangle, CheckCircle2, Target, Info, Flag } from 'lucide-react';
 import type { Exam, Question } from '@/lib/types';
 
-// Mock exam data with questions - in a real app, you would fetch this
+// Mock exam data with questions
 const mockExams: Exam[] = [
   {
     id: 'model-1',
     title: 'Model Exam 1: General Knowledge',
     description: 'A comprehensive test covering various general knowledge topics.',
-    questionCount: 3, // Keep low for easy testing of all states
+    questionCount: 3,
     durationMinutes: 5,
     isPremium: false,
     questions: [
@@ -31,14 +30,13 @@ const mockExams: Exam[] = [
     id: 'model-2',
     title: 'Model Exam 2: Verbal Reasoning',
     description: 'Focuses on verbal reasoning, comprehension, and analytical skills.',
-    questionCount: 20, // Increased to test scrolling
-    durationMinutes: 20,
-    isPremium: false,
-    questions: Array.from({ length: 20 }, (_, i) => ({
+    questionCount: 100, // Increased to test scrolling
+    durationMinutes: 120, // Adjusted duration
+    questions: Array.from({ length: 100 }, (_, i) => ({
       id: `q2_${i + 1}`,
-      text: `Verbal Reasoning Question ${i + 1}: Choose the correct synonym for "ephemeral".`,
-      options: ['Lasting', 'Temporary', 'Beautiful', 'Strong'],
-      correctAnswer: 'Temporary',
+      text: `Verbal Reasoning Question ${i + 1}: Choose the correct synonym for "ephemeral". This is a longer question text to see how it wraps and if the layout holds up with more content. The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.`,
+      options: [`Lasting Option ${i+1}`, `Temporary Option ${i+1}`, `Beautiful Option ${i+1}`, `Strong Option ${i+1}`],
+      correctAnswer: `Temporary Option ${i+1}`,
       explanation: `Ephemeral means lasting for a very short time. So, temporary is the correct synonym. Question index ${i}`
     })),
   },
@@ -215,7 +213,7 @@ export default function TakeExamPage() {
               <p className="text-5xl font-bold text-primary">
                 {score} <span className="text-3xl text-muted-foreground">/ {exam.questions.length}</span>
               </p>
-              <Progress value={(score / exam.questions.length) * 100} className="mt-4 h-3" />
+              {/* <Progress value={(score / exam.questions.length) * 100} className="mt-4 h-3" /> */}
             </div>
             <Button size="lg" onClick={() => router.push('/dashboard/exams')}>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -281,194 +279,200 @@ export default function TakeExamPage() {
   }
 
   return (
-    <div className="flex h-screen">
-      {/* Main Exam Content Area */}
-      <div className="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 overflow-y-auto">
-        <Card className="w-full shadow-xl flex-1 flex flex-col">
-          <CardHeader className="border-b pb-4">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-2xl font-semibold text-foreground">{exam.title}</h2>
-              <div className="flex items-center text-lg font-medium text-primary">
-                <Clock className="mr-2 h-5 w-5" />
-                <span>{formatTime(timeLeft)}</span>
-              </div>
-            </div>
-            <Progress value={((currentQuestionIndex + 1) / exam.questions.length) * 100} className="w-full h-2" />
-            <p className="text-sm text-muted-foreground mt-2 text-right">
-              Question {currentQuestionIndex + 1} of {exam.questions.length}
-            </p>
-          </CardHeader>
-          <CardContent className="py-6 flex-1">
-            <div className="mb-6">
-              <div className="flex justify-between items-start mb-2">
-                <p className="text-lg font-medium text-foreground">Question {currentQuestionIndex + 1}:</p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleToggleConfused(currentQuestion.id)}
-                  className={`
-                    ${confusedQuestions[currentQuestion.id] ? 'text-destructive hover:bg-destructive/10 hover:text-destructive' : 'text-muted-foreground hover:text-foreground'}
-                    p-1 h-auto items-center
-                  `}
-                  aria-pressed={confusedQuestions[currentQuestion.id]}
-                  title={confusedQuestions[currentQuestion.id] ? "Unmark from review" : "Mark for review"}
-                >
-                  <Flag className={`h-4 w-4 mr-1 ${confusedQuestions[currentQuestion.id] ? 'fill-destructive text-destructive' : ''}`} />
-                  <span className="text-xs">{confusedQuestions[currentQuestion.id] ? 'Marked' : 'Review'}</span>
-                </Button>
-              </div>
-              <p className="text-xl text-foreground/90">{currentQuestion.text}</p>
-            </div>
-            
-            <RadioGroup
-              value={userAnswers[currentQuestion.id] || ""}
-              onValueChange={(value) => handleAnswerSelect(currentQuestion.id, value)}
-              className="space-y-3 mb-8"
-            >
-              {currentQuestion.options.map((option, index) => (
-                <div key={index} className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
-                  <RadioGroupItem value={option} id={`${currentQuestion.id}-option-${index}`} />
-                  <Label htmlFor={`${currentQuestion.id}-option-${index}`} className="text-md flex-1 cursor-pointer">{option}</Label>
+    <div className="flex flex-col min-h-screen bg-muted/40 p-4 space-y-4">
+      <Card className="w-full shadow-md">
+        <CardHeader className="py-3">
+          <CardTitle className="text-xl text-center font-semibold text-primary">ADDISSPARK Online Exam Center</CardTitle>
+        </CardHeader>
+      </Card>
+
+      <div className="flex flex-1 gap-4 overflow-hidden">
+        {/* Main Exam Content Area */}
+        <div className="flex-1 flex flex-col overflow-y-auto">
+          <Card className="w-full shadow-xl flex-1 flex flex-col">
+            <CardHeader className="border-b pb-4">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-2xl font-semibold text-foreground">{exam.title}</h2>
+                <div className="flex items-center text-lg font-medium text-primary">
+                  <Clock className="mr-2 h-5 w-5" />
+                  <span>{formatTime(timeLeft)}</span>
                 </div>
-              ))}
-            </RadioGroup>
-          </CardContent>
-          <CardFooter className="border-t pt-6 flex justify-between items-center">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Quit Exam
+              </div>
+              {/* Progress bar removed here */}
+              <p className="text-sm text-muted-foreground mt-1 text-right">
+                Question {currentQuestionIndex + 1} of {exam.questions.length}
+              </p>
+            </CardHeader>
+            <CardContent className="py-6 flex-1">
+              <div className="mb-6">
+                <div className="flex justify-between items-start mb-2">
+                  <p className="text-lg font-medium text-foreground">Question {currentQuestionIndex + 1}:</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleToggleConfused(currentQuestion.id)}
+                    className={`
+                      ${confusedQuestions[currentQuestion.id] ? 'text-destructive hover:bg-destructive/10 hover:text-destructive' : 'text-muted-foreground hover:text-foreground'}
+                      p-1 h-auto items-center
+                    `}
+                    aria-pressed={confusedQuestions[currentQuestion.id]}
+                    title={confusedQuestions[currentQuestion.id] ? "Unmark from review" : "Mark for review"}
+                  >
+                    <Flag className={`h-4 w-4 mr-1 ${confusedQuestions[currentQuestion.id] ? 'fill-destructive text-destructive' : ''}`} />
+                    <span className="text-xs">{confusedQuestions[currentQuestion.id] ? 'Marked' : 'Review'}</span>
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure you want to quit?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Your progress will not be saved and you will have to start over.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => router.push('/dashboard/exams')} className="bg-destructive hover:bg-destructive/90">
-                      Quit Exam
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            
-            <div className="flex items-center space-x-2">
-              {currentQuestionIndex > 0 && (
-                <Button onClick={handlePreviousQuestion} variant="outline" size="lg">
-                  Previous Question
-                </Button>
-              )}
-              {currentQuestionIndex < exam.questions.length - 1 ? (
-                <Button onClick={handleNextQuestion} size="lg">
-                  Next Question
-                </Button>
-              ) : (
-                <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
+                </div>
+                <p className="text-xl text-foreground/90">{currentQuestion.text}</p>
+              </div>
+              
+              <RadioGroup
+                value={userAnswers[currentQuestion.id] || ""}
+                onValueChange={(value) => handleAnswerSelect(currentQuestion.id, value)}
+                className="space-y-3 mb-8"
+              >
+                {currentQuestion.options.map((option, index) => (
+                  <div key={index} className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value={option} id={`${currentQuestion.id}-option-${index}`} />
+                    <Label htmlFor={`${currentQuestion.id}-option-${index}`} className="text-md flex-1 cursor-pointer">{option}</Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </CardContent>
+            <CardFooter className="border-t pt-6 flex justify-between items-center">
+                <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button
-                      size="lg"
-                      className="bg-green-600 hover:bg-green-700 text-white" 
-                      onClick={() => setShowSubmitConfirm(true)}
-                    >
-                      <Target className="mr-2 h-5 w-5" />
-                      Submit Exam
+                    <Button variant="outline" className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive">
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Quit Exam
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Confirm Submission</AlertDialogTitle>
+                      <AlertDialogTitle>Are you sure you want to quit?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to submit your answers? You cannot change them after submission.
+                        Your progress will not be saved and you will have to start over.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleSubmitExam}>Submit</AlertDialogAction>
+                      <AlertDialogAction onClick={() => router.push('/dashboard/exams')} className="bg-destructive hover:bg-destructive/90">
+                        Quit Exam
+                      </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-              )}
-            </div>
-          </CardFooter>
-        </Card>
-      </div>
-
-      {/* Question Navigation Panel */}
-      <aside className="w-72 border-l bg-background p-3 hidden md:flex md:flex-col max-h-screen">
-        <Card className="flex-1 flex flex-col overflow-hidden shadow-md">
-            <CardHeader className="py-3 px-4 border-b">
-                <CardTitle className="text-lg text-center font-semibold text-foreground">Questions</CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto p-3">
-                <div className="grid grid-cols-5 gap-2">
-                {exam.questions.map((q, index) => {
-                    const qId = q.id;
-                    const isCurrent = index === currentQuestionIndex;
-                    const isAnswered = !!userAnswers[qId];
-                    const isConfused = !!confusedQuestions[qId];
-
-                    let combinedClassName = "aspect-square h-10 w-10 p-0 transition-all duration-150 ease-in-out text-xs";
-                    let variantStyle: "default" | "secondary" | "outline" | "destructive" = "outline";
-
-                    if (isCurrent) {
-                        variantStyle = "default";
-                        combinedClassName += " ring-2 ring-offset-background ring-primary focus:ring-primary";
-                        if (isConfused) {
-                            combinedClassName += " border-2 border-destructive"; // Red border for current & confused
-                        }
-                    } else if (isConfused) {
-                        variantStyle = "outline";
-                        combinedClassName += " border-destructive text-destructive hover:bg-destructive/10";
-                        if (isAnswered) {
-                            combinedClassName += " bg-destructive/5"; // Light red fill if answered & confused
-                        }
-                    } else if (isAnswered) {
-                        variantStyle = "default"; // Use default for theming, then style green
-                        combinedClassName += " bg-green-500 hover:bg-green-600 text-primary-foreground border-green-600";
-                    } else {
-                        // Unanswered, not confused, not current
-                        variantStyle = "outline";
-                        combinedClassName += " border-border hover:bg-muted/50";
-                    }
-
-                    return (
-                    <Button
-                        key={qId}
-                        variant={variantStyle}
-                        className={combinedClassName}
-                        onClick={() => handleQuestionNavigation(index)}
-                        disabled={examFinished}
-                    >
-                        {index + 1}
-                    </Button>
-                    );
-                })}
-                </div>
-            </CardContent>
-            <CardFooter className="py-3 px-4 border-t">
-                <div className="w-full space-y-1">
-                    <p className="text-xs text-muted-foreground flex items-center">
-                        <span className="inline-block w-3 h-3 rounded-full bg-primary mr-2 align-middle"></span> Current
-                    </p>
-                    <p className="text-xs text-muted-foreground flex items-center">
-                        <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-2 align-middle"></span> Answered
-                    </p>
-                    <p className="text-xs text-muted-foreground flex items-center">
-                        <span className="inline-block w-3 h-3 rounded-full border border-destructive mr-2 align-middle"></span> Marked for Review
-                    </p>
-                    <p className="text-xs text-muted-foreground flex items-center">
-                        <span className="inline-block w-3 h-3 rounded-full border bg-card mr-2 align-middle"></span> Unanswered
-                    </p>
-                </div>
+              
+              <div className="flex items-center space-x-2">
+                {currentQuestionIndex > 0 && (
+                  <Button onClick={handlePreviousQuestion} variant="outline" size="lg">
+                    Previous Question
+                  </Button>
+                )}
+                {currentQuestionIndex < exam.questions.length - 1 ? (
+                  <Button onClick={handleNextQuestion} size="lg">
+                    Next Question
+                  </Button>
+                ) : (
+                  <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="lg"
+                        className="bg-green-600 hover:bg-green-700 text-white" 
+                        onClick={() => setShowSubmitConfirm(true)}
+                      >
+                        <Target className="mr-2 h-5 w-5" />
+                        Submit Exam
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm Submission</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to submit your answers? You cannot change them after submission.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleSubmitExam}>Submit</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
             </CardFooter>
-        </Card>
-      </aside>
+          </Card>
+        </div>
+
+        {/* Question Navigation Panel */}
+        <aside className="w-80 border-l bg-background p-0 hidden md:flex md:flex-col max-h-[calc(100vh-8rem)]"> {/* Adjusted width and max-height */}
+          <Card className="flex-1 flex flex-col overflow-hidden shadow-md">
+              <CardHeader className="py-3 px-4 border-b">
+                  <CardTitle className="text-lg text-center font-semibold text-foreground">Questions</CardTitle>
+              </CardHeader>
+              <CardContent className="flex-1 overflow-y-auto p-3">
+                  <div className="grid grid-cols-6 gap-1.5"> {/* Changed to 6 columns, reduced gap */}
+                  {exam.questions.map((q, index) => {
+                      const qId = q.id;
+                      const isCurrent = index === currentQuestionIndex;
+                      const isAnswered = !!userAnswers[qId];
+                      const isConfused = !!confusedQuestions[qId];
+
+                      let combinedClassName = "aspect-square h-9 w-9 p-0 transition-all duration-150 ease-in-out text-xs"; // Reduced size
+                      let variantStyle: "default" | "secondary" | "outline" | "destructive" = "outline";
+
+                      if (isCurrent) {
+                          variantStyle = "default";
+                          combinedClassName += " ring-2 ring-offset-background ring-primary focus:ring-primary";
+                          if (isConfused) {
+                              combinedClassName += " border-2 border-destructive";
+                          }
+                      } else if (isConfused) {
+                          variantStyle = "outline";
+                          combinedClassName += " border-destructive text-destructive hover:bg-destructive/10";
+                          if (isAnswered) {
+                              combinedClassName += " bg-destructive/5"; 
+                          }
+                      } else if (isAnswered) {
+                          variantStyle = "default"; 
+                          combinedClassName += " bg-green-500 hover:bg-green-600 text-primary-foreground border-green-600";
+                      } else {
+                          variantStyle = "outline";
+                          combinedClassName += " border-border hover:bg-muted/50";
+                      }
+
+                      return (
+                      <Button
+                          key={qId}
+                          variant={variantStyle}
+                          className={combinedClassName}
+                          onClick={() => handleQuestionNavigation(index)}
+                          disabled={examFinished}
+                      >
+                          {index + 1}
+                      </Button>
+                      );
+                  })}
+                  </div>
+              </CardContent>
+              <CardFooter className="py-3 px-4 border-t">
+                  <div className="w-full space-y-1">
+                      <p className="text-xs text-muted-foreground flex items-center">
+                          <span className="inline-block w-3 h-3 rounded-full bg-primary mr-2 align-middle"></span> Current
+                      </p>
+                      <p className="text-xs text-muted-foreground flex items-center">
+                          <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-2 align-middle"></span> Answered
+                      </p>
+                      <p className="text-xs text-muted-foreground flex items-center">
+                          <span className="inline-block w-3 h-3 rounded-full border border-destructive mr-2 align-middle"></span> Marked for Review
+                      </p>
+                      <p className="text-xs text-muted-foreground flex items-center">
+                          <span className="inline-block w-3 h-3 rounded-full border bg-card mr-2 align-middle"></span> Unanswered
+                      </p>
+                  </div>
+              </CardFooter>
+          </Card>
+        </aside>
+      </div>
     </div>
   );
 }
-
