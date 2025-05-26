@@ -77,8 +77,8 @@ export default function ExamsPage() {
           <AlertTitle className="text-primary">Unlock Premium Exams!</AlertTitle>
           <AlertDescription>
             Upgrade to a premium subscription to access all exams and maximize your preparation.
-            <Button variant="link" className="p-0 h-auto ml-1 text-primary hover:underline" onClick={() => { /* ideally trigger upgrade flow */ alert("Redirecting to upgrade page..."); }}>
-              Upgrade Now
+            <Button variant="link" className="p-0 h-auto ml-1 text-primary hover:underline" asChild>
+              <Link href="/dashboard/payment">Upgrade Now</Link>
             </Button>
           </AlertDescription>
         </Alert>
@@ -131,9 +131,11 @@ export default function ExamsPage() {
                       <Link href={`/dashboard/exams/${exam.id}/take`}>Start Exam</Link>
                     </Button>
                   ) : (
-                    <Button className="w-full" disabled>
-                      <Lock className="mr-2 h-4 w-4" />
-                      Upgrade to Access
+                    <Button className="w-full" asChild>
+                      <Link href="/dashboard/payment">
+                        <Lock className="mr-2 h-4 w-4" />
+                        Upgrade to Access
+                      </Link>
                     </Button>
                   )}
                 </CardFooter>

@@ -71,9 +71,11 @@ export function DashboardSidebar() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <Button size="sm" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" onClick={toggleSubscription}>
-                <CreditCard className="mr-2 h-4 w-4" />
-                Upgrade to Premium
+              <Button size="sm" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" asChild>
+                <Link href="/dashboard/payment">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Upgrade to Premium
+                </Link>
               </Button>
             </CardContent>
           </Card>

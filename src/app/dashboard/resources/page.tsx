@@ -166,7 +166,7 @@ export default function ResourcesPage() {
           <AlertDescription>
             Upgrade to a premium subscription to access all exclusive content.
             <Button variant="link" className="p-0 h-auto ml-1 text-primary hover:underline" asChild>
-                <Link href="/dashboard/settings">Upgrade Now</Link>
+                <Link href="/dashboard/payment">Upgrade Now</Link>
             </Button>
           </AlertDescription>
         </Alert>
@@ -276,9 +276,11 @@ export default function ResourcesPage() {
                       </Link>
                     </Button>
                   ) : (
-                    <Button className="w-full" disabled>
-                      <Lock className="mr-2 h-4 w-4" />
-                      Upgrade to Access
+                    <Button className="w-full" asChild>
+                      <Link href="/dashboard/payment">
+                        <Lock className="mr-2 h-4 w-4" />
+                        Upgrade to Access
+                      </Link>
                     </Button>
                   )}
                 </CardFooter>

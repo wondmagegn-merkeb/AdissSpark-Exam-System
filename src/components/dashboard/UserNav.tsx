@@ -60,9 +60,11 @@ export function UserNav() {
             </Link>
           </DropdownMenuItem>
           {!isSubscribed && (
-            <DropdownMenuItem onClick={toggleSubscription}>
-              <CreditCard className="mr-2 h-4 w-4" />
-              <span>Upgrade to Premium</span>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/payment">
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Upgrade to Premium</span>
+              </Link>
             </DropdownMenuItem>
           )}
           {isSubscribed && (
