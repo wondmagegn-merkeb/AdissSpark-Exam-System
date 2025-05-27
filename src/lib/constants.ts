@@ -5,6 +5,8 @@ import type { StudentTypeFromRegistrationForm } from '@/lib/types';
 
 export const INSTITUTIONS_STORAGE_KEY = 'admin_institutions_list';
 export const DEPARTMENTS_GRADES_STORAGE_KEY = 'admin_departments_grades_list';
+export const ADMIN_EXAMS_STORAGE_KEY = 'admin_exams_list';
+export const ADMIN_RESOURCES_STORAGE_KEY = 'admin_resources_list';
 
 
 // Used in Registration Form for the dropdown and Zod schema
@@ -37,3 +39,5 @@ export const STUDENT_TYPE_FORM_TO_KEY_MAP: Record<StudentTypeFromRegistrationFor
   "College": "college",
   "University": "university",
 };
+
+export const RESOURCE_ADMIN_TYPES: Resource['type'][] = ["note", "video", "book"];
