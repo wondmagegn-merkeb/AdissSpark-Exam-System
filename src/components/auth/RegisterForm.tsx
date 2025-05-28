@@ -14,11 +14,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
-import type { Institution } from '@/lib/types';
-import { INSTITUTIONS_STORAGE_KEY, STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM, STUDENT_TYPE_TO_ADMIN_INSTITUTION_TYPE_MAP, type StudentTypeFromRegistrationForm } from '@/lib/constants';
+import type { Institution, DepartmentOrGradeEntry, StudentTypeFromRegistrationForm } from '@/lib/types';
+import { INSTITUTIONS_STORAGE_KEY, STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM, STUDENT_TYPE_TO_ADMIN_INSTITUTION_TYPE_MAP, DEPARTMENTS_GRADES_STORAGE_KEY } from '@/lib/constants';
 
 const GENDERS = ["male", "female", "other", "prefer_not_to_say"] as const;
-const DEPARTMENTS = ["Computer Science", "Software Engineering", "Electrical Engineering", "Civil Engineering", "Mechanical Engineering", "Medicine", "Nursing", "Pharmacy", "Economics", "Management", "Accounting", "Law", "Other"] as const;
+// DEPARTMENTS constant removed, will be populated from localStorage
 
 const baseSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -28,7 +28,6 @@ const baseSchema = z.object({
   gender: z.enum(GENDERS, {
     required_error: "Please select your gender.",
   }),
-  // studentType field removed from baseSchema to be defined as literal in each union part
 });
 
 const schoolSchemaFields = {
@@ -40,53 +39,21 @@ const schoolSchemaFields = {
 const primarySchoolStudentSchema = baseSchema.extend({
   studentType: z.literal(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[0]), // "Primary School"
   ...schoolSchemaFields,
-}).superRefine((data, ctx) => {
-  if (data.schoolNameSelection === "Other" && (!data.otherSchoolName || data.otherSchoolName.trim().length < 2)) {
-    ctx.addIssue({
-      path: ["otherSchoolName"],
-      message: "Please specify your school name (min 2 chars).",
-      code: z.ZodIssueCode.custom
-    });
-  }
 });
 
 const secondarySchoolStudentSchema = baseSchema.extend({
   studentType: z.literal(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[1]), // "Secondary School"
   ...schoolSchemaFields,
-}).superRefine((data, ctx) => {
-  if (data.schoolNameSelection === "Other" && (!data.otherSchoolName || data.otherSchoolName.trim().length < 2)) {
-    ctx.addIssue({
-      path: ["otherSchoolName"],
-      message: "Please specify your school name (min 2 chars).",
-      code: z.ZodIssueCode.custom
-    });
-  }
 });
 
 const highSchoolStudentSchema = baseSchema.extend({
   studentType: z.literal(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[2]), // "High School"
   ...schoolSchemaFields,
-}).superRefine((data, ctx) => {
-  if (data.schoolNameSelection === "Other" && (!data.otherSchoolName || data.otherSchoolName.trim().length < 2)) {
-    ctx.addIssue({
-      path: ["otherSchoolName"],
-      message: "Please specify your school name (min 2 chars).",
-      code: z.ZodIssueCode.custom
-    });
-  }
 });
 
 const preparatorySchoolStudentSchema = baseSchema.extend({
   studentType: z.literal(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[3]), // "Preparatory School"
   ...schoolSchemaFields,
-}).superRefine((data, ctx) => {
-  if (data.schoolNameSelection === "Other" && (!data.otherSchoolName || data.otherSchoolName.trim().length < 2)) {
-    ctx.addIssue({
-      path: ["otherSchoolName"],
-      message: "Please specify your school name (min 2 chars).",
-      code: z.ZodIssueCode.custom
-    });
-  }
 });
 
 const collegeStudentSchema = baseSchema.extend({
@@ -113,22 +80,37 @@ const registerSchema = z.discriminatedUnion("studentType", [
   preparatorySchoolStudentSchema,
   collegeStudentSchema,
   universityStudentSchema,
-], { errorMap: (issue, ctx) => {
+], { 
+  errorMap: (issue, ctx) => {
     if (issue.code === z.ZodIssueCode.invalid_union_discriminator) {
       // This means the studentType was not one of the expected literals
       return { message: 'Please select your student type.' };
     }
     return { message: ctx.defaultError };
-  }}).superRefine((data, ctx) => {
-  if (data.studentType === "University" || data.studentType === "College") {
-    if (data.institutionNameSelection === "Other" && (!data.otherInstitutionName || data.otherInstitutionName.trim().length < 2)) {
+  }
+}).superRefine((data, ctx) => {
+  // Refinement for "Other" school name
+  if (["Primary School", "Secondary School", "High School", "Preparatory School"].includes(data.studentType)) {
+    const schoolData = data as Extract<RegisterFormValues, { studentType: "Primary School" | "Secondary School" | "High School" | "Preparatory School" }>;
+    if (schoolData.schoolNameSelection === "Other" && (!schoolData.otherSchoolName || schoolData.otherSchoolName.trim().length < 2)) {
       ctx.addIssue({
-        path: ["otherInstitutionName"],
-        message: `Please specify your ${data.studentType.toLowerCase()} name (min 2 chars).`,
+        path: ["otherSchoolName"],
+        message: "Please specify your school name (min 2 chars).",
         code: z.ZodIssueCode.custom
       });
     }
-    if (data.departmentSelection === "Other" && (!data.otherDepartment || data.otherDepartment.trim().length < 2)) {
+  }
+  // Refinement for "Other" institution/department for University/College
+  if (data.studentType === "University" || data.studentType === "College") {
+    const higherEdData = data as Extract<RegisterFormValues, { studentType: "University" | "College" }>;
+    if (higherEdData.institutionNameSelection === "Other" && (!higherEdData.otherInstitutionName || higherEdData.otherInstitutionName.trim().length < 2)) {
+      ctx.addIssue({
+        path: ["otherInstitutionName"],
+        message: `Please specify your ${higherEdData.studentType.toLowerCase()} name (min 2 chars).`,
+        code: z.ZodIssueCode.custom
+      });
+    }
+    if (higherEdData.departmentSelection === "Other" && (!higherEdData.otherDepartment || higherEdData.otherDepartment.trim().length < 2)) {
       ctx.addIssue({
         path: ["otherDepartment"],
         message: "Please specify your department name (min 2 chars).",
@@ -144,6 +126,7 @@ export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const { register: registerUser } = useAuth();
   const [allAdminInstitutions, setAllAdminInstitutions] = useState<Institution[]>([]);
+  const [availableDepartments, setAvailableDepartments] = useState<string[]>([]);
   
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -153,7 +136,7 @@ export function RegisterForm() {
       email: '',
       password: '',
       gender: undefined,
-      studentType: undefined, // Important: studentType starts as undefined
+      studentType: undefined, 
       // Fields for University/College
       institutionNameSelection: undefined,
       otherInstitutionName: '',
@@ -167,16 +150,32 @@ export function RegisterForm() {
   });
 
   useEffect(() => {
-    const storedItems = localStorage.getItem(INSTITUTIONS_STORAGE_KEY);
-    if (storedItems) {
+    const storedInstitutions = localStorage.getItem(INSTITUTIONS_STORAGE_KEY);
+    if (storedInstitutions) {
       try {
-        setAllAdminInstitutions(JSON.parse(storedItems));
+        setAllAdminInstitutions(JSON.parse(storedInstitutions));
       } catch (e) {
         console.error("Failed to parse institutions from localStorage:", e);
         setAllAdminInstitutions([]); 
       }
     } else {
       setAllAdminInstitutions([]); 
+    }
+
+    const storedDepartmentsAndGrades = localStorage.getItem(DEPARTMENTS_GRADES_STORAGE_KEY);
+    if (storedDepartmentsAndGrades) {
+      try {
+        const parsedItems: DepartmentOrGradeEntry[] = JSON.parse(storedDepartmentsAndGrades);
+        const higherEdDepartments = parsedItems
+          .filter(item => item.type === "University" || item.type === "College")
+          .map(item => item.name);
+        setAvailableDepartments([...new Set(higherEdDepartments)].sort()); // Unique and sorted
+      } catch (e) {
+        console.error("Failed to parse departments/grades from localStorage:", e);
+        setAvailableDepartments([]);
+      }
+    } else {
+      setAvailableDepartments([]);
     }
   }, []);
 
@@ -191,14 +190,14 @@ export function RegisterForm() {
   }, [watchedStudentType]);
 
   const relevantInstitutionsForDropdown = useMemo(() => {
-    if (!watchedStudentType) return [];
-    const targetAdminType = STUDENT_TYPE_TO_ADMIN_INSTITUTION_TYPE_MAP[watchedStudentType as StudentTypeFromRegistrationForm]; // Cast needed as watchedStudentType can be undefined initially
-    if (!targetAdminType) return [];
+    if (!watchedStudentType) return ["Other"]; // Default to "Other" if no type selected
+    const targetAdminType = STUDENT_TYPE_TO_ADMIN_INSTITUTION_TYPE_MAP[watchedStudentType as StudentTypeFromRegistrationForm];
+    if (!targetAdminType) return ["Other"];
     
-    return allAdminInstitutions
+    const activeInstitutions = allAdminInstitutions
         .filter(inst => inst.type === targetAdminType && inst.status === 'active')
-        .map(inst => inst.name)
-        .concat("Other");
+        .map(inst => inst.name);
+    return activeInstitutions.length > 0 ? activeInstitutions.concat("Other") : ["Other"];
   }, [watchedStudentType, allAdminInstitutions]);
 
 
@@ -206,12 +205,12 @@ export function RegisterForm() {
     setIsLoading(true);
     console.log("Registration Data:", data);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    // Casting data because the registerUser function in AuthContext expects a slightly different shape for studentType.
-    // This assumes registerUser handles the conversion if necessary, or its type needs to align with RegisterFormValues.
-    registerUser(data as any); 
-    // setIsLoading(false); // Removed as registerUser redirects
+    registerUser(data); 
   }
 
+  const departmentOptionsForDropdown = useMemo(() => {
+    return availableDepartments.length > 0 ? availableDepartments.concat("Other") : ["Other"];
+  }, [availableDepartments]);
 
   return (
     <Card className="w-full max-w-lg shadow-xl">
@@ -305,8 +304,8 @@ export function RegisterForm() {
                 <FormItem>
                   <FormLabel>{studentTypeLabel}</FormLabel>
                   <Select onValueChange={(value) => {
-                      field.onChange(value as StudentTypeFromRegistrationForm); // Ensure value is of the correct type
-                      // Reset dependent fields when student type changes
+                      const studentTypeValue = value as StudentTypeFromRegistrationForm | undefined;
+                      field.onChange(studentTypeValue); 
                       form.setValue("institutionNameSelection" as any, undefined);
                       form.setValue("otherInstitutionName" as any, '');
                       form.setValue("departmentSelection" as any, undefined);
@@ -314,7 +313,7 @@ export function RegisterForm() {
                       form.setValue("schoolNameSelection" as any, undefined);
                       form.setValue("otherSchoolName" as any, '');
                       form.setValue("gradeLevel" as any, '');
-                      form.clearErrors(); // Clear all errors to re-evaluate
+                      form.clearErrors(); 
                   }} value={field.value} disabled={isLoading}>
                     <FormControl>
                       <SelectTrigger>
@@ -337,7 +336,7 @@ export function RegisterForm() {
             {/* University or College Fields */}
             {(watchedStudentType === STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[5] || // University
               watchedStudentType === STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[4]    // College
-            ) && form.getValues().studentType && ( // Ensure studentType is defined before rendering these
+            ) && form.getValues().studentType && ( 
               <>
                 <FormField
                   control={form.control}
@@ -354,8 +353,8 @@ export function RegisterForm() {
                         <SelectContent>
                           {relevantInstitutionsForDropdown.length > 1 || (relevantInstitutionsForDropdown.length === 1 && relevantInstitutionsForDropdown[0] !== "Other") 
                             ? relevantInstitutionsForDropdown.map(inst => <SelectItem key={inst} value={inst}>{inst}</SelectItem>) 
-                            : <SelectItem value="Other" disabled={relevantInstitutionsForDropdown.length === 0 && relevantInstitutionsForDropdown[0] !== "Other"}>Other</SelectItem> }
-                           {(relevantInstitutionsForDropdown.length === 0 || (relevantInstitutionsForDropdown.length === 1 && relevantInstitutionsForDropdown[0] === "Other")) && <SelectItem value="no-active" disabled>No active {watchedStudentType?.toLowerCase()}s listed. Select Other.</SelectItem>}
+                            : <SelectItem value="Other" disabled={relevantInstitutionsForDropdown.length === 1 && relevantInstitutionsForDropdown[0] !== "Other"}>Other</SelectItem> }
+                           {(relevantInstitutionsForDropdown.length === 1 && relevantInstitutionsForDropdown[0] === "Other") && <SelectItem value="no-active" disabled>No active {watchedStudentType?.toLowerCase()}s listed. Select Other.</SelectItem>}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -390,7 +389,10 @@ export function RegisterForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {DEPARTMENTS.map(dep => <SelectItem key={dep} value={dep}>{dep}</SelectItem>)}
+                          {departmentOptionsForDropdown.length > 1 || (departmentOptionsForDropdown.length === 1 && departmentOptionsForDropdown[0] !== "Other")
+                            ? departmentOptionsForDropdown.map(dep => <SelectItem key={dep} value={dep}>{dep}</SelectItem>)
+                            : <SelectItem value="Other" disabled={departmentOptionsForDropdown.length === 1 && departmentOptionsForDropdown[0] !== "Other"}>Other</SelectItem>}
+                          {(departmentOptionsForDropdown.length === 1 && departmentOptionsForDropdown[0] === "Other") && <SelectItem value="no-active" disabled>No departments listed. Select Other.</SelectItem>}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -416,11 +418,11 @@ export function RegisterForm() {
             )}
 
             {/* Primary, Secondary, High School, Preparatory Student Fields */}
-            {(watchedStudentType === STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[0] || // Primary
-              watchedStudentType === STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[1] || // Secondary
-              watchedStudentType === STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[2] || // High School
-              watchedStudentType === STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[3]    // Preparatory
-            ) && form.getValues().studentType && ( // Ensure studentType is defined
+            {(watchedStudentType === STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[0] || 
+              watchedStudentType === STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[1] || 
+              watchedStudentType === STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[2] || 
+              watchedStudentType === STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[3]    
+            ) && form.getValues().studentType && ( 
               <>
                 <FormField
                   control={form.control}
@@ -437,8 +439,8 @@ export function RegisterForm() {
                         <SelectContent>
                            {relevantInstitutionsForDropdown.length > 1 || (relevantInstitutionsForDropdown.length === 1 && relevantInstitutionsForDropdown[0] !== "Other") 
                             ? relevantInstitutionsForDropdown.map(school => (<SelectItem key={school} value={school}>{school}</SelectItem>)) 
-                            : <SelectItem value="Other" disabled={relevantInstitutionsForDropdown.length === 0 && relevantInstitutionsForDropdown[0] !== "Other"}>Other</SelectItem> }
-                           {(relevantInstitutionsForDropdown.length === 0 || (relevantInstitutionsForDropdown.length === 1 && relevantInstitutionsForDropdown[0] === "Other")) && <SelectItem value="no-active" disabled>No active schools listed. Select Other.</SelectItem>}
+                            : <SelectItem value="Other" disabled={relevantInstitutionsForDropdown.length === 1 && relevantInstitutionsForDropdown[0] !== "Other"}>Other</SelectItem> }
+                           {(relevantInstitutionsForDropdown.length === 1 && relevantInstitutionsForDropdown[0] === "Other") && <SelectItem value="no-active" disabled>No active schools listed. Select Other.</SelectItem>}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -494,6 +496,3 @@ export function RegisterForm() {
     </Card>
   );
 }
-
-
-    
