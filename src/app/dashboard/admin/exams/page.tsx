@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, Lock, FileText as FileTextIcon } from "lucide-react";
+import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, Lock, FileText as FileTextIcon, Clock } from "lucide-react";
 import type { Exam } from '@/lib/types';
 import { ADMIN_EXAMS_STORAGE_KEY } from '@/lib/constants';
 
