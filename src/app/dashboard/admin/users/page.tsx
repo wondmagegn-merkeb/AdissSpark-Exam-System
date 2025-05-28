@@ -6,15 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Trash2, ShieldCheck, User as UserIcon } from "lucide-react";
-import type { User } from "@/lib/types"; // Assuming User type is defined elsewhere
+import { PlusCircle, Edit, Trash2, ShieldCheck, UserCog } from "lucide-react";
+import type { User } from "@/lib/types"; 
 
-// Mock user data for demonstration
-const mockUsers: (User & { role: 'admin' | 'student' | 'instructor', lastLogin?: Date })[] = [
-  { id: "usr1", name: "Abebe Kebede", email: "abebe@example.com", image: "https://placehold.co/100x100.png?text=AK", role: "admin", studentType: "university", lastLogin: new Date(2024, 6, 20) },
-  { id: "usr2", name: "Fatuma Ali", email: "fatuma@example.com", image: "https://placehold.co/100x100.png?text=FA", role: "student", studentType: "high_school", lastLogin: new Date(2024, 6, 21) },
-  { id: "usr3", name: "John Doe", email: "john.doe@example.com", image: "https://placehold.co/100x100.png?text=JD", role: "instructor", studentType: "college", lastLogin: new Date(2024, 6, 19) },
-  { id: "usr4", name: "Jane Smith", email: "jane.smith@example.com", role: "student", studentType: "primary_school", lastLogin: new Date(2024, 6, 22) },
+// Mock staff data (admins/instructors)
+const mockStaff: (User & { role: 'admin' | 'instructor', lastLogin?: Date })[] = [
+  { id: "usr1", name: "Abebe Kebede (Admin)", email: "abebe.admin@example.com", image: "https://placehold.co/100x100.png?text=AK", role: "admin", studentType: undefined, lastLogin: new Date(2024, 6, 20) },
+  { id: "usr3", name: "Instructor John Doe", email: "john.instructor@example.com", image: "https://placehold.co/100x100.png?text=JD", role: "instructor", studentType: undefined, lastLogin: new Date(2024, 6, 19) },
+  { id: "usr7", name: "Dr. Almaz Lemma (Admin)", email: "almaz.admin@example.com", image: "https://placehold.co/100x100.png?text=AL", role: "admin", studentType: undefined, lastLogin: new Date(2024, 5, 15) },
+  { id: "usr8", name: "Prof. Bekele Girma (Instructor)", email: "bekele.instructor@example.com", image: "https://placehold.co/100x100.png?text=BG", role: "instructor", studentType: undefined, lastLogin: new Date(2024, 6, 1) },
 ];
 
 const getInitials = (name?: string | null) => {
@@ -26,10 +26,10 @@ const getInitials = (name?: string | null) => {
   return name[0].toUpperCase();
 };
 
-export default function ManageUsersPage() {
+export default function ManageStaffPage() { // Renamed component
   const getRoleIcon = (role: string) => {
     if (role === 'admin') return <ShieldCheck className="mr-2 h-4 w-4 text-primary" />;
-    return <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />;
+    return <UserCog className="mr-2 h-4 w-4 text-muted-foreground" />; // Changed icon for instructor
   };
   
   const getRoleVariant = (role: string) => {
@@ -41,52 +41,48 @@ export default function ManageUsersPage() {
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle className="text-2xl">Manage Users</CardTitle>
+        <CardTitle className="text-2xl">Manage Staff</CardTitle>
         <CardDescription>
-          Add, edit, or remove users and manage their roles.
+          Add, edit, or remove administrators and instructors.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="mb-6">
           <Button>
-            <PlusCircle className="mr-2 h-4 w-4" /> Add New User
+            <PlusCircle className="mr-2 h-4 w-4" /> Add New Staff Member
           </Button>
         </div>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>User</TableHead>
+              <TableHead>Staff Member</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead>Student Type</TableHead>
               <TableHead>Last Login</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockUsers.map((user) => (
-              <TableRow key={user.id}>
+            {mockStaff.map((staff) => (
+              <TableRow key={staff.id}>
                 <TableCell>
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-9 w-9">
-                      <AvatarImage src={user.image || `https://avatar.vercel.sh/${user.email}.png`} alt={user.name || "User"} data-ai-hint="user avatar" />
-                      <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                      <AvatarImage src={staff.image || `https://avatar.vercel.sh/${staff.email}.png`} alt={staff.name || "User"} data-ai-hint="user avatar" />
+                      <AvatarFallback>{getInitials(staff.name)}</AvatarFallback>
                     </Avatar>
-                    <span className="font-medium">{user.name || 'N/A'}</span>
+                    <span className="font-medium">{staff.name || 'N/A'}</span>
                   </div>
                 </TableCell>
-                <TableCell>{user.email}</TableCell>
+                <TableCell>{staff.email}</TableCell>
                 <TableCell>
-                  <Badge variant={getRoleVariant(user.role)} className="capitalize">
-                    {getRoleIcon(user.role)}
-                    {user.role}
+                  <Badge variant={getRoleVariant(staff.role)} className="capitalize">
+                    {getRoleIcon(staff.role)}
+                    {staff.role}
                   </Badge>
                 </TableCell>
-                <TableCell className="capitalize">
-                  {user.studentType ? user.studentType.replace(/_/g, ' ') : 'N/A'}
-                </TableCell>
                  <TableCell>
-                  {user.lastLogin ? user.lastLogin.toLocaleDateString() : 'N/A'}
+                  {staff.lastLogin ? staff.lastLogin.toLocaleDateString() : 'N/A'}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button variant="outline" size="sm" className="mr-2">
@@ -98,10 +94,10 @@ export default function ManageUsersPage() {
                 </TableCell>
               </TableRow>
             ))}
-            {mockUsers.length === 0 && (
+            {mockStaff.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
-                  No users found.
+                <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  No staff members found.
                 </TableCell>
               </TableRow>
             )}

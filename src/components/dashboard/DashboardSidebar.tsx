@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -15,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import type { NavItem } from '@/lib/types';
-import { LayoutDashboard, Library, FileText, Brain, User, Settings, LogOut, CreditCard, MessageSquare, Building, BookCopy, ListChecks, Edit, ShieldCheck, Users, MessageSquarePlus, Bot, Cpu, Archive } from 'lucide-react';
+import { LayoutDashboard, Library, FileText, Brain, User, Settings, LogOut, CreditCard, MessageSquare, Building, BookCopy, ListChecks, Edit, ShieldCheck, Users, MessageSquarePlus, Bot, Cpu, Archive, UserCog, UserRound } from 'lucide-react';
 
 const mainNavItems: NavItem[] = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -33,7 +34,8 @@ const userNavItems: NavItem[] = [
 ];
 
 const adminNavItems: NavItem[] = [
-  { title: 'Manage Users', href: '/dashboard/admin/users', icon: Users },
+  { title: 'Manage Staff', href: '/dashboard/admin/users', icon: UserCog }, // Repurposed "Manage Users"
+  { title: 'Manage Students', href: '/dashboard/admin/students', icon: UserRound }, // New
   { title: 'Manage Institutions', href: '/dashboard/admin/universities', icon: Building },
   { title: 'Manage Departments & Grades', href: '/dashboard/admin/departments', icon: BookCopy },
   { title: 'Manage Courses & Subjects', href: '/dashboard/admin/courses', icon: ListChecks },
@@ -75,7 +77,7 @@ export function DashboardSidebar() {
         </SidebarMenu>
         
         <SidebarSeparator />
-        {/* Placeholder for Admin section - In a real app, this would be conditionally rendered based on user role */}
+        
         <SidebarMenu>
             <SidebarMenuItem>
                  <div className="px-2 py-1 text-xs font-semibold text-sidebar-foreground/70 flex items-center">
@@ -87,7 +89,7 @@ export function DashboardSidebar() {
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === item.href}
+                isActive={pathname.startsWith(item.href)} // Use startsWith for active state with sub-routes
                 tooltip={item.title}
               >
                 <Link href={item.href}>
