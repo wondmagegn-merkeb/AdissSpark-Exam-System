@@ -38,16 +38,21 @@ export default function ManageExamQuestionsPage() {
         if (currentExam) {
           setExam(currentExam);
           setQuestions(currentExam.questions || []);
+        } else {
+           toast({ title: "Error", description: "Exam not found.", variant: "destructive" });
         }
       }
       setLoading(false);
     }
-  }, [examId]);
+  }, [examId, toast]);
 
   const filteredQuestions = useMemo(() => {
     return questions.filter(q =>
       q.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      q.options.some(opt => opt.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      q.option1.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      q.option2.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      q.option3.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      q.option4.toLowerCase().includes(searchTerm.toLowerCase()) ||
       q.correctAnswer.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [questions, searchTerm]);
@@ -56,13 +61,12 @@ export default function ManageExamQuestionsPage() {
     let sortableItems = [...filteredQuestions];
     if (sortConfig.key) {
       sortableItems.sort((a, b) => {
-        const valA = a[sortConfig.key as keyof Question]; // Type assertion
-        const valB = b[sortConfig.key as keyof Question]; // Type assertion
+        const valA = a[sortConfig.key as keyof Question]; 
+        const valB = b[sortConfig.key as keyof Question]; 
         
         if (typeof valA === 'string' && typeof valB === 'string') {
             return sortConfig.direction === 'ascending' ? valA.localeCompare(valB) : valB.localeCompare(valA);
         }
-        // Add other type comparisons if needed
         return 0;
       });
     }
@@ -149,7 +153,7 @@ export default function ManageExamQuestionsPage() {
             </Button>
         </div>
         <CardDescription>
-          Add, edit, or remove questions for this specific exam. The exam currently has {exam.questionCount} questions.
+          Add, edit, or remove questions for this specific exam. The exam currently has {exam.questions?.length || 0} questions.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -173,10 +177,13 @@ export default function ManageExamQuestionsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead onClick={() => requestSort('text')} className="cursor-pointer group hover:bg-muted/50">
+              <TableHead onClick={() => requestSort('text')} className="cursor-pointer group hover:bg-muted/50 min-w-[250px]">
                 <div className="flex items-center">Question Text {renderSortIcon('text')}</div>
               </TableHead>
-              <TableHead>Options</TableHead>
+              <TableHead>Option 1</TableHead>
+              <TableHead>Option 2</TableHead>
+              <TableHead>Option 3</TableHead>
+              <TableHead>Option 4</TableHead>
               <TableHead onClick={() => requestSort('correctAnswer')} className="cursor-pointer group hover:bg-muted/50">
                 <div className="flex items-center">Correct Answer {renderSortIcon('correctAnswer')}</div>
               </TableHead>
@@ -186,9 +193,12 @@ export default function ManageExamQuestionsPage() {
           <TableBody>
             {paginatedQuestions.map((q) => (
               <TableRow key={q.id}>
-                <TableCell className="font-medium max-w-xs truncate">{q.text}</TableCell>
-                <TableCell className="text-xs text-muted-foreground max-w-xs truncate">{q.options.join(', ')}</TableCell>
-                <TableCell>{q.correctAnswer}</TableCell>
+                <TableCell className="font-medium max-w-xs truncate" title={q.text}>{q.text}</TableCell>
+                <TableCell className="text-xs text-muted-foreground max-w-[100px] truncate" title={q.option1}>{q.option1}</TableCell>
+                <TableCell className="text-xs text-muted-foreground max-w-[100px] truncate" title={q.option2}>{q.option2}</TableCell>
+                <TableCell className="text-xs text-muted-foreground max-w-[100px] truncate" title={q.option3}>{q.option3}</TableCell>
+                <TableCell className="text-xs text-muted-foreground max-w-[100px] truncate" title={q.option4}>{q.option4}</TableCell>
+                <TableCell className="text-green-600 font-semibold max-w-[120px] truncate" title={q.correctAnswer}>{q.correctAnswer}</TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/dashboard/admin/exams/${examId}/questions/edit/${q.id}`}>
@@ -222,7 +232,7 @@ export default function ManageExamQuestionsPage() {
             ))}
             {paginatedQuestions.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   No questions found for this exam or matching your criteria.
                 </TableCell>
               </TableRow>
@@ -263,5 +273,3 @@ export default function ManageExamQuestionsPage() {
     </Card>
   );
 }
-
-    

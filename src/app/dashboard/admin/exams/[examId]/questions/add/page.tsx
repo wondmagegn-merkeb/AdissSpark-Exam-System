@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from "@/components/ui/button";
@@ -12,22 +12,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, PlusCircle, Trash2 } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import type { Exam, Question } from '@/lib/types';
 import { ADMIN_EXAMS_STORAGE_KEY } from '@/lib/constants';
 
-const MIN_OPTIONS = 2;
-const MAX_OPTIONS = 5;
-
 const questionSchema = z.object({
   text: z.string().min(5, { message: "Question text must be at least 5 characters." }),
-  options: z.array(
-      z.object({ value: z.string().min(1, { message: "Option cannot be empty." }) })
-    ).min(MIN_OPTIONS, { message: `Please provide at least ${MIN_OPTIONS} options.` })
-     .max(MAX_OPTIONS, { message: `You can add a maximum of ${MAX_OPTIONS} options.` }),
-  correctAnswer: z.string().min(1, { message: "Please select the correct answer." }),
+  option1: z.string().min(1, { message: "Option 1 cannot be empty." }),
+  option2: z.string().min(1, { message: "Option 2 cannot be empty." }),
+  option3: z.string().min(1, { message: "Option 3 cannot be empty." }),
+  option4: z.string().min(1, { message: "Option 4 cannot be empty." }),
+  correctAnswer: z.string().min(1, { message: "Please select the correct answer." }), // Will store the text of the correct option
   explanation: z.string().optional(),
+}).refine(data => { // Ensure correct answer is one of the options
+    const options = [data.option1, data.option2, data.option3, data.option4];
+    return options.includes(data.correctAnswer);
+}, {
+    message: "Correct answer must match one of the provided options.",
+    path: ["correctAnswer"],
 });
 
 type QuestionFormValues = z.infer<typeof questionSchema>;
@@ -45,18 +48,21 @@ export default function AddExamQuestionPage() {
     resolver: zodResolver(questionSchema),
     defaultValues: {
       text: '',
-      options: [{ value: '' }, { value: '' }], // Start with 2 empty options
+      option1: '',
+      option2: '',
+      option3: '',
+      option4: '',
       correctAnswer: undefined,
       explanation: '',
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "options"
-  });
-
-  const watchedOptions = form.watch("options");
+  const watchedOptions = [
+    form.watch("option1"),
+    form.watch("option2"),
+    form.watch("option3"),
+    form.watch("option4"),
+  ];
 
   useEffect(() => {
     if (examId) {
@@ -85,21 +91,26 @@ export default function AddExamQuestionPage() {
         const newQuestion: Question = {
           id: `q-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           text: data.text,
-          options: data.options.map(opt => opt.value),
+          option1: data.option1,
+          option2: data.option2,
+          option3: data.option3,
+          option4: data.option4,
           correctAnswer: data.correctAnswer,
           explanation: data.explanation || undefined,
         };
         
-        exams[examIndex].questions = [...(exams[examIndex].questions || []), newQuestion];
-        exams[examIndex].questionCount = exams[examIndex].questions.length;
+        if (!exams[examIndex].questions) {
+          exams[examIndex].questions = [];
+        }
+        exams[examIndex].questions!.push(newQuestion);
+        exams[examIndex].questionCount = exams[examIndex].questions!.length;
 
         localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(exams));
         toast({
           title: "Question Added",
           description: `The question has been added to "${examTitle}".`,
         });
-        form.reset(); // Reset form for another entry
-        // No redirect, stay on page to add more
+        form.reset(); 
       } else {
         toast({ title: "Error", description: "Exam not found for adding question.", variant: "destructive" });
       }
@@ -141,32 +152,27 @@ export default function AddExamQuestionPage() {
             {form.formState.errors.text && <p className="text-sm text-destructive mt-1">{form.formState.errors.text.message}</p>}
           </div>
 
-          <div className="space-y-3">
-            <Label>Options</Label>
-            {fields.map((field, index) => (
-              <div key={field.id} className="flex items-center gap-2">
-                <Input
-                  {...form.register(`options.${index}.value` as const)}
-                  placeholder={`Option ${index + 1}`}
-                  disabled={isLoading}
-                  className="flex-grow"
-                />
-                {fields.length > MIN_OPTIONS && (
-                  <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={isLoading}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                )}
-                {form.formState.errors.options?.[index]?.value && <p className="text-sm text-destructive mt-1">{form.formState.errors.options?.[index]?.value?.message}</p>}
-              </div>
-            ))}
-            {form.formState.errors.options && !form.formState.errors.options.root?.message && form.formState.errors.options.message && (
-                 <p className="text-sm text-destructive mt-1">{form.formState.errors.options.message}</p>
-            )}
-             {fields.length < MAX_OPTIONS && (
-                <Button type="button" variant="outline" size="sm" onClick={() => append({ value: '' })} disabled={isLoading}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Option
-                </Button>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="option1">Option 1</Label>
+              <Input id="option1" {...form.register("option1")} disabled={isLoading} className="mt-1" />
+              {form.formState.errors.option1 && <p className="text-sm text-destructive mt-1">{form.formState.errors.option1.message}</p>}
+            </div>
+            <div>
+              <Label htmlFor="option2">Option 2</Label>
+              <Input id="option2" {...form.register("option2")} disabled={isLoading} className="mt-1" />
+              {form.formState.errors.option2 && <p className="text-sm text-destructive mt-1">{form.formState.errors.option2.message}</p>}
+            </div>
+            <div>
+              <Label htmlFor="option3">Option 3</Label>
+              <Input id="option3" {...form.register("option3")} disabled={isLoading} className="mt-1" />
+              {form.formState.errors.option3 && <p className="text-sm text-destructive mt-1">{form.formState.errors.option3.message}</p>}
+            </div>
+            <div>
+              <Label htmlFor="option4">Option 4</Label>
+              <Input id="option4" {...form.register("option4")} disabled={isLoading} className="mt-1" />
+              {form.formState.errors.option4 && <p className="text-sm text-destructive mt-1">{form.formState.errors.option4.message}</p>}
+            </div>
           </div>
         
           <div>
@@ -175,19 +181,24 @@ export default function AddExamQuestionPage() {
               name="correctAnswer"
               control={form.control}
               render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value} disabled={isLoading || watchedOptions.every(opt => !opt.value.trim())}>
+                <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value} 
+                    disabled={isLoading || watchedOptions.some(opt => !opt?.trim())}
+                >
                   <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select the correct answer" />
+                    <SelectValue placeholder="Select the correct answer from options above" />
                   </SelectTrigger>
                   <SelectContent>
                     {watchedOptions.map((option, index) => (
-                      option.value.trim() && <SelectItem key={index} value={option.value}>{option.value}</SelectItem>
+                      option?.trim() && <SelectItem key={index} value={option}>{option}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               )}
             />
             {form.formState.errors.correctAnswer && <p className="text-sm text-destructive mt-1">{form.formState.errors.correctAnswer.message}</p>}
+             <p className="text-xs text-muted-foreground mt-1">Ensure options are filled above before selecting.</p>
           </div>
 
           <div>
@@ -213,5 +224,3 @@ export default function AddExamQuestionPage() {
     </Card>
   );
 }
-
-    

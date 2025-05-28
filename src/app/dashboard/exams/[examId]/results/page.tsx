@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ArrowLeft, CheckCircle2, XCircle, AlertCircle, Info, BarChart3, MessageSquareText } from 'lucide-react';
-import type { Exam, Question } from '@/lib/types'; // Question type is now global
+import type { Exam, Question } from '@/lib/types';
 import { PieChart, Pie, Cell, Legend } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 
 interface CompletedExamData {
-  exam: Exam & { questions: Question[] }; // Ensure questions are part of the stored exam data
+  exam: Exam; // Exam object now contains embedded questions
   userAnswers: Record<string, string>;
   score: number;
   incorrectCount: number;
@@ -38,13 +38,13 @@ export default function ExamResultsPage() {
       try {
         const storedData = localStorage.getItem(`completedExam_${examId}`);
         if (storedData) {
-          const parsedData = JSON.parse(storedData);
+          const parsedData: CompletedExamData = JSON.parse(storedData);
           // Ensure parsedData.exam.questions exists and is an array
           if (parsedData.exam && Array.isArray(parsedData.exam.questions)) {
             setCompletedData(parsedData);
           } else {
             console.error("Stored exam data is missing or has an invalid questions array for exam ID:", examId, parsedData);
-            setCompletedData(null); // Or handle this case appropriately
+            setCompletedData(null); 
           }
         }
       } catch (error) {
@@ -69,7 +69,7 @@ export default function ExamResultsPage() {
     return (
       <div className="container mx-auto py-8 text-center">
         <Alert variant="destructive" className="max-w-lg mx-auto">
-          <AlertCircle className="h-4 w-4" /> {/* Changed Icon for consistency */}
+          <AlertCircle className="h-4 w-4" />
           <AlertTitle>Results Not Found</AlertTitle>
           <AlertDescription>
             We couldn't find the results for this exam (ID: {examId}), or the data is corrupted. It's possible they were not saved correctly or have been cleared.
@@ -111,7 +111,7 @@ export default function ExamResultsPage() {
           {exam.questions.map((question, index) => {
             const userAnswer = userAnswers[question.id];
             const isCorrect = userAnswer === question.correctAnswer;
-            const isAnswered = userAnswer !== undefined;
+            const isAnswered = userAnswer !== undefined && userAnswer !== null && userAnswer !== '';
             const optionsArray = [question.option1, question.option2, question.option3, question.option4];
 
             let questionStatusIcon = <Info className="h-5 w-5 text-blue-500" />;

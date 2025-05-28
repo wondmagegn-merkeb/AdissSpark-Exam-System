@@ -5,10 +5,21 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { Exam } from '@/lib/types';
+import type { Exam, Question } from '@/lib/types'; // Import Question
 import { useAuth } from '@/hooks/useAuth';
 import { FileText, Clock, Lock, Sparkles } from 'lucide-react';
 import Image from 'next/image';
+
+// Sample questions - these should now follow the new Question structure
+const sampleGlobalQuestions: Question[] = [
+  { id: "gq1", text: "What is the capital of Ethiopia?", option1: "Nairobi", option2: "Addis Ababa", option3: "Cairo", option4: "Lagos", correctAnswer: "Addis Ababa", explanation: "Addis Ababa is the capital and largest city of Ethiopia." },
+  { id: "gq2", text: "Which river is the longest in the world?", option1: "Amazon", option2: "Nile", option3: "Yangtze", option4: "Mississippi", correctAnswer: "Nile", explanation: "The Nile River is traditionally considered the longest river in the world." },
+  { id: "gq3", text: "Who painted the Mona Lisa?", option1: "Vincent van Gogh", option2: "Pablo Picasso", option3: "Leonardo da Vinci", option4: "Claude Monet", correctAnswer: "Leonardo da Vinci", explanation: "The Mona Lisa was painted by the Italian Renaissance artist Leonardo da Vinci." },
+  { id: "gq4", text: "What is 2 + 2?", option1: "3", option2: "4", option3: "5", option4: "6", correctAnswer: "4", explanation: "Basic arithmetic." },
+  { id: "gq5", text: "In which continent is Ethiopia located?", option1: "Asia", option2: "Europe", option3: "Africa", option4: "South America", correctAnswer: "Africa" },
+  { id: "gq6", text: "What is the chemical symbol for water?", option1: "O2", option2: "CO2", option3: "H2O", option4: "NaCl", correctAnswer: "H2O"},
+];
+
 
 const mockStudentExams: Exam[] = [
   {
@@ -17,7 +28,7 @@ const mockStudentExams: Exam[] = [
     description: 'A comprehensive test covering various general knowledge topics. Ideal for baseline assessment.',
     durationMinutes: 60,
     isPremium: false,
-    questionIds: ["gq1", "gq2", "gq3"], // Link to global questions
+    questions: [sampleGlobalQuestions[0], sampleGlobalQuestions[1], sampleGlobalQuestions[2]], 
   },
   {
     id: 'model-2',
@@ -25,7 +36,7 @@ const mockStudentExams: Exam[] = [
     description: 'Focuses on verbal reasoning, comprehension, and analytical skills. Prepare for aptitude tests.',
     durationMinutes: 45,
     isPremium: false,
-    questionIds: ["gq4", "gq5"], // Link to global questions
+    questions: [sampleGlobalQuestions[3], sampleGlobalQuestions[4]], 
   },
   {
     id: 'model-3',
@@ -33,7 +44,7 @@ const mockStudentExams: Exam[] = [
     description: 'Challenging questions on quantitative aptitude. Requires a premium subscription.',
     durationMinutes: 90,
     isPremium: true,
-    questionIds: ["gq6", "gq1", "gq4"], // Link to global questions
+    questions: [sampleGlobalQuestions[5], sampleGlobalQuestions[0], sampleGlobalQuestions[3]], 
   },
   {
     id: 'model-4',
@@ -41,7 +52,7 @@ const mockStudentExams: Exam[] = [
     description: 'Test your logical thinking and problem-solving abilities with these tricky puzzles.',
     durationMinutes: 60,
     isPremium: false,
-    questionIds: ["gq2", "gq5", "gq6"], // Link to global questions
+    questions: [sampleGlobalQuestions[1], sampleGlobalQuestions[4], sampleGlobalQuestions[5]], 
   },
   {
     id: 'model-5',
@@ -49,7 +60,7 @@ const mockStudentExams: Exam[] = [
     description: 'An in-depth exam for a specialized subject, designed by experts. Premium access only.',
     durationMinutes: 120,
     isPremium: true,
-    questionIds: ["gq1", "gq3", "gq5", "gq6"], // Link to global questions
+    questions: [sampleGlobalQuestions[0], sampleGlobalQuestions[2], sampleGlobalQuestions[4], sampleGlobalQuestions[5]], 
   },
 ];
 
@@ -111,7 +122,7 @@ export default function ExamsPage() {
                   <div className="space-y-2 text-sm text-muted-foreground">
                     <div className="flex items-center">
                       <FileText className="mr-2 h-4 w-4" />
-                      <span>{exam.questionIds.length} Questions</span>
+                      <span>{exam.questions?.length || 0} Questions</span>
                     </div>
                     <div className="flex items-center">
                       <Clock className="mr-2 h-4 w-4" />

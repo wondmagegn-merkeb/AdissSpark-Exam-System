@@ -9,20 +9,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, Lock, FileText as FileTextIconLucide, Clock, Layers, BookCopy } from "lucide-react"; // Renamed FileText
-import type { Exam, Question } from '@/lib/types'; // Question type is now global
-import { ADMIN_EXAMS_STORAGE_KEY, ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY } from '@/lib/constants';
+import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, Lock, Layers, BookCopy, ListChecks, FileText as FileTextIconLucide } from "lucide-react"; // Renamed FileText
+import type { Exam, StudentTypeFromRegistrationForm } from '@/lib/types';
+import { ADMIN_EXAMS_STORAGE_KEY } from '@/lib/constants';
 
-const initialSeedExams: Omit<Exam, 'questionIds'> & { initialQuestionIds?: string[] } [] = [ // Adjusted for seed
+const initialSeedExams: Exam[] = [
   {
     id: 'model-1',
     title: 'Model Exam 1: General Knowledge',
     description: 'A comprehensive test covering various general knowledge topics.',
     durationMinutes: 5,
     isPremium: false,
-    initialQuestionIds: ["gq1", "gq2", "gq3"], // Example IDs from global seed questions
+    questions: [], // Questions will be managed per exam
     educationalLevel: "High School",
     departmentOrGradeName: "Grade 11",
+    questionCount: 0,
   },
   {
     id: 'model-2',
@@ -30,9 +31,10 @@ const initialSeedExams: Omit<Exam, 'questionIds'> & { initialQuestionIds?: strin
     description: 'Focuses on verbal reasoning, comprehension, and analytical skills.',
     durationMinutes: 10,
     isPremium: false,
-    initialQuestionIds: ["gq4", "gq5"], // Example IDs
+    questions: [],
     educationalLevel: "University",
     departmentOrGradeName: "English Language and Literature",
+    questionCount: 0,
   },
   {
     id: 'model-3',
@@ -40,9 +42,10 @@ const initialSeedExams: Omit<Exam, 'questionIds'> & { initialQuestionIds?: strin
     description: 'Challenging questions on quantitative aptitude.',
     durationMinutes: 30,
     isPremium: true,
-    initialQuestionIds: ["gq6", "gq1"], // Example IDs
+    questions: [],
     educationalLevel: "College",
     departmentOrGradeName: "Mathematics",
+    questionCount: 0,
   },
 ];
 
@@ -61,22 +64,22 @@ export default function ManageAdminExamsPage() {
         try {
           const parsedExams: Exam[] = JSON.parse(storedExams);
            if (Array.isArray(parsedExams) && parsedExams.every(exam => typeof exam.id === 'string' && typeof exam.title === 'string')) {
-            setExams(parsedExams.map(exam => ({ ...exam, questionIds: exam.questionIds || [] })));
+            setExams(parsedExams.map(exam => ({ ...exam, questions: exam.questions || [], questionCount: (exam.questions || []).length })));
           } else {
-            const examsWithIds = initialSeedExams.map(examSeed => ({...examSeed, questionIds: examSeed.initialQuestionIds || []}));
-            localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(examsWithIds));
-            setExams(examsWithIds);
+            const examsWithCounts = initialSeedExams.map(examSeed => ({...examSeed, questions: examSeed.questions || [], questionCount: (examSeed.questions || []).length}));
+            localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(examsWithCounts));
+            setExams(examsWithCounts);
           }
         } catch (error) {
           console.error("Error parsing exams from localStorage:", error);
-          const examsWithIds = initialSeedExams.map(examSeed => ({...examSeed, questionIds: examSeed.initialQuestionIds || []}));
-          localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(examsWithIds));
-          setExams(examsWithIds);
+          const examsWithCounts = initialSeedExams.map(examSeed => ({...examSeed, questions: examSeed.questions || [], questionCount: (examSeed.questions || []).length}));
+          localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(examsWithCounts));
+          setExams(examsWithCounts);
         }
       } else {
-        const examsWithIds = initialSeedExams.map(examSeed => ({...examSeed, questionIds: examSeed.initialQuestionIds || []}));
-        localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(examsWithIds));
-        setExams(examsWithIds);
+        const examsWithCounts = initialSeedExams.map(examSeed => ({...examSeed, questions: examSeed.questions || [], questionCount: (examSeed.questions || []).length}));
+        localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(examsWithCounts));
+        setExams(examsWithCounts);
       }
     };
     loadExams();
@@ -103,8 +106,8 @@ export default function ManageAdminExamsPage() {
       sortableItems.sort((a, b) => {
         let valA, valB;
         if (sortConfig.key === 'questionCount') {
-            valA = a.questionIds.length;
-            valB = b.questionIds.length;
+            valA = a.questions?.length || 0;
+            valB = b.questions?.length || 0;
         } else {
             valA = a[sortConfig.key as keyof Exam];
             valB = b[sortConfig.key as keyof Exam];
@@ -164,7 +167,7 @@ export default function ManageAdminExamsPage() {
       <CardHeader>
         <CardTitle className="text-2xl">Manage Exams</CardTitle>
         <CardDescription>
-          Add, edit, or delete practice exams. Assign questions from the global question bank.
+          Add, edit, or delete practice exams and manage their questions.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -202,7 +205,7 @@ export default function ManageAdminExamsPage() {
                 <div className="flex items-center"><FileTextIconLucide className="inline-block mr-1 h-4 w-4" />Questions {renderSortIcon('questionCount')}</div>
               </TableHead>
               <TableHead onClick={() => requestSort('durationMinutes')} className="cursor-pointer group hover:bg-muted/50">
-                <div className="flex items-center"><Clock className="inline-block mr-1 h-4 w-4" />Duration (min) {renderSortIcon('durationMinutes')}</div>
+                <div className="flex items-center"><Clock className="mr-1 h-4 w-4" />Duration (min) {renderSortIcon('durationMinutes')}</div>
               </TableHead>
               <TableHead onClick={() => requestSort('isPremium')} className="cursor-pointer group hover:bg-muted/50">
                 <div className="flex items-center"><Lock className="inline-block mr-1 h-4 w-4" />Premium {renderSortIcon('isPremium')}</div>
@@ -217,7 +220,7 @@ export default function ManageAdminExamsPage() {
                 <TableCell className="font-medium">{exam.title}</TableCell>
                 <TableCell>{exam.educationalLevel || 'N/A'}</TableCell>
                 <TableCell>{exam.departmentOrGradeName || 'N/A'}</TableCell>
-                <TableCell>{exam.questionIds.length}</TableCell>
+                <TableCell>{exam.questions?.length || 0}</TableCell>
                 <TableCell>{exam.durationMinutes}</TableCell>
                 <TableCell>
                   <Badge variant={exam.isPremium ? "default" : "secondary"}>
@@ -226,8 +229,13 @@ export default function ManageAdminExamsPage() {
                 </TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button variant="outline" size="sm" asChild>
+                    <Link href={`/dashboard/admin/exams/${exam.id}/questions`}>
+                      <ListChecks className="mr-1 h-3 w-3" /> Questions
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
                     <Link href={`/dashboard/admin/exams/edit/${exam.id}`}>
-                      <Edit className="mr-1 h-3 w-3" /> Edit
+                      <Edit className="mr-1 h-3 w-3" /> Edit Exam
                     </Link>
                   </Button>
                   <AlertDialog>

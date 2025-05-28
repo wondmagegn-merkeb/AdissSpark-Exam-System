@@ -7,7 +7,7 @@ export const DEPARTMENTS_GRADES_STORAGE_KEY = 'admin_departments_grades_list';
 export const ADMIN_EXAMS_STORAGE_KEY = 'admin_exams_list';
 export const ADMIN_RESOURCES_STORAGE_KEY = 'admin_resources_list';
 export const ADMIN_COURSES_SUBJECTS_STORAGE_KEY = 'admin_courses_subjects_list';
-export const ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY = 'admin_global_questions_list';
+// ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY is removed
 
 
 export const STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM: StudentTypeFromRegistrationForm[] = [
@@ -39,3 +39,4 @@ export const STUDENT_TYPE_FORM_TO_KEY_MAP: Record<StudentTypeFromRegistrationFor
 };
 
 export const RESOURCE_ADMIN_TYPES: Resource['type'][] = ["note", "video", "book"];
+

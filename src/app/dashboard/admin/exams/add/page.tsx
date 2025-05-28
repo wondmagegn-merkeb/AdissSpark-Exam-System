@@ -25,11 +25,6 @@ const examSchema = z.object({
   departmentOrGradeName: z.string().optional(),
   durationMinutes: z.coerce.number().int().positive({ message: "Must be a positive number." }),
   isPremium: z.boolean().default(false),
-  questionIdsInput: z.string().refine(val => {
-    if (!val.trim()) return true; // Optional, can be empty
-    const ids = val.split(',').map(id => id.trim());
-    return ids.every(id => id.length > 0); // If not empty, all parts must be non-empty
-  }, {message: "Question IDs must be a comma-separated list of non-empty strings, or empty."}).optional(),
 });
 
 type ExamFormValues = z.infer<typeof examSchema>;
@@ -49,7 +44,6 @@ export default function AddAdminExamPage() {
       departmentOrGradeName: undefined,
       durationMinutes: 30,
       isPremium: false,
-      questionIdsInput: '',
     },
   });
 
@@ -87,8 +81,6 @@ export default function AddAdminExamPage() {
       const storedExams = localStorage.getItem(ADMIN_EXAMS_STORAGE_KEY);
       let exams: Exam[] = storedExams ? JSON.parse(storedExams) : [];
       
-      const questionIds = data.questionIdsInput?.split(',').map(id => id.trim()).filter(id => id) || [];
-
       const newExam: Exam = {
         id: `exam-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         title: data.title,
@@ -97,14 +89,15 @@ export default function AddAdminExamPage() {
         departmentOrGradeName: data.departmentOrGradeName || undefined,
         durationMinutes: data.durationMinutes,
         isPremium: data.isPremium,
-        questionIds: questionIds,
+        questions: [], // Initialize with empty questions array
+        questionCount: 0,
       };
       exams.push(newExam);
       localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(exams));
 
       toast({
         title: "Exam Added",
-        description: `${data.title} has been successfully added.`,
+        description: `${data.title} has been successfully added. You can now add questions to it.`,
       });
       reset(); 
     } catch (error) {
@@ -130,7 +123,7 @@ export default function AddAdminExamPage() {
           </Button>
         </div>
         <CardDescription>
-          Fill in the details for the new exam. Link questions from the global bank using their IDs.
+          Fill in the details for the new exam. Questions can be added after the exam is created.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -201,14 +194,7 @@ export default function AddAdminExamPage() {
               <Input id="durationMinutes" type="number" {...register("durationMinutes")} disabled={isLoading} className="mt-1" />
               {errors.durationMinutes && <p className="text-sm text-destructive mt-1">{errors.durationMinutes.message}</p>}
             </div>
-            
-            <div>
-              <Label htmlFor="questionIdsInput">Question IDs (Comma-separated)</Label>
-              <Textarea id="questionIdsInput" {...register("questionIdsInput")} disabled={isLoading} className="mt-1" rows={2} placeholder="e.g., gq1,gq2,gq5" />
-              {errors.questionIdsInput && <p className="text-sm text-destructive mt-1">{errors.questionIdsInput.message}</p>}
-              <p className="text-xs text-muted-foreground mt-1">Enter IDs of questions from the global question bank.</p>
-            </div>
-          
+                      
           <div className="flex items-center space-x-2">
             <Switch
                 id="isPremium"

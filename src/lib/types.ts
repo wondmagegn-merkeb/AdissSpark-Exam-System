@@ -52,9 +52,11 @@ export interface Resource {
   dataAiHint?: string;
 }
 
+// Question structure remains with 4 distinct options
 export interface Question {
   id: string;
   text: string;
+  // Options are now distinct fields
   option1: string;
   option2: string;
   option3: string;
@@ -69,10 +71,10 @@ export interface Exam {
   description: string;
   durationMinutes: number; 
   isPremium: boolean;
-  questionIds: string[]; // Array of IDs from the global question bank
+  questions?: Question[]; // Questions are now embedded in the exam
   educationalLevel?: StudentTypeFromRegistrationForm;
   departmentOrGradeName?: string;
-  // questionCount is now derived from questionIds.length
+  questionCount?: number; // Can be used/updated based on questions.length
 }
 
 export interface StudyPlanData {
@@ -148,3 +150,4 @@ export interface CourseOrSubjectEntry {
   educationalLevel: StudentTypeFromRegistrationForm; 
   departmentOrGradeName?: string; 
 }
+

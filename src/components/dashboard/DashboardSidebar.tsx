@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import type { NavItem } from '@/lib/types';
-import { LayoutDashboard, Library, FileText as FileTextIconLucide, Brain, User, Settings, LogOut, CreditCard, MessageSquare, Building, BookCopy, ListChecks, Edit as EditIconLucide, ShieldCheck, Users, MessageSquarePlus, Bot, Cpu, Archive, UserCog, UserRound, HelpCircle } from 'lucide-react'; // Renamed FileText to FileTextIconLucide, Edit to EditIconLucide
+import { LayoutDashboard, Library, FileText as FileTextIconLucide, Brain, User, Settings, LogOut, CreditCard, MessageSquare, Building, BookCopy, ListChecks, Edit as EditIconLucide, ShieldCheck, Users, MessageSquarePlus, Bot, Cpu, Archive, UserCog, UserRound } from 'lucide-react'; // Removed HelpCircle
 
 const mainNavItems: NavItem[] = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -40,7 +40,7 @@ const adminNavItems: NavItem[] = [
   { title: 'Manage Departments & Grades', href: '/dashboard/admin/departments', icon: BookCopy },
   { title: 'Manage Courses & Subjects', href: '/dashboard/admin/courses', icon: ListChecks },
   { title: 'Manage Exams', href: '/dashboard/admin/exams', icon: EditIconLucide },
-  { title: 'Manage Global Questions', href: '/dashboard/admin/questions', icon: HelpCircle },
+  // { title: 'Manage Global Questions', href: '/dashboard/admin/questions', icon: HelpCircle }, // Removed global questions link
   { title: 'Manage Resources', href: '/dashboard/admin/resources', icon: Library },
   { title: 'Manage Agents', href: '/dashboard/admin/agents', icon: Cpu },
   { title: 'Manage Feedback', href: '/dashboard/admin/feedback', icon: Archive },
@@ -169,6 +169,7 @@ export function DashboardSidebar() {
   );
 }
 
+// Re-adding Card components locally as they are used here.
 const Card = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={`rounded-lg border shadow-sm ${className}`}

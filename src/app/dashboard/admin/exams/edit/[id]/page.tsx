@@ -25,11 +25,6 @@ const examSchema = z.object({
   departmentOrGradeName: z.string().optional(),
   durationMinutes: z.coerce.number().int().positive({ message: "Must be a positive number." }),
   isPremium: z.boolean().default(false),
-  questionIdsInput: z.string().refine(val => {
-    if (!val.trim()) return true; 
-    const ids = val.split(',').map(id => id.trim());
-    return ids.every(id => id.length > 0); 
-  }, {message: "Question IDs must be a comma-separated list of non-empty strings, or empty."}).optional(),
 });
 
 type ExamFormValues = z.infer<typeof examSchema>;
@@ -63,7 +58,6 @@ export default function EditAdminExamPage() {
           setValue('educationalLevel', examToEdit.educationalLevel || STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[0]);
           setValue('durationMinutes', examToEdit.durationMinutes);
           setValue('isPremium', examToEdit.isPremium);
-          setValue('questionIdsInput', (examToEdit.questionIds || []).join(', '));
         } else {
           setItemNotFound(true);
           toast({ title: "Error", description: "Exam not found.", variant: "destructive" });
@@ -122,16 +116,15 @@ export default function EditAdminExamPage() {
       
       const examIndex = exams.findIndex(exam => exam.id === examId);
       if (examIndex > -1) {
-        const questionIds = data.questionIdsInput?.split(',').map(id => id.trim()).filter(id => id) || [];
         exams[examIndex] = { 
-            ...exams[examIndex], 
+            ...exams[examIndex], // Preserve existing fields like questions array
             title: data.title,
             description: data.description,
             educationalLevel: data.educationalLevel,
             departmentOrGradeName: data.departmentOrGradeName || undefined,
             durationMinutes: data.durationMinutes,
             isPremium: data.isPremium,
-            questionIds: questionIds,
+            questionCount: exams[examIndex].questions?.length || 0, // Recalculate if needed
         };
         localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(exams));
         toast({
@@ -180,7 +173,7 @@ export default function EditAdminExamPage() {
           </Button>
         </div>
         <CardDescription>
-          Modify the details for the exam. Link questions from the global bank using their IDs.
+          Modify the details for the exam. Questions are managed separately.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -257,14 +250,7 @@ export default function EditAdminExamPage() {
               <Input id="durationMinutes" type="number" {...register("durationMinutes")} disabled={isLoading} className="mt-1" />
               {errors.durationMinutes && <p className="text-sm text-destructive mt-1">{errors.durationMinutes.message}</p>}
             </div>
-            
-            <div>
-              <Label htmlFor="questionIdsInput">Question IDs (Comma-separated)</Label>
-              <Textarea id="questionIdsInput" {...register("questionIdsInput")} disabled={isLoading} className="mt-1" rows={2} placeholder="e.g., gq1,gq2,gq5" />
-              {errors.questionIdsInput && <p className="text-sm text-destructive mt-1">{errors.questionIdsInput.message}</p>}
-               <p className="text-xs text-muted-foreground mt-1">Enter IDs of questions from the global question bank.</p>
-            </div>
-          
+                      
           <div className="flex items-center space-x-2">
             <Switch
                 id="isPremium"

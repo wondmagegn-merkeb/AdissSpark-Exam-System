@@ -12,17 +12,27 @@ import { ArrowLeft, FileText, Clock, AlertTriangle, CheckCircle2, Target, Info, 
 import type { Exam, Question, ExamHistoryEntry } from '@/lib/types';
 import { PieChart, Pie, Cell } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
-import { ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY, ADMIN_EXAMS_STORAGE_KEY } from '@/lib/constants'; // Import storage keys
+import { ADMIN_EXAMS_STORAGE_KEY } from '@/lib/constants'; 
 
-// Mock student-facing exam definitions - these now primarily list question IDs from the global bank
-const mockStudentExams: Exam[] = [
+
+// Sample questions - these should now follow the new Question structure
+const sampleGlobalQuestions: Question[] = [
+  { id: "gq1", text: "What is the capital of Ethiopia?", option1: "Nairobi", option2: "Addis Ababa", option3: "Cairo", option4: "Lagos", correctAnswer: "Addis Ababa", explanation: "Addis Ababa is the capital and largest city of Ethiopia." },
+  { id: "gq2", text: "Which river is the longest in the world?", option1: "Amazon", option2: "Nile", option3: "Yangtze", option4: "Mississippi", correctAnswer: "Nile", explanation: "The Nile River is traditionally considered the longest river in the world." },
+  { id: "gq3", text: "Who painted the Mona Lisa?", option1: "Vincent van Gogh", option2: "Pablo Picasso", option3: "Leonardo da Vinci", option4: "Claude Monet", correctAnswer: "Leonardo da Vinci", explanation: "The Mona Lisa was painted by the Italian Renaissance artist Leonardo da Vinci." },
+  { id: "gq4", text: "What is 2 + 2?", option1: "3", option2: "4", option3: "5", option4: "6", correctAnswer: "4", explanation: "Basic arithmetic." },
+  { id: "gq5", text: "In which continent is Ethiopia located?", option1: "Asia", option2: "Europe", option3: "Africa", option4: "South America", correctAnswer: "Africa" },
+  { id: "gq6", text: "What is the chemical symbol for water?", option1: "O2", option2: "CO2", option3: "H2O", option4: "NaCl", correctAnswer: "H2O"},
+];
+
+const studentMockExams: Exam[] = [
   {
     id: 'model-1',
     title: 'Model Exam 1: General Knowledge',
     description: 'A comprehensive test covering various general knowledge topics.',
     durationMinutes: 5, 
     isPremium: false,
-    questionIds: ["gq1", "gq2", "gq3"], 
+    questions: [sampleGlobalQuestions[0], sampleGlobalQuestions[1], sampleGlobalQuestions[2]], 
   },
   {
     id: 'model-2',
@@ -30,7 +40,16 @@ const mockStudentExams: Exam[] = [
     description: 'Focuses on verbal reasoning, comprehension, and analytical skills.',
     durationMinutes: 12, 
     isPremium: false,
-    questionIds: Array.from({ length: 100 }, (_, i) => `gq2_${i + 1}_placeholder`), // Placeholder for 100 questions
+    questions: Array.from({ length: 100 }, (_, i) => ({
+        id: `gq2_${i + 1}_placeholder`,
+        text: `Placeholder Question ${i + 1} for Model Exam 2. What is option A?`,
+        option1: "Option A",
+        option2: "Option B",
+        option3: "Option C",
+        option4: "Option D",
+        correctAnswer: "Option A",
+        explanation: `This is a placeholder explanation for question ${i + 1}.`
+    })),
   },
   {
     id: 'model-3',
@@ -38,7 +57,7 @@ const mockStudentExams: Exam[] = [
     description: 'Challenging questions on quantitative aptitude.',
     durationMinutes: 1, 
     isPremium: true,
-    questionIds: ["gq6", "gq4"], 
+    questions: [sampleGlobalQuestions[5], sampleGlobalQuestions[3]], 
   },
    {
     id: 'model-4',
@@ -46,7 +65,7 @@ const mockStudentExams: Exam[] = [
     description: 'Test your logical thinking and problem-solving abilities.',
     durationMinutes: 1,
     isPremium: false,
-    questionIds: ["gq1", "gq5"], // Use some existing global questions
+    questions: [sampleGlobalQuestions[0], sampleGlobalQuestions[4]], 
   },
   {
     id: 'model-5',
@@ -54,7 +73,7 @@ const mockStudentExams: Exam[] = [
     description: 'An in-depth exam for a specialized subject, designed by experts.',
     durationMinutes: 1, 
     isPremium: true,
-    questionIds: ["gq2", "gq6"], // Use some existing global questions
+    questions: [sampleGlobalQuestions[1], sampleGlobalQuestions[5]], 
   },
 ];
 
@@ -96,7 +115,6 @@ export default function TakeExamPage() {
   const [incorrectCount, setIncorrectCount] = useState(0);
 
   useEffect(() => {
-    // Load exam definition (could be from student-facing mock, or admin-created exams in localStorage)
     const adminExamsString = localStorage.getItem(ADMIN_EXAMS_STORAGE_KEY);
     let foundExam: Exam | undefined;
     if (adminExamsString) {
@@ -104,28 +122,13 @@ export default function TakeExamPage() {
         foundExam = adminExams.find(e => e.id === examId);
     }
     if (!foundExam) {
-        foundExam = mockStudentExams.find(e => e.id === examId);
-    }
-    setExamDefinition(foundExam);
-
-    if (foundExam && foundExam.questionIds) {
-      const globalQuestionsString = localStorage.getItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY);
-      if (globalQuestionsString) {
-        const allGlobalQuestions: Question[] = JSON.parse(globalQuestionsString);
-        const questionsForThisExam = allGlobalQuestions.filter(q => foundExam!.questionIds.includes(q.id));
-        
-        // Ensure the order of questions matches the order in questionIds
-        const orderedQuestions = foundExam.questionIds.map(id => questionsForThisExam.find(q => q.id === id)).filter(q => q !== undefined) as Question[];
-        setExamQuestions(orderedQuestions);
-      } else {
-        console.warn("Global question bank not found in localStorage. Using empty questions for exam.");
-        setExamQuestions([]);
-      }
-    } else if (foundExam && !foundExam.questionIds) {
-         console.warn(`Exam ${examId} has no questionIds defined. Using empty questions.`);
-         setExamQuestions([]);
+        foundExam = studentMockExams.find(e => e.id === examId);
     }
 
+    if (foundExam) {
+        setExamDefinition(foundExam);
+        setExamQuestions(foundExam.questions || []); // Use embedded questions
+    }
   }, [examId]);
 
 
@@ -133,7 +136,6 @@ export default function TakeExamPage() {
     if (examDefinition && examQuestions.length > 0 && !examStarted) { 
       setTimeLeft(examDefinition.durationMinutes * 60);
     } else if (examDefinition && examQuestions.length === 0 && !examStarted) {
-        // If no questions are loaded for the exam, prevent timer start.
         setTimeLeft(0); 
     }
   }, [examDefinition, examQuestions, examStarted]);
@@ -162,23 +164,13 @@ export default function TakeExamPage() {
     setShowSubmitConfirm(false);
 
     try {
-      // Reconstruct a minimal Exam object for localStorage results page if needed
-      const examForResults: Exam = {
-        id: examDefinition.id,
-        title: examDefinition.title,
-        description: examDefinition.description,
-        durationMinutes: examDefinition.durationMinutes,
-        isPremium: examDefinition.isPremium,
-        questionIds: examDefinition.questionIds, // Keep IDs for reference
-        // Add questions that were part of this attempt for the results page
-        // This ensures the results page shows the exact questions taken
-        // (Though the Question type now is slightly different in how options are stored)
-        // For simplicity, we'll rely on the results page re-fetching questions by ID if needed
-        // Or, we can pass the examQuestions array here. Let's pass the resolved questions.
+      const examForResults: Exam = { // Storing the exam with its questions for the results page
+        ...examDefinition,
+        questions: examQuestions, 
       };
 
       localStorage.setItem(`completedExam_${examDefinition.id}`, JSON.stringify({ 
-        exam: {...examForResults, questions: examQuestions}, // Store the actual questions taken
+        exam: examForResults, 
         userAnswers, 
         score: correctAnswers, 
         incorrectCount: localIncorrectCount, 
@@ -266,7 +258,7 @@ export default function TakeExamPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-6">
-              Could not load questions for exam: "{examDefinition.title}". Please ensure questions are available in the global bank and linked correctly.
+              Could not load questions for exam: "{examDefinition.title}". Please ensure questions are available for this exam.
             </p>
             <Button onClick={() => router.push('/dashboard/exams')}>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -283,7 +275,7 @@ export default function TakeExamPage() {
 
   const handleStartExam = () => {
     if(examQuestions.length === 0) {
-        alert("No questions loaded for this exam. Cannot start."); // Or use toast
+        alert("No questions loaded for this exam. Cannot start."); 
         return;
     }
     setExamStarted(true);
@@ -468,7 +460,6 @@ export default function TakeExamPage() {
     );
   }
 
-  // Ensure currentQuestion is available before rendering exam taking UI
   if (!currentQuestion) {
      return (
       <div className="flex flex-col min-h-screen bg-muted/40 p-4 space-y-4 items-center justify-center">
