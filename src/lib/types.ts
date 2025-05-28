@@ -126,18 +126,18 @@ export type InstitutionStatus = 'active' | 'inactive';
 export interface Institution {
   id: string;
   name: string;
-  type: InstitutionType;
+  type: InstitutionType; // "Primary School", "University", etc.
   context: string;
   status: InstitutionStatus;
 }
 
 // Used for the "Manage Departments & Grades" admin page
-export type DepartmentOrGradeType = StudentTypeFromRegistrationForm;
+export type DepartmentOrGradeAssociatedLevel = StudentTypeFromRegistrationForm;
 
 export interface DepartmentOrGradeEntry {
   id: string;
   name: string; // e.g., "Computer Science" or "Grade 9"
-  type: DepartmentOrGradeType; // e.g., "University", "High School"
+  type: DepartmentOrGradeAssociatedLevel; // e.g., "University", "High School"
 }
 
 // Used for the "Manage Courses & Subjects" admin page
@@ -145,4 +145,5 @@ export interface CourseOrSubjectEntry {
   id: string;
   name: string; // e.g., "Calculus I" or "Physics Grade 9"
   educationalLevel: StudentTypeFromRegistrationForm; // e.g., "University", "High School"
+  departmentOrGradeName?: string; // Stores the name of the selected department or grade (e.g., "Computer Science" or "Grade 9")
 }

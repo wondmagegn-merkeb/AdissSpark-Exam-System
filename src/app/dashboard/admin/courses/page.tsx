@@ -13,12 +13,12 @@ import type { CourseOrSubjectEntry, StudentTypeFromRegistrationForm } from '@/li
 import { ADMIN_COURSES_SUBJECTS_STORAGE_KEY } from '@/lib/constants';
 
 const initialSeedCoursesSubjects: CourseOrSubjectEntry[] = [
-  { id: "cs1", name: "Calculus I", educationalLevel: "University" },
-  { id: "cs2", name: "Physics Grade 9", educationalLevel: "High School" },
-  { id: "cs3", name: "Introduction to Programming", educationalLevel: "College" },
-  { id: "cs4", name: "Amharic Grade 5", educationalLevel: "Primary School" },
-  { id: "cs5", name: "Advanced Biology", educationalLevel: "Preparatory School" },
-  { id: "cs6", "name": "General Chemistry", "educationalLevel": "Secondary School" },
+  { id: "cs1", name: "Calculus I", educationalLevel: "University", departmentOrGradeName: "Mathematics" },
+  { id: "cs2", name: "Physics Grade 9", educationalLevel: "High School", departmentOrGradeName: "Grade 9" },
+  { id: "cs3", name: "Introduction to Programming", educationalLevel: "College", departmentOrGradeName: "Information Technology" },
+  { id: "cs4", name: "Amharic Grade 5", educationalLevel: "Primary School", departmentOrGradeName: "Grade 5" },
+  { id: "cs5", name: "Advanced Biology", educationalLevel: "Preparatory School", departmentOrGradeName: "Grade 11" },
+  { id: "cs6", name: "General Chemistry", educationalLevel: "Secondary School", departmentOrGradeName: "Grade 10" },
 ];
 
 const ITEMS_PER_PAGE = 5;
@@ -26,7 +26,7 @@ const ITEMS_PER_PAGE = 5;
 export default function ManageCoursesAndSubjectsPage() {
   const [items, setItems] = useState<CourseOrSubjectEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: keyof CourseOrSubjectEntry | null; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
+  const [sortConfig, setSortConfig] = useState<{ key: keyof CourseOrSubjectEntry | 'departmentOrGradeName' | null; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function ManageCoursesAndSubjectsPage() {
     };
     loadItems();
     window.addEventListener('storage', loadItems);
-    window.addEventListener('focus', loadItems);
+    window.addEventListener('focus', loadItems); // Refresh when tab gets focus
     return () => {
       window.removeEventListener('storage', loadItems);
       window.removeEventListener('focus', loadItems);
@@ -63,7 +63,8 @@ export default function ManageCoursesAndSubjectsPage() {
   const filteredItems = useMemo(() => {
     return items.filter(item =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.educationalLevel.toLowerCase().includes(searchTerm.toLowerCase())
+      item.educationalLevel.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.departmentOrGradeName && item.departmentOrGradeName.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [items, searchTerm]);
 
@@ -71,10 +72,17 @@ export default function ManageCoursesAndSubjectsPage() {
     let sortableItems = [...filteredItems];
     if (sortConfig.key) {
       sortableItems.sort((a, b) => {
-        if (a[sortConfig.key!] < b[sortConfig.key!]) {
+        const valA = a[sortConfig.key as keyof CourseOrSubjectEntry];
+        const valB = b[sortConfig.key as keyof CourseOrSubjectEntry];
+        
+        // Handle cases where departmentOrGradeName might be undefined for sorting
+        const safeValA = valA === undefined ? '' : valA;
+        const safeValB = valB === undefined ? '' : valB;
+
+        if (safeValA < safeValB) {
           return sortConfig.direction === 'ascending' ? -1 : 1;
         }
-        if (a[sortConfig.key!] > b[sortConfig.key!]) {
+        if (safeValA > safeValB) {
           return sortConfig.direction === 'ascending' ? 1 : -1;
         }
         return 0;
@@ -90,7 +98,7 @@ export default function ManageCoursesAndSubjectsPage() {
 
   const totalPages = Math.ceil(sortedItems.length / ITEMS_PER_PAGE);
 
-  const requestSort = (key: keyof CourseOrSubjectEntry) => {
+  const requestSort = (key: keyof CourseOrSubjectEntry | 'departmentOrGradeName') => {
     let direction: 'ascending' | 'descending' = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
       direction = 'descending';
@@ -108,7 +116,7 @@ export default function ManageCoursesAndSubjectsPage() {
     }
   };
 
-  const renderSortIcon = (columnKey: keyof CourseOrSubjectEntry) => {
+  const renderSortIcon = (columnKey: keyof CourseOrSubjectEntry | 'departmentOrGradeName') => {
     if (sortConfig.key !== columnKey) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30 group-hover:opacity-100" />;
     return sortConfig.direction === 'ascending' ? <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-0" /> : <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-180" />;
   };
@@ -118,7 +126,7 @@ export default function ManageCoursesAndSubjectsPage() {
       <CardHeader>
         <CardTitle className="text-2xl">Manage Courses & Subjects</CardTitle>
         <CardDescription>
-          Add, edit, or remove courses and subjects, associating them with specific educational levels.
+          Add, edit, or remove courses and subjects, associating them with specific educational levels and departments/grades.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -149,6 +157,9 @@ export default function ManageCoursesAndSubjectsPage() {
               <TableHead onClick={() => requestSort('educationalLevel')} className="cursor-pointer group hover:bg-muted/50">
                 <div className="flex items-center">Educational Level {renderSortIcon('educationalLevel')}</div>
               </TableHead>
+              <TableHead onClick={() => requestSort('departmentOrGradeName')} className="cursor-pointer group hover:bg-muted/50">
+                <div className="flex items-center">Department / Grade {renderSortIcon('departmentOrGradeName')}</div>
+              </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -158,6 +169,7 @@ export default function ManageCoursesAndSubjectsPage() {
                 <TableCell className="text-xs text-muted-foreground">{item.id}</TableCell>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.educationalLevel}</TableCell>
+                <TableCell>{item.departmentOrGradeName || 'N/A'}</TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/dashboard/admin/courses/edit/${item.id}`}>
@@ -175,7 +187,7 @@ export default function ManageCoursesAndSubjectsPage() {
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
                           This action cannot be undone. This will permanently delete the item:
-                          <br /><strong>{item.name} (Level: {item.educationalLevel})</strong>.
+                          <br /><strong>{item.name} (Level: {item.educationalLevel}{item.departmentOrGradeName ? `, Dept/Grade: ${item.departmentOrGradeName}` : ''})</strong>.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -191,7 +203,7 @@ export default function ManageCoursesAndSubjectsPage() {
             ))}
             {paginatedItems.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   No courses or subjects found matching your criteria.
                 </TableCell>
               </TableRow>

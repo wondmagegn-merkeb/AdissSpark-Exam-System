@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,12 +13,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
-import type { CourseOrSubjectEntry, StudentTypeFromRegistrationForm } from '@/lib/types';
-import { ADMIN_COURSES_SUBJECTS_STORAGE_KEY, STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM } from '@/lib/constants';
+import type { CourseOrSubjectEntry, DepartmentOrGradeEntry, StudentTypeFromRegistrationForm } from '@/lib/types';
+import { ADMIN_COURSES_SUBJECTS_STORAGE_KEY, STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM, DEPARTMENTS_GRADES_STORAGE_KEY } from '@/lib/constants';
 
 const itemSchema = z.object({
   name: z.string().min(2, { message: "Course/Subject name must be at least 2 characters." }),
   educationalLevel: z.enum(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM, { required_error: "Please select an educational level." }),
+  departmentOrGradeName: z.string().optional(),
 });
 
 type ItemFormValues = z.infer<typeof itemSchema>;
@@ -27,14 +28,37 @@ export default function AddCourseOrSubjectPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [fetchedDeptGrades, setFetchedDeptGrades] = useState<string[]>([]);
 
-  const { control, register, handleSubmit, formState: { errors }, reset } = useForm<ItemFormValues>({
+  const { control, register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm<ItemFormValues>({
     resolver: zodResolver(itemSchema),
     defaultValues: {
       name: '',
       educationalLevel: undefined,
+      departmentOrGradeName: undefined,
     },
   });
+
+  const watchedEducationalLevel = watch("educationalLevel");
+
+  useEffect(() => {
+    if (watchedEducationalLevel) {
+      const storedDeptGrades = localStorage.getItem(DEPARTMENTS_GRADES_STORAGE_KEY);
+      let relevantNames: string[] = [];
+      if (storedDeptGrades) {
+        const allDeptGrades: DepartmentOrGradeEntry[] = JSON.parse(storedDeptGrades);
+        relevantNames = allDeptGrades
+          .filter(item => item.type === watchedEducationalLevel)
+          .map(item => item.name)
+          .sort();
+      }
+      setFetchedDeptGrades(relevantNames);
+      setValue('departmentOrGradeName', undefined); // Reset when educational level changes
+    } else {
+      setFetchedDeptGrades([]);
+      setValue('departmentOrGradeName', undefined);
+    }
+  }, [watchedEducationalLevel, setValue]);
 
   const onSubmit = async (data: ItemFormValues) => {
     setIsLoading(true);
@@ -45,13 +69,14 @@ export default function AddCourseOrSubjectPage() {
       const newItem: CourseOrSubjectEntry = {
         id: `cs-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         ...data,
+        departmentOrGradeName: data.departmentOrGradeName || undefined, // Ensure it's undefined if not selected
       };
       items.push(newItem);
       localStorage.setItem(ADMIN_COURSES_SUBJECTS_STORAGE_KEY, JSON.stringify(items));
 
       toast({
         title: "Item Added",
-        description: `${data.name} (Level: ${data.educationalLevel}) has been successfully added.`,
+        description: `${data.name} (Level: ${data.educationalLevel}${data.departmentOrGradeName ? `, Dept/Grade: ${data.departmentOrGradeName}` : ''}) has been successfully added.`,
       });
       reset(); 
     } catch (error) {
@@ -66,6 +91,12 @@ export default function AddCourseOrSubjectPage() {
     }
   };
 
+  const getDeptGradeLabel = () => {
+    if (!watchedEducationalLevel) return "Department / Grade";
+    if (["University", "College"].includes(watchedEducationalLevel)) return "Department";
+    return "Grade";
+  };
+
   return (
     <Card className="shadow-lg max-w-2xl mx-auto">
       <CardHeader>
@@ -77,7 +108,7 @@ export default function AddCourseOrSubjectPage() {
           </Button>
         </div>
         <CardDescription>
-          Fill in the details for the new course or subject and associate it with an educational level.
+          Fill in the details for the new course or subject.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -109,7 +140,35 @@ export default function AddCourseOrSubjectPage() {
             {errors.educationalLevel && <p className="text-sm text-destructive mt-1">{errors.educationalLevel.message}</p>}
           </div>
           
-          <div className="flex justify-end space-x-3">
+          {watchedEducationalLevel && fetchedDeptGrades.length > 0 && (
+            <div>
+              <Label htmlFor="departmentOrGradeName">{getDeptGradeLabel()}</Label>
+              <Controller
+                name="departmentOrGradeName"
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isLoading || fetchedDeptGrades.length === 0}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder={`Select ${getDeptGradeLabel().toLowerCase()}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {fetchedDeptGrades.map(name => (
+                         <SelectItem key={name} value={name}>{name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.departmentOrGradeName && <p className="text-sm text-destructive mt-1">{errors.departmentOrGradeName.message}</p>}
+            </div>
+          )}
+          {watchedEducationalLevel && fetchedDeptGrades.length === 0 && (
+             <p className="text-sm text-muted-foreground mt-1">
+                No specific {getDeptGradeLabel().toLowerCase()}s found for {watchedEducationalLevel}. You can add them in 'Manage Departments & Grades'.
+            </p>
+          )}
+          
+          <div className="flex justify-end space-x-3 pt-4">
             <Button type="button" variant="outline" onClick={() => router.push('/dashboard/admin/courses')} disabled={isLoading}>
               Cancel
             </Button>
