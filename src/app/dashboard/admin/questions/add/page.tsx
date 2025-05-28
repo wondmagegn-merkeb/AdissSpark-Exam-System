@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Save } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import type { Question } from '@/lib/types';
-import { ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY } from '@/lib/constants';
+// import { ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY } from '@/lib/constants'; // Removed import
 
 const questionSchema = z.object({
   text: z.string().min(5, { message: "Question text must be at least 5 characters." }),
@@ -63,43 +63,52 @@ export default function AddGlobalQuestionPage() {
 
   const onSubmit = async (data: QuestionFormValues) => {
     setIsLoading(true);
-    try {
-      const storedQuestions = localStorage.getItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY);
-      let questions: Question[] = storedQuestions ? JSON.parse(storedQuestions) : [];
+    // try {
+    //   // This section is commented out as ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY is removed
+    //   // const storedQuestions = localStorage.getItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY);
+    //   // let questions: Question[] = storedQuestions ? JSON.parse(storedQuestions) : [];
       
-      const newQuestion: Question = {
-        id: `gq-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-        ...data,
-        explanation: data.explanation || undefined,
-      };
-      questions.push(newQuestion);
-      localStorage.setItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY, JSON.stringify(questions));
+    //   // const newQuestion: Question = {
+    //   //   id: `gq-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    //   //   ...data,
+    //   //   explanation: data.explanation || undefined,
+    //   // };
+    //   // questions.push(newQuestion);
+    //   // localStorage.setItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY, JSON.stringify(questions));
 
-      toast({
-        title: "Question Added",
-        description: `The question has been added to the global bank.`,
-      });
-      form.reset(); 
-    } catch (error) {
-      console.error("Error saving question:", error);
-      toast({ title: "Error", description: "Failed to add question. Please try again.", variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
+    //   // toast({
+    //   //   title: "Question Added",
+    //   //   description: `The question has been added to the global bank.`,
+    //   // });
+    //   // form.reset(); 
+    // } catch (error) {
+    //   console.error("Error saving question:", error);
+    //   toast({ title: "Error", description: "Failed to add question. Please try again.", variant: "destructive" });
+    // } finally {
+    //   setIsLoading(false);
+    // }
+    // Simulate save for deprecated page
+    await new Promise(resolve => setTimeout(resolve, 500));
+    toast({
+        title: "Question Added (Simulated)",
+        description: `The question has been 'added' to this deprecated global bank.`,
+    });
+    form.reset();
+    setIsLoading(false);
   };
   
   return (
     <Card className="shadow-lg max-w-2xl mx-auto my-8">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl">Add New Global Question</CardTitle>
+          <CardTitle className="text-2xl">Add New Global Question (Deprecated)</CardTitle>
           <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/admin/questions')}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Global Questions List
           </Button>
         </div>
         <CardDescription>
-          Fill in the details for the new question. It will be available for all exams.
+          This section is deprecated. Questions are managed per exam.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -182,3 +191,5 @@ export default function AddGlobalQuestionPage() {
     </Card>
   );
 }
+
+    

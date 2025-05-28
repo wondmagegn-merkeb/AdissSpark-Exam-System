@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Save, AlertTriangle } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import type { Question } from '@/lib/types';
-import { ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY } from '@/lib/constants';
+// import { ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY } from '@/lib/constants'; // Removed import
 
 const questionSchema = z.object({
   text: z.string().min(5, { message: "Question text must be at least 5 characters." }),
@@ -34,6 +34,13 @@ const questionSchema = z.object({
 });
 
 type QuestionFormValues = z.infer<typeof questionSchema>;
+
+// Mock initial questions (same as list page) for this deprecated page to function in isolation
+const initialSeedQuestions: Question[] = [
+  { id: "gq1", text: "What is the capital of Ethiopia?", option1: "Nairobi", option2: "Addis Ababa", option3: "Cairo", option4: "Lagos", correctAnswer: "Addis Ababa", explanation: "Addis Ababa is the capital and largest city of Ethiopia." },
+  { id: "gq2", text: "Which river is the longest in the world?", option1: "Amazon", option2: "Nile", option3: "Yangtze", option4: "Mississippi", correctAnswer: "Nile", explanation: "The Nile River is traditionally considered the longest river in the world." },
+];
+
 
 export default function EditGlobalQuestionPage() {
   const router = useRouter();
@@ -57,60 +64,65 @@ export default function EditGlobalQuestionPage() {
 
   useEffect(() => {
     if (questionId) {
-      const storedQuestions = localStorage.getItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY);
-      if (storedQuestions) {
-        const questions: Question[] = JSON.parse(storedQuestions);
-        const questionToEdit = questions.find(q => q.id === questionId);
-        if (questionToEdit) {
-          form.reset({
-            text: questionToEdit.text,
-            option1: questionToEdit.option1,
-            option2: questionToEdit.option2,
-            option3: questionToEdit.option3,
-            option4: questionToEdit.option4,
-            correctAnswer: questionToEdit.correctAnswer,
-            explanation: questionToEdit.explanation || '',
-          });
-        } else {
-          setItemNotFound(true);
-          toast({ title: "Error", description: "Question not found.", variant: "destructive" });
-        }
+      // This section is modified as ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY is removed
+      // For deprecated page, use in-memory mock data
+      const questions: Question[] = initialSeedQuestions; 
+      const questionToEdit = questions.find(q => q.id === questionId);
+      if (questionToEdit) {
+        form.reset({
+          text: questionToEdit.text,
+          option1: questionToEdit.option1,
+          option2: questionToEdit.option2,
+          option3: questionToEdit.option3,
+          option4: questionToEdit.option4,
+          correctAnswer: questionToEdit.correctAnswer,
+          explanation: questionToEdit.explanation || '',
+        });
       } else {
         setItemNotFound(true);
-        toast({ title: "Error", description: "No question data found.", variant: "destructive" });
+        toast({ title: "Error", description: "Question not found.", variant: "destructive" });
       }
     }
   }, [questionId, form, toast]);
 
   const onSubmit = async (data: QuestionFormValues) => {
     setIsLoading(true);
-    try {
-      const storedQuestions = localStorage.getItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY);
-      let questions: Question[] = storedQuestions ? JSON.parse(storedQuestions) : [];
-      const questionIndex = questions.findIndex(q => q.id === questionId);
+    // try {
+    //   // This section is commented out as ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY is removed
+    //   // const storedQuestions = localStorage.getItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY);
+    //   // let questions: Question[] = storedQuestions ? JSON.parse(storedQuestions) : [];
+    //   // const questionIndex = questions.findIndex(q => q.id === questionId);
 
-      if (questionIndex > -1) {
-        questions[questionIndex] = {
-          ...questions[questionIndex],
-          ...data,
-          explanation: data.explanation || undefined,
-        };
-        localStorage.setItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY, JSON.stringify(questions));
-        toast({
-          title: "Question Updated",
-          description: `The question has been updated.`,
+    //   // if (questionIndex > -1) {
+    //   //   questions[questionIndex] = {
+    //   //     ...questions[questionIndex],
+    //   //     ...data,
+    //   //     explanation: data.explanation || undefined,
+    //   //   };
+    //   //   localStorage.setItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY, JSON.stringify(questions));
+    //   //   toast({
+    //   //     title: "Question Updated",
+    //   //     description: `The question has been updated.`,
+    //   //   });
+    //   //   router.push('/dashboard/admin/questions');
+    //   // } else {
+    //   //   toast({ title: "Error", description: "Could not find question to update.", variant: "destructive" });
+    //   //   setItemNotFound(true);
+    //   // }
+    // } catch (error) {
+    //   console.error("Error updating question:", error);
+    //   toast({ title: "Error", description: "Failed to update question. Please try again.", variant: "destructive" });
+    // } finally {
+    //   setIsLoading(false);
+    // }
+    // Simulate save for deprecated page
+    await new Promise(resolve => setTimeout(resolve, 500));
+     toast({
+          title: "Question Updated (Simulated)",
+          description: `The question has been 'updated' in this deprecated global bank.`,
         });
-        router.push('/dashboard/admin/questions');
-      } else {
-        toast({ title: "Error", description: "Could not find question to update.", variant: "destructive" });
-        setItemNotFound(true);
-      }
-    } catch (error) {
-      console.error("Error updating question:", error);
-      toast({ title: "Error", description: "Failed to update question. Please try again.", variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
+    router.push('/dashboard/admin/questions');
+    setIsLoading(false);
   };
 
   if (itemNotFound) {
@@ -135,14 +147,14 @@ export default function EditGlobalQuestionPage() {
     <Card className="shadow-lg max-w-2xl mx-auto my-8">
       <CardHeader>
          <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl">Edit Global Question</CardTitle>
+          <CardTitle className="text-2xl">Edit Global Question (Deprecated)</CardTitle>
           <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/admin/questions')}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Global Questions List
           </Button>
         </div>
         <CardDescription>
-          Modify the details for this global question.
+          This section is deprecated. Questions are managed per exam.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -224,3 +236,5 @@ export default function EditGlobalQuestionPage() {
     </Card>
   );
 }
+
+    

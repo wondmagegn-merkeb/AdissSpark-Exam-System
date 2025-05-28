@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, HelpCircle } from "lucide-react";
 import type { Question } from '@/lib/types';
-import { ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY } from '@/lib/constants';
+// import { ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY } from '@/lib/constants'; // Removed import
 import { useToast } from '@/hooks/use-toast';
 
 const initialSeedQuestions: Question[] = [
@@ -25,42 +25,37 @@ const initialSeedQuestions: Question[] = [
 const ITEMS_PER_PAGE = 10;
 
 export default function ManageGlobalQuestionsPage() {
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questions, setQuestions] = useState<Question[]>(initialSeedQuestions); // Operates with in-memory data
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof Question | null; direction: 'ascending' | 'descending' }>({ key: 'text', direction: 'ascending' });
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const loadQuestions = () => {
-      const storedQuestions = localStorage.getItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY);
-      if (storedQuestions) {
-        try {
-          const parsedQuestions = JSON.parse(storedQuestions);
-          if (Array.isArray(parsedQuestions)) {
-            setQuestions(parsedQuestions);
-          } else {
-            localStorage.setItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY, JSON.stringify(initialSeedQuestions));
-            setQuestions(initialSeedQuestions);
-          }
-        } catch (error) {
-          console.error("Error parsing global questions from localStorage:", error);
-          localStorage.setItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY, JSON.stringify(initialSeedQuestions));
-          setQuestions(initialSeedQuestions);
-        }
-      } else {
-        localStorage.setItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY, JSON.stringify(initialSeedQuestions));
-        setQuestions(initialSeedQuestions);
-      }
-    };
-    loadQuestions();
-    window.addEventListener('storage', loadQuestions);
-    window.addEventListener('focus', loadQuestions);
-    return () => {
-      window.removeEventListener('storage', loadQuestions);
-      window.removeEventListener('focus', loadQuestions);
-    };
-  }, []);
+  // useEffect(() => {
+  //   // This section is commented out as ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY is removed
+  //   // const loadQuestions = () => {
+  //   //   const storedQuestions = localStorage.getItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY);
+  //   //   if (storedQuestions) {
+  //   //     try {
+  //   //       const parsedQuestions = JSON.parse(storedQuestions);
+  //   //       if (Array.isArray(parsedQuestions)) {
+  //   //         setQuestions(parsedQuestions);
+  //   //       } else {
+  //   //         localStorage.setItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY, JSON.stringify(initialSeedQuestions));
+  //   //         setQuestions(initialSeedQuestions);
+  //   //       }
+  //   //     } catch (error) {
+  //   //       console.error("Error parsing global questions from localStorage:", error);
+  //   //       localStorage.setItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY, JSON.stringify(initialSeedQuestions));
+  //   //       setQuestions(initialSeedQuestions);
+  //   //     }
+  //   //   } else {
+  //   //     localStorage.setItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY, JSON.stringify(initialSeedQuestions));
+  //   //     setQuestions(initialSeedQuestions);
+  //   //   }
+  //   // };
+  //   // loadQuestions();
+  // }, []);
 
   const filteredQuestions = useMemo(() => {
     return questions.filter(q =>
@@ -109,8 +104,8 @@ export default function ManageGlobalQuestionsPage() {
   const handleDelete = (questionId: string) => {
     const updatedQuestions = questions.filter(q => q.id !== questionId);
     setQuestions(updatedQuestions);
-    localStorage.setItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY, JSON.stringify(updatedQuestions));
-    toast({ title: "Question Deleted", description: "The question has been removed from the global bank." });
+    // localStorage.setItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY, JSON.stringify(updatedQuestions)); // Removed localStorage
+    toast({ title: "Question Deleted", description: "The question has been removed (from this session)." });
     if (paginatedQuestions.length === 1 && currentPage > 1 && (sortedQuestions.length - 1) % ITEMS_PER_PAGE === 0) {
       setCurrentPage(currentPage - 1);
     }
@@ -125,10 +120,10 @@ export default function ManageGlobalQuestionsPage() {
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle className="text-2xl flex items-center">
-            <HelpCircle className="mr-3 h-6 w-6 text-primary" /> Manage Global Questions
+            <HelpCircle className="mr-3 h-6 w-6 text-primary" /> Manage Global Questions (Deprecated)
         </CardTitle>
         <CardDescription>
-          Add, edit, or delete questions for the entire platform. These questions can be linked to exams.
+          This section for managing a global question bank is deprecated. Questions are now managed per exam.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -252,3 +247,5 @@ export default function ManageGlobalQuestionsPage() {
     </Card>
   );
 }
+
+    
