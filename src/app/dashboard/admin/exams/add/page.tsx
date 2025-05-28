@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from "@/components/ui/button";
@@ -12,14 +12,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
-import type { Exam, Question } from '@/lib/types';
-import { ADMIN_EXAMS_STORAGE_KEY } from '@/lib/constants';
+import type { Exam, Question, StudentTypeFromRegistrationForm, DepartmentOrGradeEntry } from '@/lib/types';
+import { ADMIN_EXAMS_STORAGE_KEY, STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM, DEPARTMENTS_GRADES_STORAGE_KEY } from '@/lib/constants';
 
 const examSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
+  educationalLevel: z.enum(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM, { required_error: "Please select an educational level." }),
+  departmentOrGradeName: z.string().optional(),
   questionCount: z.coerce.number().int().positive({ message: "Must be a positive number." }),
   durationMinutes: z.coerce.number().int().positive({ message: "Must be a positive number." }),
   isPremium: z.boolean().default(false),
@@ -31,19 +34,48 @@ export default function AddAdminExamPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [fetchedDeptGrades, setFetchedDeptGrades] = useState<string[]>([]);
 
-  const { control, register, handleSubmit, formState: { errors }, reset, watch } = useForm<ExamFormValues>({
+  const { control, register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm<ExamFormValues>({
     resolver: zodResolver(examSchema),
     defaultValues: {
       title: '',
       description: '',
-      questionCount: 10,
+      educationalLevel: undefined,
+      departmentOrGradeName: undefined,
+      questionCount: 10, // Placeholder, actual questions managed separately
       durationMinutes: 30,
       isPremium: false,
     },
   });
 
   const isPremium = watch('isPremium');
+  const watchedEducationalLevel = watch("educationalLevel");
+
+  useEffect(() => {
+    if (watchedEducationalLevel) {
+      const storedDeptGrades = localStorage.getItem(DEPARTMENTS_GRADES_STORAGE_KEY);
+      let relevantNames: string[] = [];
+      if (storedDeptGrades) {
+        const allDeptGrades: DepartmentOrGradeEntry[] = JSON.parse(storedDeptGrades);
+        relevantNames = allDeptGrades
+          .filter(item => item.type === watchedEducationalLevel)
+          .map(item => item.name)
+          .sort();
+      }
+      setFetchedDeptGrades(relevantNames);
+      setValue('departmentOrGradeName', undefined); 
+    } else {
+      setFetchedDeptGrades([]);
+      setValue('departmentOrGradeName', undefined);
+    }
+  }, [watchedEducationalLevel, setValue]);
+
+  const getDeptGradeLabel = () => {
+    if (!watchedEducationalLevel) return "Department / Grade";
+    if (["University", "College"].includes(watchedEducationalLevel)) return "Department";
+    return "Grade";
+  };
 
   const onSubmit = async (data: ExamFormValues) => {
     setIsLoading(true);
@@ -51,8 +83,6 @@ export default function AddAdminExamPage() {
       const storedExams = localStorage.getItem(ADMIN_EXAMS_STORAGE_KEY);
       let exams: Exam[] = storedExams ? JSON.parse(storedExams) : [];
       
-      // For now, questions array will be empty or have placeholder if needed.
-      // A more complex UI would be needed to manage questions.
       const placeholderQuestions: Question[] = Array.from({ length: data.questionCount }, (_, i) => ({
         id: `q-${Date.now()}-${i}`,
         text: `Placeholder Question ${i + 1} for exam: ${data.title}`,
@@ -64,7 +94,8 @@ export default function AddAdminExamPage() {
       const newExam: Exam = {
         id: `exam-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         ...data,
-        questions: placeholderQuestions, // Add placeholder questions
+        departmentOrGradeName: data.departmentOrGradeName || undefined,
+        questions: placeholderQuestions, 
       };
       exams.push(newExam);
       localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(exams));
@@ -74,7 +105,6 @@ export default function AddAdminExamPage() {
         description: `${data.title} has been successfully added.`,
       });
       reset(); 
-      // router.push('/dashboard/admin/exams'); // Optionally redirect
     } catch (error) {
       console.error("Error saving exam to localStorage:", error);
       toast({
@@ -98,7 +128,7 @@ export default function AddAdminExamPage() {
           </Button>
         </div>
         <CardDescription>
-          Fill in the details for the new exam. Question management will be handled separately.
+          Fill in the details for the new exam. Question content will be managed separately.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -115,11 +145,61 @@ export default function AddAdminExamPage() {
             {errors.description && <p className="text-sm text-destructive mt-1">{errors.description.message}</p>}
           </div>
 
+          <div>
+            <Label htmlFor="educationalLevel">Educational Level</Label>
+            <Controller
+              name="educationalLevel"
+              control={control}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select educational level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM.map(level => (
+                       <SelectItem key={level} value={level}>{level}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.educationalLevel && <p className="text-sm text-destructive mt-1">{errors.educationalLevel.message}</p>}
+          </div>
+          
+          {watchedEducationalLevel && fetchedDeptGrades.length > 0 && (
+            <div>
+              <Label htmlFor="departmentOrGradeName">{getDeptGradeLabel()}</Label>
+              <Controller
+                name="departmentOrGradeName"
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isLoading || fetchedDeptGrades.length === 0}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder={`Select ${getDeptGradeLabel().toLowerCase()}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {fetchedDeptGrades.map(name => (
+                         <SelectItem key={name} value={name}>{name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.departmentOrGradeName && <p className="text-sm text-destructive mt-1">{errors.departmentOrGradeName.message}</p>}
+            </div>
+          )}
+          {watchedEducationalLevel && fetchedDeptGrades.length === 0 && (
+             <p className="text-sm text-muted-foreground mt-1">
+                No specific {getDeptGradeLabel().toLowerCase()}s found for {watchedEducationalLevel}. You can add them in 'Manage Departments & Grades'.
+            </p>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="questionCount">Number of Questions</Label>
+              <Label htmlFor="questionCount">Number of Questions (Initial)</Label>
               <Input id="questionCount" type="number" {...register("questionCount")} disabled={isLoading} className="mt-1" />
               {errors.questionCount && <p className="text-sm text-destructive mt-1">{errors.questionCount.message}</p>}
+              <p className="text-xs text-muted-foreground mt-1">Actual questions are managed separately.</p>
             </div>
             <div>
               <Label htmlFor="durationMinutes">Duration (Minutes)</Label>
@@ -133,7 +213,6 @@ export default function AddAdminExamPage() {
                 id="isPremium"
                 checked={isPremium}
                 onCheckedChange={(checked) => {
-                    // @ts-ignore TODO: fix type error
                     setValue('isPremium', checked);
                 }}
                 disabled={isLoading}

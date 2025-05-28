@@ -68,6 +68,8 @@ export interface Exam {
   durationMinutes: number; // Duration in minutes
   isPremium: boolean;
   questions: Question[];
+  educationalLevel?: StudentTypeFromRegistrationForm;
+  departmentOrGradeName?: string;
 }
 
 export interface StudyPlanData {
@@ -147,3 +149,4 @@ export interface CourseOrSubjectEntry {
   educationalLevel: StudentTypeFromRegistrationForm; // e.g., "University", "High School"
   departmentOrGradeName?: string; // Stores the name of the selected department or grade (e.g., "Computer Science" or "Grade 9")
 }
+

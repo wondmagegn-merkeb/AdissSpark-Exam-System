@@ -12,14 +12,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save, AlertTriangle } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
-import type { Exam } from '@/lib/types';
-import { ADMIN_EXAMS_STORAGE_KEY } from '@/lib/constants';
+import type { Exam, StudentTypeFromRegistrationForm, DepartmentOrGradeEntry } from '@/lib/types';
+import { ADMIN_EXAMS_STORAGE_KEY, STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM, DEPARTMENTS_GRADES_STORAGE_KEY } from '@/lib/constants';
 
 const examSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
+  educationalLevel: z.enum(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM, { required_error: "Please select an educational level." }),
+  departmentOrGradeName: z.string().optional(),
   questionCount: z.coerce.number().int().positive({ message: "Must be a positive number." }),
   durationMinutes: z.coerce.number().int().positive({ message: "Must be a positive number." }),
   isPremium: z.boolean().default(false),
@@ -35,12 +38,14 @@ export default function EditAdminExamPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [itemNotFound, setItemNotFound] = useState(false);
+  const [fetchedDeptGrades, setFetchedDeptGrades] = useState<string[]>([]);
 
   const { control, register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ExamFormValues>({
     resolver: zodResolver(examSchema),
   });
   
   const isPremium = watch('isPremium');
+  const watchedEducationalLevel = watch("educationalLevel");
 
   useEffect(() => {
     if (examId) {
@@ -51,27 +56,60 @@ export default function EditAdminExamPage() {
         if (examToEdit) {
           setValue('title', examToEdit.title);
           setValue('description', examToEdit.description);
+          setValue('educationalLevel', examToEdit.educationalLevel || STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM[0]); // Default if undefined
+          // departmentOrGradeName will be set in the other useEffect
           setValue('questionCount', examToEdit.questionCount);
           setValue('durationMinutes', examToEdit.durationMinutes);
           setValue('isPremium', examToEdit.isPremium);
         } else {
           setItemNotFound(true);
-          toast({
-            title: "Error",
-            description: "Exam not found in storage.",
-            variant: "destructive",
-          });
+          toast({ title: "Error", description: "Exam not found.", variant: "destructive" });
         }
       } else {
         setItemNotFound(true);
-         toast({
-            title: "Error",
-            description: "No exam data found in storage.",
-            variant: "destructive",
-          });
+         toast({ title: "Error", description: "No exam data found.", variant: "destructive" });
       }
     }
   }, [examId, setValue, toast]);
+
+  useEffect(() => {
+    if (watchedEducationalLevel) {
+      const storedDeptGrades = localStorage.getItem(DEPARTMENTS_GRADES_STORAGE_KEY);
+      let relevantNames: string[] = [];
+      if (storedDeptGrades) {
+        const allDeptGrades: DepartmentOrGradeEntry[] = JSON.parse(storedDeptGrades);
+        relevantNames = allDeptGrades
+          .filter(item => item.type === watchedEducationalLevel)
+          .map(item => item.name)
+          .sort();
+      }
+      setFetchedDeptGrades(relevantNames);
+
+      const storedExams = localStorage.getItem(ADMIN_EXAMS_STORAGE_KEY);
+      if (storedExams) {
+          const exams: Exam[] = JSON.parse(storedExams);
+          const examToEdit = exams.find(exam => exam.id === examId);
+          if (examToEdit && examToEdit.educationalLevel === watchedEducationalLevel) {
+            if(examToEdit.departmentOrGradeName && relevantNames.includes(examToEdit.departmentOrGradeName)){
+                 setValue('departmentOrGradeName', examToEdit.departmentOrGradeName);
+            } else {
+                setValue('departmentOrGradeName', undefined);
+            }
+          } else if (examToEdit && examToEdit.educationalLevel !== watchedEducationalLevel) {
+             setValue('departmentOrGradeName', undefined);
+          }
+      }
+    } else {
+      setFetchedDeptGrades([]);
+      setValue('departmentOrGradeName', undefined);
+    }
+  }, [watchedEducationalLevel, setValue, examId]);
+
+  const getDeptGradeLabel = () => {
+    if (!watchedEducationalLevel) return "Department / Grade";
+    if (["University", "College"].includes(watchedEducationalLevel)) return "Department";
+    return "Grade";
+  };
 
   const onSubmit = async (data: ExamFormValues) => {
     setIsLoading(true);
@@ -81,9 +119,13 @@ export default function EditAdminExamPage() {
       
       const examIndex = exams.findIndex(exam => exam.id === examId);
       if (examIndex > -1) {
-        // Preserve existing questions, only update metadata
         const existingQuestions = exams[examIndex].questions;
-        exams[examIndex] = { ...exams[examIndex], ...data, questions: existingQuestions };
+        exams[examIndex] = { 
+            ...exams[examIndex], 
+            ...data, 
+            departmentOrGradeName: data.departmentOrGradeName || undefined,
+            questions: existingQuestions // Preserve existing questions
+        };
         localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(exams));
         toast({
           title: "Exam Updated",
@@ -91,20 +133,12 @@ export default function EditAdminExamPage() {
         });
         router.push('/dashboard/admin/exams');
       } else {
-         toast({
-          title: "Error",
-          description: "Could not find exam to update.",
-          variant: "destructive",
-        });
+         toast({ title: "Error", description: "Could not find exam to update.", variant: "destructive" });
         setItemNotFound(true);
       }
     } catch (error) {
       console.error("Error updating exam in localStorage:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update exam. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to update exam. Please try again.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -139,7 +173,7 @@ export default function EditAdminExamPage() {
           </Button>
         </div>
         <CardDescription>
-          Modify the details for the exam. Question management is handled separately.
+          Modify the details for the exam. Question content is managed separately.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -156,11 +190,67 @@ export default function EditAdminExamPage() {
             {errors.description && <p className="text-sm text-destructive mt-1">{errors.description.message}</p>}
           </div>
 
+          <div>
+            <Label htmlFor="educationalLevel">Educational Level</Label>
+            <Controller
+              name="educationalLevel"
+              control={control}
+              render={({ field }) => (
+                <Select 
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                  }} 
+                  value={field.value} 
+                  disabled={isLoading}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select educational level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM.map(level => (
+                       <SelectItem key={level} value={level}>{level}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.educationalLevel && <p className="text-sm text-destructive mt-1">{errors.educationalLevel.message}</p>}
+          </div>
+          
+          {watchedEducationalLevel && fetchedDeptGrades.length > 0 && (
+            <div>
+              <Label htmlFor="departmentOrGradeName">{getDeptGradeLabel()}</Label>
+              <Controller
+                name="departmentOrGradeName"
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isLoading || fetchedDeptGrades.length === 0}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder={`Select ${getDeptGradeLabel().toLowerCase()}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {fetchedDeptGrades.map(name => (
+                         <SelectItem key={name} value={name}>{name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.departmentOrGradeName && <p className="text-sm text-destructive mt-1">{errors.departmentOrGradeName.message}</p>}
+            </div>
+          )}
+          {watchedEducationalLevel && fetchedDeptGrades.length === 0 && (
+             <p className="text-sm text-muted-foreground mt-1">
+                No specific {getDeptGradeLabel().toLowerCase()}s found for {watchedEducationalLevel}. You can add them in 'Manage Departments & Grades'.
+            </p>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="questionCount">Number of Questions</Label>
               <Input id="questionCount" type="number" {...register("questionCount")} disabled={isLoading} className="mt-1" />
               {errors.questionCount && <p className="text-sm text-destructive mt-1">{errors.questionCount.message}</p>}
+              <p className="text-xs text-muted-foreground mt-1">Actual questions are managed separately.</p>
             </div>
             <div>
               <Label htmlFor="durationMinutes">Duration (Minutes)</Label>
@@ -174,7 +264,6 @@ export default function EditAdminExamPage() {
                 id="isPremium"
                 checked={isPremium}
                 onCheckedChange={(checked) => {
-                    // @ts-ignore TODO: fix type error
                     setValue('isPremium', checked);
                 }}
                 disabled={isLoading}

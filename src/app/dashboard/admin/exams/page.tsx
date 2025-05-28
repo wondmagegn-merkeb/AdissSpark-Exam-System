@@ -9,8 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, Lock, FileText as FileTextIcon, Clock, ListChecks } from "lucide-react";
-import type { Exam } from '@/lib/types';
+import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, Lock, FileText as FileTextIcon, Clock, ListChecks, Layers, BookCopy } from "lucide-react";
+import type { Exam, Question } from '@/lib/types';
 import { ADMIN_EXAMS_STORAGE_KEY } from '@/lib/constants';
 
 // Mock exam data to seed localStorage if empty
@@ -27,18 +27,22 @@ const initialSeedExams: Exam[] = [
       { id: 'q1_2', text: 'Which river is the longest in the world?', options: ['Amazon', 'Nile', 'Yangtze', 'Mississippi'], correctAnswer: 'Nile', explanation: 'The Nile River is traditionally considered the longest river in the world.' },
       { id: 'q1_3', text: 'Who painted the Mona Lisa?', options: ['Vincent van Gogh', 'Pablo Picasso', 'Leonardo da Vinci', 'Claude Monet'], correctAnswer: 'Leonardo da Vinci', explanation: 'The Mona Lisa was painted by the Italian Renaissance artist Leonardo da Vinci.' },
     ],
+    educationalLevel: "High School",
+    departmentOrGradeName: "Grade 11",
   },
   {
     id: 'model-2',
     title: 'Model Exam 2: Verbal Reasoning',
     description: 'Focuses on verbal reasoning, comprehension, and analytical skills.',
-    questionCount: 2, // Adjusted for manageability in mock data
+    questionCount: 2, 
     durationMinutes: 10,
     isPremium: false,
     questions: [
       { id: 'q2_1', text: 'Synonym for "ephemeral"?', options: ['Lasting', 'Temporary', 'Beautiful', 'Strong'], correctAnswer: 'Temporary', explanation: 'Ephemeral means lasting for a short time.' },
       { id: 'q2_2', text: 'Antonym for "ubiquitous"?', options: ['Common', 'Everywhere', 'Rare', 'Popular'], correctAnswer: 'Rare', explanation: 'Ubiquitous means present everywhere.' }
     ],
+    educationalLevel: "University",
+    departmentOrGradeName: "English Language and Literature",
   },
   {
     id: 'model-3',
@@ -50,7 +54,9 @@ const initialSeedExams: Exam[] = [
     questions: [
         { id: 'q3_1', text: 'If a car travels at 60 km/h, how far will it travel in 2.5 hours?', options: ['120 km', '150 km', '180 km', '200 km'], correctAnswer: '150 km', explanation: 'Distance = Speed × Time. So, 60 km/h × 2.5 h = 150 km.' },
         { id: 'q3_2', text: 'What is 20% of 200?', options: ['20', '40', '60', '80'], correctAnswer: '40', explanation: '20% of 200 is (20/100) * 200 = 0.20 * 200 = 40.' },
-    ]
+    ],
+    educationalLevel: "College",
+    departmentOrGradeName: "Mathematics",
   },
 ];
 
@@ -59,7 +65,7 @@ const ITEMS_PER_PAGE = 5;
 export default function ManageAdminExamsPage() {
   const [exams, setExams] = useState<Exam[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: keyof Exam | null; direction: 'ascending' | 'descending' }>({ key: 'title', direction: 'ascending' });
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Exam | 'departmentOrGradeName' | null; direction: 'ascending' | 'descending' }>({ key: 'title', direction: 'ascending' });
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
@@ -69,7 +75,7 @@ export default function ManageAdminExamsPage() {
         try {
           const parsedExams = JSON.parse(storedExams);
            if (Array.isArray(parsedExams) && parsedExams.every(exam => typeof exam.id === 'string' && typeof exam.title === 'string')) {
-            setExams(parsedExams.map(exam => ({ ...exam, questions: exam.questions || [] }))); // Ensure questions array exists
+            setExams(parsedExams.map(exam => ({ ...exam, questions: exam.questions || [] })));
           } else {
             localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(initialSeedExams.map(exam => ({ ...exam, questions: exam.questions || [] }))));
             setExams(initialSeedExams.map(exam => ({ ...exam, questions: exam.questions || [] })));
@@ -96,7 +102,9 @@ export default function ManageAdminExamsPage() {
 
   const filteredExams = useMemo(() => {
     return exams.filter(exam =>
-      exam.title.toLowerCase().includes(searchTerm.toLowerCase())
+      exam.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (exam.educationalLevel && exam.educationalLevel.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (exam.departmentOrGradeName && exam.departmentOrGradeName.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [exams, searchTerm]);
 
@@ -104,16 +112,20 @@ export default function ManageAdminExamsPage() {
     let sortableItems = [...filteredExams];
     if (sortConfig.key) {
       sortableItems.sort((a, b) => {
-        const valA = a[sortConfig.key!];
-        const valB = b[sortConfig.key!];
-        if (typeof valA === 'number' && typeof valB === 'number') {
-            return sortConfig.direction === 'ascending' ? valA - valB : valB - valA;
+        const valA = a[sortConfig.key as keyof Exam];
+        const valB = b[sortConfig.key as keyof Exam];
+
+        const safeValA = valA === undefined ? '' : valA;
+        const safeValB = valB === undefined ? '' : valB;
+        
+        if (typeof safeValA === 'number' && typeof safeValB === 'number') {
+            return sortConfig.direction === 'ascending' ? safeValA - safeValB : safeValB - safeValA;
         }
-        if (typeof valA === 'string' && typeof valB === 'string') {
-            return sortConfig.direction === 'ascending' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        if (typeof safeValA === 'string' && typeof safeValB === 'string') {
+            return sortConfig.direction === 'ascending' ? safeValA.localeCompare(safeValB) : safeValB.localeCompare(safeValA);
         }
-        if (typeof valA === 'boolean' && typeof valB === 'boolean') {
-            return sortConfig.direction === 'ascending' ? (valA === valB ? 0 : valA ? -1 : 1) : (valA === valB ? 0 : valA ? 1 : -1);
+        if (typeof safeValA === 'boolean' && typeof safeValB === 'boolean') {
+            return sortConfig.direction === 'ascending' ? (safeValA === safeValB ? 0 : safeValA ? -1 : 1) : (safeValA === safeValB ? 0 : safeValA ? 1 : -1);
         }
         return 0;
       });
@@ -128,7 +140,7 @@ export default function ManageAdminExamsPage() {
 
   const totalPages = Math.ceil(sortedExams.length / ITEMS_PER_PAGE);
 
-  const requestSort = (key: keyof Exam) => {
+  const requestSort = (key: keyof Exam | 'departmentOrGradeName') => {
     let direction: 'ascending' | 'descending' = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
       direction = 'descending';
@@ -147,7 +159,7 @@ export default function ManageAdminExamsPage() {
     }
   };
 
-  const renderSortIcon = (columnKey: keyof Exam) => {
+  const renderSortIcon = (columnKey: keyof Exam | 'departmentOrGradeName') => {
     if (sortConfig.key !== columnKey) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30 group-hover:opacity-100" />;
     return sortConfig.direction === 'ascending' ? <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-0" /> : <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-180" />;
   };
@@ -166,7 +178,7 @@ export default function ManageAdminExamsPage() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search exams by title..."
+              placeholder="Search exams..."
               className="pl-8 w-full"
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
@@ -185,6 +197,12 @@ export default function ManageAdminExamsPage() {
               <TableHead onClick={() => requestSort('title')} className="cursor-pointer group hover:bg-muted/50">
                 <div className="flex items-center">Title {renderSortIcon('title')}</div>
               </TableHead>
+              <TableHead onClick={() => requestSort('educationalLevel')} className="cursor-pointer group hover:bg-muted/50">
+                <div className="flex items-center"><Layers className="inline-block mr-1 h-4 w-4" />Educational Level {renderSortIcon('educationalLevel')}</div>
+              </TableHead>
+              <TableHead onClick={() => requestSort('departmentOrGradeName')} className="cursor-pointer group hover:bg-muted/50">
+                 <div className="flex items-center"><BookCopy className="inline-block mr-1 h-4 w-4" />Dept/Grade {renderSortIcon('departmentOrGradeName')}</div>
+              </TableHead>
               <TableHead onClick={() => requestSort('questionCount')} className="cursor-pointer group hover:bg-muted/50">
                 <div className="flex items-center"><FileTextIcon className="inline-block mr-1 h-4 w-4" />Questions {renderSortIcon('questionCount')}</div>
               </TableHead>
@@ -202,6 +220,8 @@ export default function ManageAdminExamsPage() {
               <TableRow key={exam.id}>
                 <TableCell className="text-xs text-muted-foreground">{exam.id}</TableCell>
                 <TableCell className="font-medium">{exam.title}</TableCell>
+                <TableCell>{exam.educationalLevel || 'N/A'}</TableCell>
+                <TableCell>{exam.departmentOrGradeName || 'N/A'}</TableCell>
                 <TableCell>{exam.questionCount}</TableCell>
                 <TableCell>{exam.durationMinutes}</TableCell>
                 <TableCell>
@@ -247,7 +267,7 @@ export default function ManageAdminExamsPage() {
             ))}
             {paginatedExams.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   No exams found matching your criteria.
                 </TableCell>
               </TableRow>
@@ -288,5 +308,3 @@ export default function ManageAdminExamsPage() {
     </Card>
   );
 }
-
-    
