@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, Lock, FileText as FileTextIcon, Clock } from "lucide-react";
+import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, Lock, FileText as FileTextIcon, Clock, ListChecks } from "lucide-react";
 import type { Exam } from '@/lib/types';
 import { ADMIN_EXAMS_STORAGE_KEY } from '@/lib/constants';
 
@@ -32,16 +32,13 @@ const initialSeedExams: Exam[] = [
     id: 'model-2',
     title: 'Model Exam 2: Verbal Reasoning',
     description: 'Focuses on verbal reasoning, comprehension, and analytical skills.',
-    questionCount: 100, 
-    durationMinutes: 120,
+    questionCount: 2, // Adjusted for manageability in mock data
+    durationMinutes: 10,
     isPremium: false,
-    questions: Array.from({ length: 100 }, (_, i) => ({
-      id: `q2_${i + 1}`,
-      text: `Verbal Reasoning Question ${i + 1}: Choose the correct synonym for "ephemeral".`,
-      options: [`Lasting Option ${i+1}`, `Temporary Option ${i+1}`, `Beautiful Option ${i+1}`, `Strong Option ${i+1}`],
-      correctAnswer: `Temporary Option ${i+1}`,
-      explanation: `Ephemeral means lasting for a very short time. So, temporary is the correct synonym. Question index ${i}`
-    })),
+    questions: [
+      { id: 'q2_1', text: 'Synonym for "ephemeral"?', options: ['Lasting', 'Temporary', 'Beautiful', 'Strong'], correctAnswer: 'Temporary', explanation: 'Ephemeral means lasting for a short time.' },
+      { id: 'q2_2', text: 'Antonym for "ubiquitous"?', options: ['Common', 'Everywhere', 'Rare', 'Popular'], correctAnswer: 'Rare', explanation: 'Ubiquitous means present everywhere.' }
+    ],
   },
   {
     id: 'model-3',
@@ -72,25 +69,23 @@ export default function ManageAdminExamsPage() {
         try {
           const parsedExams = JSON.parse(storedExams);
            if (Array.isArray(parsedExams) && parsedExams.every(exam => typeof exam.id === 'string' && typeof exam.title === 'string')) {
-            setExams(parsedExams);
+            setExams(parsedExams.map(exam => ({ ...exam, questions: exam.questions || [] }))); // Ensure questions array exists
           } else {
-            localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(initialSeedExams));
-            setExams(initialSeedExams);
+            localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(initialSeedExams.map(exam => ({ ...exam, questions: exam.questions || [] }))));
+            setExams(initialSeedExams.map(exam => ({ ...exam, questions: exam.questions || [] })));
           }
         } catch (error) {
           console.error("Error parsing exams from localStorage:", error);
-          localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(initialSeedExams));
-          setExams(initialSeedExams);
+          localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(initialSeedExams.map(exam => ({ ...exam, questions: exam.questions || [] }))));
+          setExams(initialSeedExams.map(exam => ({ ...exam, questions: exam.questions || [] })));
         }
       } else {
-        localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(initialSeedExams));
-        setExams(initialSeedExams);
+        localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(initialSeedExams.map(exam => ({ ...exam, questions: exam.questions || [] }))));
+        setExams(initialSeedExams.map(exam => ({ ...exam, questions: exam.questions || [] })));
       }
     };
     loadExams();
-     // Listen for storage changes to refresh if data is modified in another tab/window (basic refresh)
     window.addEventListener('storage', loadExams);
-    // Refresh on focus (e.g. coming back to the tab)
     window.addEventListener('focus', loadExams);
 
     return () => {
@@ -216,6 +211,11 @@ export default function ManageAdminExamsPage() {
                 </TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button variant="outline" size="sm" asChild>
+                    <Link href={`/dashboard/admin/exams/${exam.id}/questions`}>
+                      <ListChecks className="mr-1 h-3 w-3" /> Questions
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
                     <Link href={`/dashboard/admin/exams/edit/${exam.id}`}>
                       <Edit className="mr-1 h-3 w-3" /> Edit
                     </Link>
@@ -288,3 +288,5 @@ export default function ManageAdminExamsPage() {
     </Card>
   );
 }
+
+    
