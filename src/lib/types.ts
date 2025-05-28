@@ -119,9 +119,8 @@ export interface AgentEntry {
   lastUpdated: Date;
 }
 
-// Updated InstitutionType to match registration form options
+// Used for "Manage Institutions" admin page
 export type InstitutionType = StudentTypeFromRegistrationForm;
-
 export type InstitutionStatus = 'active' | 'inactive';
 
 export interface Institution {
@@ -132,13 +131,18 @@ export interface Institution {
   status: InstitutionStatus;
 }
 
-// This type is used for the "Manage Departments & Grades" admin page
-// It will now use the more specific student types.
+// Used for the "Manage Departments & Grades" admin page
 export type DepartmentOrGradeType = StudentTypeFromRegistrationForm;
 
 export interface DepartmentOrGradeEntry {
   id: string;
   name: string; // e.g., "Computer Science" or "Grade 9"
-  type: DepartmentOrGradeType; // e.g., "University", "College", "High School"
+  type: DepartmentOrGradeType; // e.g., "University", "High School"
 }
 
+// Used for the "Manage Courses & Subjects" admin page
+export interface CourseOrSubjectEntry {
+  id: string;
+  name: string; // e.g., "Calculus I" or "Physics Grade 9"
+  educationalLevel: StudentTypeFromRegistrationForm; // e.g., "University", "High School"
+}

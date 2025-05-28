@@ -1,12 +1,13 @@
 
 // src/lib/constants.ts
-import type { InstitutionType as AdminInstitutionType, StudentTypeFromRegistrationFormKey } from '@/lib/types';
+import type { InstitutionType as AdminInstitutionType, StudentTypeFromRegistrationFormKey, Resource } from '@/lib/types';
 import type { StudentTypeFromRegistrationForm } from '@/lib/types';
 
 export const INSTITUTIONS_STORAGE_KEY = 'admin_institutions_list';
 export const DEPARTMENTS_GRADES_STORAGE_KEY = 'admin_departments_grades_list';
 export const ADMIN_EXAMS_STORAGE_KEY = 'admin_exams_list';
 export const ADMIN_RESOURCES_STORAGE_KEY = 'admin_resources_list';
+export const ADMIN_COURSES_SUBJECTS_STORAGE_KEY = 'admin_courses_subjects_list';
 
 
 // Used in Registration Form for the dropdown and Zod schema
@@ -41,3 +42,4 @@ export const STUDENT_TYPE_FORM_TO_KEY_MAP: Record<StudentTypeFromRegistrationFor
 };
 
 export const RESOURCE_ADMIN_TYPES: Resource['type'][] = ["note", "video", "book"];
+
