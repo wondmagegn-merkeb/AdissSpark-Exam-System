@@ -1,5 +1,4 @@
 
-// src/lib/constants.ts
 import type { InstitutionType as AdminInstitutionType, StudentTypeFromRegistrationFormKey, Resource } from '@/lib/types';
 import type { StudentTypeFromRegistrationForm } from '@/lib/types';
 
@@ -8,9 +7,9 @@ export const DEPARTMENTS_GRADES_STORAGE_KEY = 'admin_departments_grades_list';
 export const ADMIN_EXAMS_STORAGE_KEY = 'admin_exams_list';
 export const ADMIN_RESOURCES_STORAGE_KEY = 'admin_resources_list';
 export const ADMIN_COURSES_SUBJECTS_STORAGE_KEY = 'admin_courses_subjects_list';
+export const ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY = 'admin_global_questions_list';
 
 
-// Used in Registration Form for the dropdown and Zod schema
 export const STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM: StudentTypeFromRegistrationForm[] = [
   "Primary School",
   "Secondary School",
@@ -21,7 +20,6 @@ export const STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM: StudentTypeFromRegistr
 ] as const;
 
 
-// Maps the user-friendly student type from registration form to the InstitutionType used in admin management
 export const STUDENT_TYPE_TO_ADMIN_INSTITUTION_TYPE_MAP: Record<StudentTypeFromRegistrationForm, AdminInstitutionType> = {
   "Primary School": "Primary School",
   "Secondary School": "Secondary School",
@@ -31,7 +29,6 @@ export const STUDENT_TYPE_TO_ADMIN_INSTITUTION_TYPE_MAP: Record<StudentTypeFromR
   "University": "University",
 };
 
-// Maps the user-friendly student type from registration form to the key stored in user object
 export const STUDENT_TYPE_FORM_TO_KEY_MAP: Record<StudentTypeFromRegistrationForm, StudentTypeFromRegistrationFormKey> = {
   "Primary School": "primary_school",
   "Secondary School": "secondary_school",
@@ -42,4 +39,3 @@ export const STUDENT_TYPE_FORM_TO_KEY_MAP: Record<StudentTypeFromRegistrationFor
 };
 
 export const RESOURCE_ADMIN_TYPES: Resource['type'][] = ["note", "video", "book"];
-

@@ -16,12 +16,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import type { NavItem } from '@/lib/types';
-import { LayoutDashboard, Library, FileText, Brain, User, Settings, LogOut, CreditCard, MessageSquare, Building, BookCopy, ListChecks, Edit, ShieldCheck, Users, MessageSquarePlus, Bot, Cpu, Archive, UserCog, UserRound } from 'lucide-react';
+import { LayoutDashboard, Library, FileText as FileTextIconLucide, Brain, User, Settings, LogOut, CreditCard, MessageSquare, Building, BookCopy, ListChecks, Edit as EditIconLucide, ShieldCheck, Users, MessageSquarePlus, Bot, Cpu, Archive, UserCog, UserRound, HelpCircle } from 'lucide-react'; // Renamed FileText to FileTextIconLucide, Edit to EditIconLucide
 
 const mainNavItems: NavItem[] = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { title: 'Resources', href: '/dashboard/resources', icon: Library },
-  { title: 'Exams', href: '/dashboard/exams', icon: FileText },
+  { title: 'Exams', href: '/dashboard/exams', icon: FileTextIconLucide },
   { title: 'AI Study Plan', href: '/dashboard/study-plan', icon: Brain, requiresSubscription: true },
   { title: 'Chat', href: '/dashboard/chat', icon: MessageSquare },
   { title: 'Submit Feedback', href: '/dashboard/feedback', icon: MessageSquarePlus },
@@ -34,12 +34,13 @@ const userNavItems: NavItem[] = [
 ];
 
 const adminNavItems: NavItem[] = [
-  { title: 'Manage Staff', href: '/dashboard/admin/users', icon: UserCog }, // Repurposed "Manage Users"
-  { title: 'Manage Students', href: '/dashboard/admin/students', icon: UserRound }, // New
+  { title: 'Manage Staff', href: '/dashboard/admin/users', icon: UserCog }, 
+  { title: 'Manage Students', href: '/dashboard/admin/students', icon: UserRound }, 
   { title: 'Manage Institutions', href: '/dashboard/admin/universities', icon: Building },
   { title: 'Manage Departments & Grades', href: '/dashboard/admin/departments', icon: BookCopy },
   { title: 'Manage Courses & Subjects', href: '/dashboard/admin/courses', icon: ListChecks },
-  { title: 'Manage Exams', href: '/dashboard/admin/exams', icon: Edit },
+  { title: 'Manage Exams', href: '/dashboard/admin/exams', icon: EditIconLucide },
+  { title: 'Manage Global Questions', href: '/dashboard/admin/questions', icon: HelpCircle },
   { title: 'Manage Resources', href: '/dashboard/admin/resources', icon: Library },
   { title: 'Manage Agents', href: '/dashboard/admin/agents', icon: Cpu },
   { title: 'Manage Feedback', href: '/dashboard/admin/feedback', icon: Archive },
@@ -89,7 +90,7 @@ export function DashboardSidebar() {
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname.startsWith(item.href)} // Use startsWith for active state with sub-routes
+                isActive={pathname.startsWith(item.href)} 
                 tooltip={item.title}
               >
                 <Link href={item.href}>
@@ -168,8 +169,6 @@ export function DashboardSidebar() {
   );
 }
 
-// Minimal Card components to avoid import cycle if Card is used within Sidebar UI components itself.
-// If Card from ui/card is safe to use, prefer that.
 const Card = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={`rounded-lg border shadow-sm ${className}`}

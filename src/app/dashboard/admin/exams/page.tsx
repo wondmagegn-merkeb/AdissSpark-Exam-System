@@ -9,24 +9,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, Lock, FileText as FileTextIcon, Clock, ListChecks, Layers, BookCopy } from "lucide-react";
-import type { Exam, Question } from '@/lib/types';
-import { ADMIN_EXAMS_STORAGE_KEY } from '@/lib/constants';
+import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, Lock, FileText as FileTextIconLucide, Clock, Layers, BookCopy } from "lucide-react"; // Renamed FileText
+import type { Exam, Question } from '@/lib/types'; // Question type is now global
+import { ADMIN_EXAMS_STORAGE_KEY, ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY } from '@/lib/constants';
 
-// Mock exam data to seed localStorage if empty
-const initialSeedExams: Exam[] = [
+const initialSeedExams: Omit<Exam, 'questionIds'> & { initialQuestionIds?: string[] } [] = [ // Adjusted for seed
   {
     id: 'model-1',
     title: 'Model Exam 1: General Knowledge',
     description: 'A comprehensive test covering various general knowledge topics.',
-    questionCount: 3,
     durationMinutes: 5,
     isPremium: false,
-    questions: [
-      { id: 'q1_1', text: 'What is the capital of Ethiopia?', options: ['Nairobi', 'Addis Ababa', 'Cairo', 'Lagos'], correctAnswer: 'Addis Ababa', explanation: 'Addis Ababa is the capital and largest city of Ethiopia.' },
-      { id: 'q1_2', text: 'Which river is the longest in the world?', options: ['Amazon', 'Nile', 'Yangtze', 'Mississippi'], correctAnswer: 'Nile', explanation: 'The Nile River is traditionally considered the longest river in the world.' },
-      { id: 'q1_3', text: 'Who painted the Mona Lisa?', options: ['Vincent van Gogh', 'Pablo Picasso', 'Leonardo da Vinci', 'Claude Monet'], correctAnswer: 'Leonardo da Vinci', explanation: 'The Mona Lisa was painted by the Italian Renaissance artist Leonardo da Vinci.' },
-    ],
+    initialQuestionIds: ["gq1", "gq2", "gq3"], // Example IDs from global seed questions
     educationalLevel: "High School",
     departmentOrGradeName: "Grade 11",
   },
@@ -34,13 +28,9 @@ const initialSeedExams: Exam[] = [
     id: 'model-2',
     title: 'Model Exam 2: Verbal Reasoning',
     description: 'Focuses on verbal reasoning, comprehension, and analytical skills.',
-    questionCount: 2, 
     durationMinutes: 10,
     isPremium: false,
-    questions: [
-      { id: 'q2_1', text: 'Synonym for "ephemeral"?', options: ['Lasting', 'Temporary', 'Beautiful', 'Strong'], correctAnswer: 'Temporary', explanation: 'Ephemeral means lasting for a short time.' },
-      { id: 'q2_2', text: 'Antonym for "ubiquitous"?', options: ['Common', 'Everywhere', 'Rare', 'Popular'], correctAnswer: 'Rare', explanation: 'Ubiquitous means present everywhere.' }
-    ],
+    initialQuestionIds: ["gq4", "gq5"], // Example IDs
     educationalLevel: "University",
     departmentOrGradeName: "English Language and Literature",
   },
@@ -48,13 +38,9 @@ const initialSeedExams: Exam[] = [
     id: 'model-3',
     title: 'Model Exam 3: Quantitative Aptitude (Premium)',
     description: 'Challenging questions on quantitative aptitude.',
-    questionCount: 2,
     durationMinutes: 30,
     isPremium: true,
-    questions: [
-        { id: 'q3_1', text: 'If a car travels at 60 km/h, how far will it travel in 2.5 hours?', options: ['120 km', '150 km', '180 km', '200 km'], correctAnswer: '150 km', explanation: 'Distance = Speed × Time. So, 60 km/h × 2.5 h = 150 km.' },
-        { id: 'q3_2', text: 'What is 20% of 200?', options: ['20', '40', '60', '80'], correctAnswer: '40', explanation: '20% of 200 is (20/100) * 200 = 0.20 * 200 = 40.' },
-    ],
+    initialQuestionIds: ["gq6", "gq1"], // Example IDs
     educationalLevel: "College",
     departmentOrGradeName: "Mathematics",
   },
@@ -65,7 +51,7 @@ const ITEMS_PER_PAGE = 5;
 export default function ManageAdminExamsPage() {
   const [exams, setExams] = useState<Exam[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: keyof Exam | 'departmentOrGradeName' | null; direction: 'ascending' | 'descending' }>({ key: 'title', direction: 'ascending' });
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Exam | 'departmentOrGradeName' | 'questionCount' | null; direction: 'ascending' | 'descending' }>({ key: 'title', direction: 'ascending' });
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
@@ -73,21 +59,24 @@ export default function ManageAdminExamsPage() {
       const storedExams = localStorage.getItem(ADMIN_EXAMS_STORAGE_KEY);
       if (storedExams) {
         try {
-          const parsedExams = JSON.parse(storedExams);
+          const parsedExams: Exam[] = JSON.parse(storedExams);
            if (Array.isArray(parsedExams) && parsedExams.every(exam => typeof exam.id === 'string' && typeof exam.title === 'string')) {
-            setExams(parsedExams.map(exam => ({ ...exam, questions: exam.questions || [] })));
+            setExams(parsedExams.map(exam => ({ ...exam, questionIds: exam.questionIds || [] })));
           } else {
-            localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(initialSeedExams.map(exam => ({ ...exam, questions: exam.questions || [] }))));
-            setExams(initialSeedExams.map(exam => ({ ...exam, questions: exam.questions || [] })));
+            const examsWithIds = initialSeedExams.map(examSeed => ({...examSeed, questionIds: examSeed.initialQuestionIds || []}));
+            localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(examsWithIds));
+            setExams(examsWithIds);
           }
         } catch (error) {
           console.error("Error parsing exams from localStorage:", error);
-          localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(initialSeedExams.map(exam => ({ ...exam, questions: exam.questions || [] }))));
-          setExams(initialSeedExams.map(exam => ({ ...exam, questions: exam.questions || [] })));
+          const examsWithIds = initialSeedExams.map(examSeed => ({...examSeed, questionIds: examSeed.initialQuestionIds || []}));
+          localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(examsWithIds));
+          setExams(examsWithIds);
         }
       } else {
-        localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(initialSeedExams.map(exam => ({ ...exam, questions: exam.questions || [] }))));
-        setExams(initialSeedExams.map(exam => ({ ...exam, questions: exam.questions || [] })));
+        const examsWithIds = initialSeedExams.map(examSeed => ({...examSeed, questionIds: examSeed.initialQuestionIds || []}));
+        localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(examsWithIds));
+        setExams(examsWithIds);
       }
     };
     loadExams();
@@ -112,9 +101,15 @@ export default function ManageAdminExamsPage() {
     let sortableItems = [...filteredExams];
     if (sortConfig.key) {
       sortableItems.sort((a, b) => {
-        const valA = a[sortConfig.key as keyof Exam];
-        const valB = b[sortConfig.key as keyof Exam];
-
+        let valA, valB;
+        if (sortConfig.key === 'questionCount') {
+            valA = a.questionIds.length;
+            valB = b.questionIds.length;
+        } else {
+            valA = a[sortConfig.key as keyof Exam];
+            valB = b[sortConfig.key as keyof Exam];
+        }
+        
         const safeValA = valA === undefined ? '' : valA;
         const safeValB = valB === undefined ? '' : valB;
         
@@ -140,7 +135,7 @@ export default function ManageAdminExamsPage() {
 
   const totalPages = Math.ceil(sortedExams.length / ITEMS_PER_PAGE);
 
-  const requestSort = (key: keyof Exam | 'departmentOrGradeName') => {
+  const requestSort = (key: keyof Exam | 'departmentOrGradeName' | 'questionCount') => {
     let direction: 'ascending' | 'descending' = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
       direction = 'descending';
@@ -159,7 +154,7 @@ export default function ManageAdminExamsPage() {
     }
   };
 
-  const renderSortIcon = (columnKey: keyof Exam | 'departmentOrGradeName') => {
+  const renderSortIcon = (columnKey: keyof Exam | 'departmentOrGradeName' | 'questionCount') => {
     if (sortConfig.key !== columnKey) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30 group-hover:opacity-100" />;
     return sortConfig.direction === 'ascending' ? <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-0" /> : <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-180" />;
   };
@@ -169,7 +164,7 @@ export default function ManageAdminExamsPage() {
       <CardHeader>
         <CardTitle className="text-2xl">Manage Exams</CardTitle>
         <CardDescription>
-          Add, edit, or delete practice exams available on the platform.
+          Add, edit, or delete practice exams. Assign questions from the global question bank.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -204,7 +199,7 @@ export default function ManageAdminExamsPage() {
                  <div className="flex items-center"><BookCopy className="inline-block mr-1 h-4 w-4" />Dept/Grade {renderSortIcon('departmentOrGradeName')}</div>
               </TableHead>
               <TableHead onClick={() => requestSort('questionCount')} className="cursor-pointer group hover:bg-muted/50">
-                <div className="flex items-center"><FileTextIcon className="inline-block mr-1 h-4 w-4" />Questions {renderSortIcon('questionCount')}</div>
+                <div className="flex items-center"><FileTextIconLucide className="inline-block mr-1 h-4 w-4" />Questions {renderSortIcon('questionCount')}</div>
               </TableHead>
               <TableHead onClick={() => requestSort('durationMinutes')} className="cursor-pointer group hover:bg-muted/50">
                 <div className="flex items-center"><Clock className="inline-block mr-1 h-4 w-4" />Duration (min) {renderSortIcon('durationMinutes')}</div>
@@ -222,7 +217,7 @@ export default function ManageAdminExamsPage() {
                 <TableCell className="font-medium">{exam.title}</TableCell>
                 <TableCell>{exam.educationalLevel || 'N/A'}</TableCell>
                 <TableCell>{exam.departmentOrGradeName || 'N/A'}</TableCell>
-                <TableCell>{exam.questionCount}</TableCell>
+                <TableCell>{exam.questionIds.length}</TableCell>
                 <TableCell>{exam.durationMinutes}</TableCell>
                 <TableCell>
                   <Badge variant={exam.isPremium ? "default" : "secondary"}>
@@ -230,11 +225,6 @@ export default function ManageAdminExamsPage() {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right space-x-2">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/dashboard/admin/exams/${exam.id}/questions`}>
-                      <ListChecks className="mr-1 h-3 w-3" /> Questions
-                    </Link>
-                  </Button>
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/dashboard/admin/exams/edit/${exam.id}`}>
                       <Edit className="mr-1 h-3 w-3" /> Edit

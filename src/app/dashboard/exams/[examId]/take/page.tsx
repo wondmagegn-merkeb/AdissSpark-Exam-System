@@ -12,73 +12,52 @@ import { ArrowLeft, FileText, Clock, AlertTriangle, CheckCircle2, Target, Info, 
 import type { Exam, Question, ExamHistoryEntry } from '@/lib/types';
 import { PieChart, Pie, Cell } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
+import { ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY, ADMIN_EXAMS_STORAGE_KEY } from '@/lib/constants'; // Import storage keys
 
-// Mock exam data with questions
-const mockExams: Exam[] = [
+// Mock student-facing exam definitions - these now primarily list question IDs from the global bank
+const mockStudentExams: Exam[] = [
   {
     id: 'model-1',
     title: 'Model Exam 1: General Knowledge',
     description: 'A comprehensive test covering various general knowledge topics.',
-    questionCount: 3,
-    durationMinutes: 5, // Shortened for testing
+    durationMinutes: 5, 
     isPremium: false,
-    questions: [
-      { id: 'q1_1', text: 'What is the capital of Ethiopia?', options: ['Nairobi', 'Addis Ababa', 'Cairo', 'Lagos'], correctAnswer: 'Addis Ababa', explanation: 'Addis Ababa is the capital and largest city of Ethiopia.' },
-      { id: 'q1_2', text: 'Which river is the longest in the world?', options: ['Amazon', 'Nile', 'Yangtze', 'Mississippi'], correctAnswer: 'Nile', explanation: 'The Nile River is traditionally considered the longest river in the world.' },
-      { id: 'q1_3', text: 'Who painted the Mona Lisa?', options: ['Vincent van Gogh', 'Pablo Picasso', 'Leonardo da Vinci', 'Claude Monet'], correctAnswer: 'Leonardo da Vinci', explanation: 'The Mona Lisa was painted by the Italian Renaissance artist Leonardo da Vinci.' },
-    ],
+    questionIds: ["gq1", "gq2", "gq3"], 
   },
   {
     id: 'model-2',
     title: 'Model Exam 2: Verbal Reasoning',
     description: 'Focuses on verbal reasoning, comprehension, and analytical skills.',
-    questionCount: 100, 
-    durationMinutes: 12, // Adjusted duration for 100 questions (120/10)
-    questions: Array.from({ length: 100 }, (_, i) => ({
-      id: `q2_${i + 1}`,
-      text: `Verbal Reasoning Question ${i + 1}: Choose the correct synonym for "ephemeral". This is a longer question text to see how it wraps and if the layout holds up with more content. The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.`,
-      options: [`Lasting Option ${i+1}`, `Temporary Option ${i+1}`, `Beautiful Option ${i+1}`, `Strong Option ${i+1}`],
-      correctAnswer: `Temporary Option ${i+1}`,
-      explanation: `Ephemeral means lasting for a very short time. So, temporary is the correct synonym. Question index ${i}`
-    })),
+    durationMinutes: 12, 
+    isPremium: false,
+    questionIds: Array.from({ length: 100 }, (_, i) => `gq2_${i + 1}_placeholder`), // Placeholder for 100 questions
   },
   {
     id: 'model-3',
     title: 'Model Exam 3: Quantitative Aptitude (Premium)',
     description: 'Challenging questions on quantitative aptitude.',
-    questionCount: 2,
-    durationMinutes: 1, // Shortened for testing
+    durationMinutes: 1, 
     isPremium: true,
-    questions: [
-        { id: 'q3_1', text: 'If a car travels at 60 km/h, how far will it travel in 2.5 hours?', options: ['120 km', '150 km', '180 km', '200 km'], correctAnswer: '150 km', explanation: 'Distance = Speed × Time. So, 60 km/h × 2.5 h = 150 km.' },
-        { id: 'q3_2', text: 'What is 20% of 200?', options: ['20', '40', '60', '80'], correctAnswer: '40', explanation: '20% of 200 is (20/100) * 200 = 0.20 * 200 = 40.' },
-    ]
+    questionIds: ["gq6", "gq4"], 
   },
    {
     id: 'model-4',
     title: 'Model Exam 4: Logical Reasoning',
     description: 'Test your logical thinking and problem-solving abilities.',
-    questionCount: 2,
-    durationMinutes: 1, // Shortened for testing
+    durationMinutes: 1,
     isPremium: false,
-    questions: [
-        { id: 'q4_1', text: 'Look at this series: 2, 1, (1/2), (1/4), ... What number should come next?', options: ['(1/3)', '(1/8)', '(2/8)', '(1/16)'], correctAnswer: '(1/8)' },
-        { id: 'q4_2', text: 'Statement: All birds lay eggs. Conclusion: Pigeons lay eggs because pigeons are birds. Is the conclusion valid?', options: ['Yes', 'No'], correctAnswer: 'Yes' },
-    ]
+    questionIds: ["gq1", "gq5"], // Use some existing global questions
   },
   {
     id: 'model-5',
     title: 'Model Exam 5: Specialized Subject (Premium)',
     description: 'An in-depth exam for a specialized subject, designed by experts.',
-    questionCount: 2,
-    durationMinutes: 1, // Shortened for testing
+    durationMinutes: 1, 
     isPremium: true,
-    questions: [
-      { id: 'q5_1', text: 'In computer science, what does CPU stand for?', options: ['Central Processing Unit', 'Computer Personal Unit', 'Central Program Unit', 'Control Processing Unit'], correctAnswer: 'Central Processing Unit' },
-      { id: 'q5_2', text: 'What is the chemical symbol for water?', options: ['O2', 'H2O', 'CO2', 'NaCl'], correctAnswer: 'H2O' },
-    ]
+    questionIds: ["gq2", "gq6"], // Use some existing global questions
   },
 ];
+
 
 const chartConfig = {
   correct: {
@@ -102,13 +81,9 @@ export default function TakeExamPage() {
   const router = useRouter();
   const examId = params.examId as string;
 
-  const [exam, setExam] = useState<Exam | undefined>(undefined);
+  const [examDefinition, setExamDefinition] = useState<Exam | undefined>(undefined);
+  const [examQuestions, setExamQuestions] = useState<Question[]>([]);
   
-  useEffect(() => {
-    const foundExam = mockExams.find(e => e.id === examId);
-    setExam(foundExam);
-  }, [examId]);
-
   const [examStarted, setExamStarted] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
@@ -121,24 +96,61 @@ export default function TakeExamPage() {
   const [incorrectCount, setIncorrectCount] = useState(0);
 
   useEffect(() => {
-    if (exam && !examStarted) { 
-      setTimeLeft(exam.durationMinutes * 60);
+    // Load exam definition (could be from student-facing mock, or admin-created exams in localStorage)
+    const adminExamsString = localStorage.getItem(ADMIN_EXAMS_STORAGE_KEY);
+    let foundExam: Exam | undefined;
+    if (adminExamsString) {
+        const adminExams: Exam[] = JSON.parse(adminExamsString);
+        foundExam = adminExams.find(e => e.id === examId);
     }
-  }, [exam, examStarted]);
+    if (!foundExam) {
+        foundExam = mockStudentExams.find(e => e.id === examId);
+    }
+    setExamDefinition(foundExam);
+
+    if (foundExam && foundExam.questionIds) {
+      const globalQuestionsString = localStorage.getItem(ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY);
+      if (globalQuestionsString) {
+        const allGlobalQuestions: Question[] = JSON.parse(globalQuestionsString);
+        const questionsForThisExam = allGlobalQuestions.filter(q => foundExam!.questionIds.includes(q.id));
+        
+        // Ensure the order of questions matches the order in questionIds
+        const orderedQuestions = foundExam.questionIds.map(id => questionsForThisExam.find(q => q.id === id)).filter(q => q !== undefined) as Question[];
+        setExamQuestions(orderedQuestions);
+      } else {
+        console.warn("Global question bank not found in localStorage. Using empty questions for exam.");
+        setExamQuestions([]);
+      }
+    } else if (foundExam && !foundExam.questionIds) {
+         console.warn(`Exam ${examId} has no questionIds defined. Using empty questions.`);
+         setExamQuestions([]);
+    }
+
+  }, [examId]);
+
+
+  useEffect(() => {
+    if (examDefinition && examQuestions.length > 0 && !examStarted) { 
+      setTimeLeft(examDefinition.durationMinutes * 60);
+    } else if (examDefinition && examQuestions.length === 0 && !examStarted) {
+        // If no questions are loaded for the exam, prevent timer start.
+        setTimeLeft(0); 
+    }
+  }, [examDefinition, examQuestions, examStarted]);
 
   const handleSubmitExam = useCallback(() => {
-    if (!exam) return;
+    if (!examDefinition || examQuestions.length === 0) return;
     let correctAnswers = 0;
-    exam.questions.forEach(q => {
+    examQuestions.forEach(q => {
       if (userAnswers[q.id] === q.correctAnswer) {
         correctAnswers++;
       }
     });
 
     const totalAnswered = Object.keys(userAnswers).length;
-    const localUnansweredCount = exam.questions.length - totalAnswered;
+    const localUnansweredCount = examQuestions.length - totalAnswered;
     const localIncorrectCount = totalAnswered - correctAnswers;
-    const percentageScore = exam.questions.length > 0 ? (correctAnswers / exam.questions.length) * 100 : 0;
+    const percentageScore = examQuestions.length > 0 ? (correctAnswers / examQuestions.length) * 100 : 0;
 
 
     setScore(correctAnswers);
@@ -150,22 +162,35 @@ export default function TakeExamPage() {
     setShowSubmitConfirm(false);
 
     try {
-      // Store detailed results for the current exam
-      localStorage.setItem(`completedExam_${exam.id}`, JSON.stringify({ 
-        exam, 
+      // Reconstruct a minimal Exam object for localStorage results page if needed
+      const examForResults: Exam = {
+        id: examDefinition.id,
+        title: examDefinition.title,
+        description: examDefinition.description,
+        durationMinutes: examDefinition.durationMinutes,
+        isPremium: examDefinition.isPremium,
+        questionIds: examDefinition.questionIds, // Keep IDs for reference
+        // Add questions that were part of this attempt for the results page
+        // This ensures the results page shows the exact questions taken
+        // (Though the Question type now is slightly different in how options are stored)
+        // For simplicity, we'll rely on the results page re-fetching questions by ID if needed
+        // Or, we can pass the examQuestions array here. Let's pass the resolved questions.
+      };
+
+      localStorage.setItem(`completedExam_${examDefinition.id}`, JSON.stringify({ 
+        exam: {...examForResults, questions: examQuestions}, // Store the actual questions taken
         userAnswers, 
         score: correctAnswers, 
         incorrectCount: localIncorrectCount, 
         unansweredCount: localUnansweredCount 
       }));
 
-      // Store summary in exam history
       const newHistoryEntry: ExamHistoryEntry = {
-        examId: exam.id,
-        examTitle: exam.title,
+        examId: examDefinition.id,
+        examTitle: examDefinition.title,
         dateCompleted: new Date().toISOString(),
         score: correctAnswers,
-        totalQuestions: exam.questions.length,
+        totalQuestions: examQuestions.length,
         percentageScore: parseFloat(percentageScore.toFixed(1)),
       };
 
@@ -174,16 +199,16 @@ export default function TakeExamPage() {
       if (existingHistoryString) {
         try {
           examHistory = JSON.parse(existingHistoryString);
-          if (!Array.isArray(examHistory)) examHistory = []; // Ensure it's an array
+          if (!Array.isArray(examHistory)) examHistory = [];
         } catch (e) {
           console.error("Error parsing existing exam history:", e);
           examHistory = [];
         }
       }
       
-      examHistory.unshift(newHistoryEntry); // Add new entry to the beginning
+      examHistory.unshift(newHistoryEntry); 
       if (examHistory.length > MAX_EXAM_HISTORY_ITEMS) {
-        examHistory = examHistory.slice(0, MAX_EXAM_HISTORY_ITEMS); // Keep only the most recent items
+        examHistory = examHistory.slice(0, MAX_EXAM_HISTORY_ITEMS); 
       }
       localStorage.setItem('examHistory', JSON.stringify(examHistory));
 
@@ -191,18 +216,18 @@ export default function TakeExamPage() {
       console.error("Error saving exam results or history to localStorage:", error);
     }
 
-  }, [exam, userAnswers]);
+  }, [examDefinition, examQuestions, userAnswers]);
 
   useEffect(() => {
-    if (examStarted && !examFinished && timeLeft > 0) {
+    if (examStarted && !examFinished && timeLeft > 0 && examQuestions.length > 0) {
       const timerId = setInterval(() => {
         setTimeLeft(prevTime => prevTime - 1);
       }, 1000);
       return () => clearInterval(timerId);
-    } else if (examStarted && !examFinished && timeLeft === 0) {
+    } else if (examStarted && !examFinished && timeLeft === 0 && examQuestions.length > 0) {
       handleSubmitExam(); 
     }
-  }, [examStarted, examFinished, timeLeft, handleSubmitExam]);
+  }, [examStarted, examFinished, timeLeft, handleSubmitExam, examQuestions.length]);
 
   const handleToggleConfused = (questionId: string) => {
     setConfusedQuestions(prev => ({
@@ -211,7 +236,7 @@ export default function TakeExamPage() {
     }));
   };
 
-  if (!exam) {
+  if (!examDefinition) {
     return (
       <div className="container mx-auto py-8 text-center">
         <Card className="max-w-md mx-auto shadow-lg">
@@ -231,15 +256,41 @@ export default function TakeExamPage() {
       </div>
     );
   }
+  
+  if (examDefinition && examQuestions.length === 0 && !examStarted) {
+    return (
+      <div className="container mx-auto py-8 text-center">
+        <Card className="max-w-md mx-auto shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-2xl text-destructive flex items-center justify-center"><AlertTriangle className="mr-2 h-6 w-6" />Error Loading Exam</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-6">
+              Could not load questions for exam: "{examDefinition.title}". Please ensure questions are available in the global bank and linked correctly.
+            </p>
+            <Button onClick={() => router.push('/dashboard/exams')}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Exams List
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  const currentQuestion = exam.questions[currentQuestionIndex];
+
+  const currentQuestion = examQuestions[currentQuestionIndex];
 
   const handleStartExam = () => {
+    if(examQuestions.length === 0) {
+        alert("No questions loaded for this exam. Cannot start."); // Or use toast
+        return;
+    }
     setExamStarted(true);
     setCurrentQuestionIndex(0);
     setUserAnswers({});
     setConfusedQuestions({});
-    setTimeLeft(exam.durationMinutes * 60);
+    setTimeLeft(examDefinition.durationMinutes * 60);
     setExamFinished(false);
     setScore(0);
     setUnansweredCount(0);
@@ -251,7 +302,7 @@ export default function TakeExamPage() {
   };
 
   const handleNextQuestion = () => {
-    if (currentQuestionIndex < exam.questions.length - 1) {
+    if (currentQuestionIndex < examQuestions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     }
   };
@@ -289,14 +340,14 @@ export default function TakeExamPage() {
               <CheckCircle2 className="mr-3 h-8 w-8 text-green-500" /> Exam Completed!
             </CardTitle>
             <CardDescription className="text-md text-muted-foreground pt-1">
-              You have completed: {exam.title}
+              You have completed: {examDefinition.title}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="p-6 bg-muted/50 rounded-lg">
               <p className="text-xl text-muted-foreground">Your Score:</p>
               <p className="text-5xl font-bold text-primary">
-                {score} <span className="text-3xl text-muted-foreground">/ {exam.questions.length}</span>
+                {score} <span className="text-3xl text-muted-foreground">/ {examQuestions.length}</span>
               </p>
             </div>
 
@@ -348,7 +399,7 @@ export default function TakeExamPage() {
             <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 justify-center">
               <Button 
                 size="lg" 
-                onClick={() => router.push(`/dashboard/exams/${exam.id}/results`)}
+                onClick={() => router.push(`/dashboard/exams/${examDefinition.id}/results`)}
               >
                 <ListChecks className="mr-2 h-4 w-4" />
                 View Detailed Results
@@ -373,9 +424,9 @@ export default function TakeExamPage() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Exams List
             </Button>
-            <CardTitle className="text-3xl font-bold text-foreground">{exam.title}</CardTitle>
+            <CardTitle className="text-3xl font-bold text-foreground">{examDefinition.title}</CardTitle>
             <CardDescription className="text-md text-muted-foreground pt-1">
-              {exam.description}
+              {examDefinition.description}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -383,14 +434,14 @@ export default function TakeExamPage() {
               <div className="flex items-center p-3 bg-muted/50 rounded-md">
                 <FileText className="mr-3 h-5 w-5 text-primary" />
                 <div>
-                  <p className="font-semibold">{exam.questions.length} Questions</p>
+                  <p className="font-semibold">{examQuestions.length} Questions</p>
                   <p className="text-xs text-muted-foreground">Total questions in this exam.</p>
                 </div>
               </div>
               <div className="flex items-center p-3 bg-muted/50 rounded-md">
                 <Clock className="mr-3 h-5 w-5 text-primary" />
                 <div>
-                  <p className="font-semibold">{exam.durationMinutes} Minutes</p>
+                  <p className="font-semibold">{examDefinition.durationMinutes} Minutes</p>
                   <p className="text-xs text-muted-foreground">Allocated time for this exam.</p>
                 </div>
               </div>
@@ -408,14 +459,31 @@ export default function TakeExamPage() {
               </ul>
             </div>
 
-            <Button size="lg" className="w-full font-semibold text-lg py-6" onClick={handleStartExam}>
-              Start Exam Now
+            <Button size="lg" className="w-full font-semibold text-lg py-6" onClick={handleStartExam} disabled={examQuestions.length === 0}>
+              {examQuestions.length === 0 ? "Loading Questions..." : "Start Exam Now"}
             </Button>
           </CardContent>
         </Card>
       </div>
     );
   }
+
+  // Ensure currentQuestion is available before rendering exam taking UI
+  if (!currentQuestion) {
+     return (
+      <div className="flex flex-col min-h-screen bg-muted/40 p-4 space-y-4 items-center justify-center">
+        <Card><CardContent className="p-4">Loading question data...</CardContent></Card>
+      </div>
+     )
+  }
+
+  const optionsForCurrentQuestion = [
+    currentQuestion.option1,
+    currentQuestion.option2,
+    currentQuestion.option3,
+    currentQuestion.option4,
+  ];
+
 
   return (
     <div className="flex flex-col min-h-screen bg-muted/40 p-4 space-y-4">
@@ -426,12 +494,11 @@ export default function TakeExamPage() {
       </Card>
 
       <div className="flex flex-1 gap-4 overflow-hidden">
-        {/* Main Exam Content Area */}
         <div className="flex-1 flex flex-col overflow-y-auto">
           <Card className="w-full shadow-xl flex-1 flex flex-col">
             <CardHeader className="border-b pb-4">
               <div className="flex justify-between items-center mb-2">
-                <h2 className="text-2xl font-semibold text-foreground">{exam.title}</h2>
+                <h2 className="text-2xl font-semibold text-foreground">{examDefinition.title}</h2>
                 <div className="flex items-center text-lg font-medium text-primary">
                   <Clock className="mr-2 h-5 w-5" />
                   <span>{formatTime(timeLeft)}</span>
@@ -465,7 +532,7 @@ export default function TakeExamPage() {
                 onValueChange={(value) => handleAnswerSelect(currentQuestion.id, value)}
                 className="space-y-3 mb-8"
               >
-                {currentQuestion.options.map((option, index) => (
+                {optionsForCurrentQuestion.map((option, index) => (
                   <div key={index} className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
                     <RadioGroupItem value={option} id={`${currentQuestion.id}-option-${index}`} />
                     <Label htmlFor={`${currentQuestion.id}-option-${index}`} className="text-md flex-1 cursor-pointer">{option}</Label>
@@ -503,7 +570,7 @@ export default function TakeExamPage() {
                     Previous Question
                   </Button>
                 )}
-                {currentQuestionIndex < exam.questions.length - 1 ? (
+                {currentQuestionIndex < examQuestions.length - 1 ? (
                   <Button onClick={handleNextQuestion} size="lg">
                     Next Question
                   </Button>
@@ -538,7 +605,6 @@ export default function TakeExamPage() {
           </Card>
         </div>
 
-        {/* Question Navigation Panel */}
         <aside className="w-80 border-l bg-background p-0 hidden md:flex md:flex-col max-h-[calc(100vh-8rem)]"> 
           <Card className="flex-1 flex flex-col overflow-hidden shadow-md">
               <CardHeader className="py-3 px-4 border-b">
@@ -546,7 +612,7 @@ export default function TakeExamPage() {
               </CardHeader>
               <CardContent className="flex-1 overflow-y-auto p-3">
                   <div className="grid grid-cols-6 gap-1.5"> 
-                  {exam.questions.map((q, index) => {
+                  {examQuestions.map((q, index) => {
                       const qId = q.id;
                       const isCurrent = index === currentQuestionIndex;
                       const isAnswered = !!userAnswers[qId];

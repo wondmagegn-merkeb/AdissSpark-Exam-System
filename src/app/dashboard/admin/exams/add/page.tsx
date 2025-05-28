@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
-import type { Exam, Question, StudentTypeFromRegistrationForm, DepartmentOrGradeEntry } from '@/lib/types';
+import type { Exam, StudentTypeFromRegistrationForm, DepartmentOrGradeEntry } from '@/lib/types';
 import { ADMIN_EXAMS_STORAGE_KEY, STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM, DEPARTMENTS_GRADES_STORAGE_KEY } from '@/lib/constants';
 
 const examSchema = z.object({
@@ -23,9 +23,13 @@ const examSchema = z.object({
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
   educationalLevel: z.enum(STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM, { required_error: "Please select an educational level." }),
   departmentOrGradeName: z.string().optional(),
-  questionCount: z.coerce.number().int().positive({ message: "Must be a positive number." }),
   durationMinutes: z.coerce.number().int().positive({ message: "Must be a positive number." }),
   isPremium: z.boolean().default(false),
+  questionIdsInput: z.string().refine(val => {
+    if (!val.trim()) return true; // Optional, can be empty
+    const ids = val.split(',').map(id => id.trim());
+    return ids.every(id => id.length > 0); // If not empty, all parts must be non-empty
+  }, {message: "Question IDs must be a comma-separated list of non-empty strings, or empty."}).optional(),
 });
 
 type ExamFormValues = z.infer<typeof examSchema>;
@@ -43,9 +47,9 @@ export default function AddAdminExamPage() {
       description: '',
       educationalLevel: undefined,
       departmentOrGradeName: undefined,
-      questionCount: 10, // Placeholder, actual questions managed separately
       durationMinutes: 30,
       isPremium: false,
+      questionIdsInput: '',
     },
   });
 
@@ -83,19 +87,17 @@ export default function AddAdminExamPage() {
       const storedExams = localStorage.getItem(ADMIN_EXAMS_STORAGE_KEY);
       let exams: Exam[] = storedExams ? JSON.parse(storedExams) : [];
       
-      const placeholderQuestions: Question[] = Array.from({ length: data.questionCount }, (_, i) => ({
-        id: `q-${Date.now()}-${i}`,
-        text: `Placeholder Question ${i + 1} for exam: ${data.title}`,
-        options: ["Option A", "Option B", "Option C", "Option D"],
-        correctAnswer: "Option A",
-        explanation: "This is a placeholder explanation."
-      }));
+      const questionIds = data.questionIdsInput?.split(',').map(id => id.trim()).filter(id => id) || [];
 
       const newExam: Exam = {
         id: `exam-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-        ...data,
+        title: data.title,
+        description: data.description,
+        educationalLevel: data.educationalLevel,
         departmentOrGradeName: data.departmentOrGradeName || undefined,
-        questions: placeholderQuestions, 
+        durationMinutes: data.durationMinutes,
+        isPremium: data.isPremium,
+        questionIds: questionIds,
       };
       exams.push(newExam);
       localStorage.setItem(ADMIN_EXAMS_STORAGE_KEY, JSON.stringify(exams));
@@ -128,7 +130,7 @@ export default function AddAdminExamPage() {
           </Button>
         </div>
         <CardDescription>
-          Fill in the details for the new exam. Question content will be managed separately.
+          Fill in the details for the new exam. Link questions from the global bank using their IDs.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -141,7 +143,7 @@ export default function AddAdminExamPage() {
 
           <div>
             <Label htmlFor="description">Description</Label>
-            <Textarea id="description" {...register("description")} disabled={isLoading} className="mt-1" rows={4} />
+            <Textarea id="description" {...register("description")} disabled={isLoading} className="mt-1" rows={3} />
             {errors.description && <p className="text-sm text-destructive mt-1">{errors.description.message}</p>}
           </div>
 
@@ -194,19 +196,18 @@ export default function AddAdminExamPage() {
             </p>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="questionCount">Number of Questions (Initial)</Label>
-              <Input id="questionCount" type="number" {...register("questionCount")} disabled={isLoading} className="mt-1" />
-              {errors.questionCount && <p className="text-sm text-destructive mt-1">{errors.questionCount.message}</p>}
-              <p className="text-xs text-muted-foreground mt-1">Actual questions are managed separately.</p>
-            </div>
             <div>
               <Label htmlFor="durationMinutes">Duration (Minutes)</Label>
               <Input id="durationMinutes" type="number" {...register("durationMinutes")} disabled={isLoading} className="mt-1" />
               {errors.durationMinutes && <p className="text-sm text-destructive mt-1">{errors.durationMinutes.message}</p>}
             </div>
-          </div>
+            
+            <div>
+              <Label htmlFor="questionIdsInput">Question IDs (Comma-separated)</Label>
+              <Textarea id="questionIdsInput" {...register("questionIdsInput")} disabled={isLoading} className="mt-1" rows={2} placeholder="e.g., gq1,gq2,gq5" />
+              {errors.questionIdsInput && <p className="text-sm text-destructive mt-1">{errors.questionIdsInput.message}</p>}
+              <p className="text-xs text-muted-foreground mt-1">Enter IDs of questions from the global question bank.</p>
+            </div>
           
           <div className="flex items-center space-x-2">
             <Switch

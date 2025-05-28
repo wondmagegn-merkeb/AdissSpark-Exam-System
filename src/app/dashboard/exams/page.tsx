@@ -10,46 +10,46 @@ import { useAuth } from '@/hooks/useAuth';
 import { FileText, Clock, Lock, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 
-const mockExams: Exam[] = [
+const mockStudentExams: Exam[] = [
   {
     id: 'model-1',
     title: 'Model Exam 1: General Knowledge',
     description: 'A comprehensive test covering various general knowledge topics. Ideal for baseline assessment.',
-    questionCount: 50,
     durationMinutes: 60,
     isPremium: false,
+    questionIds: ["gq1", "gq2", "gq3"], // Link to global questions
   },
   {
     id: 'model-2',
     title: 'Model Exam 2: Verbal Reasoning',
     description: 'Focuses on verbal reasoning, comprehension, and analytical skills. Prepare for aptitude tests.',
-    questionCount: 40,
     durationMinutes: 45,
     isPremium: false,
+    questionIds: ["gq4", "gq5"], // Link to global questions
   },
   {
     id: 'model-3',
     title: 'Model Exam 3: Quantitative Aptitude (Premium)',
     description: 'Challenging questions on quantitative aptitude. Requires a premium subscription.',
-    questionCount: 60,
     durationMinutes: 90,
     isPremium: true,
+    questionIds: ["gq6", "gq1", "gq4"], // Link to global questions
   },
   {
     id: 'model-4',
     title: 'Model Exam 4: Logical Reasoning',
     description: 'Test your logical thinking and problem-solving abilities with these tricky puzzles.',
-    questionCount: 30,
     durationMinutes: 60,
     isPremium: false,
+    questionIds: ["gq2", "gq5", "gq6"], // Link to global questions
   },
   {
     id: 'model-5',
     title: 'Model Exam 5: Specialized Subject (Premium)',
     description: 'An in-depth exam for a specialized subject, designed by experts. Premium access only.',
-    questionCount: 75,
     durationMinutes: 120,
     isPremium: true,
+    questionIds: ["gq1", "gq3", "gq5", "gq6"], // Link to global questions
   },
 ];
 
@@ -84,11 +84,11 @@ export default function ExamsPage() {
         </Alert>
       )}
 
-      {mockExams.length === 0 ? (
+      {mockStudentExams.length === 0 ? (
         <p className="text-center text-muted-foreground">No exams available at the moment. Please check back later.</p>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {mockExams.map((exam) => {
+          {mockStudentExams.map((exam) => {
             const canAccess = !exam.isPremium || (exam.isPremium && isSubscribed);
             const shortTitle = getShortTitle(exam.title);
             return (
@@ -111,7 +111,7 @@ export default function ExamsPage() {
                   <div className="space-y-2 text-sm text-muted-foreground">
                     <div className="flex items-center">
                       <FileText className="mr-2 h-4 w-4" />
-                      <span>{exam.questionCount} Questions</span>
+                      <span>{exam.questionIds.length} Questions</span>
                     </div>
                     <div className="flex items-center">
                       <Clock className="mr-2 h-4 w-4" />

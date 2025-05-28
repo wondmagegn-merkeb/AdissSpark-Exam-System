@@ -4,12 +4,12 @@ export interface User {
   name?: string | null;
   username?: string | null;
   email?: string | null;
-  image?: string | null; // Added for avatar
+  image?: string | null; 
   gender?: "male" | "female" | "other" | "prefer_not_to_say" | null;
   studentType?: StudentTypeFromRegistrationFormKey | null;
-  institutionName?: string | null; // Stores the final name (selected, 'Other' text, school name, or generic institution)
-  department?: string | null; // Stores final department (selected, 'Other' text) - primarily for university/college
-  gradeLevel?: string | null; // For primary, secondary, high_school, preparatory
+  institutionName?: string | null; 
+  department?: string | null; 
+  gradeLevel?: string | null; 
 }
 
 export type StudentTypeFromRegistrationForm = 
@@ -45,31 +45,34 @@ export interface Resource {
   title: string;
   type: 'note' | 'video' | 'book';
   description: string;
-  subjectOrCourse: string; // This will store the subject (for school) or course/field (for uni/college)
+  subjectOrCourse: string; 
   imageUrl?: string;
-  isPremium: boolean; // True if requires subscription
-  contentUrl?: string; // URL to the actual resource or a placeholder
+  isPremium: boolean; 
+  contentUrl?: string; 
   dataAiHint?: string;
 }
 
 export interface Question {
   id: string;
   text: string;
-  options: string[];
-  correctAnswer: string; // The string content of the correct option
-  explanation?: string; // Optional explanation
+  option1: string;
+  option2: string;
+  option3: string;
+  option4: string;
+  correctAnswer: string; // Stores the text of the correct option (e.g., the content of option1, option2, etc.)
+  explanation?: string; 
 }
 
 export interface Exam {
   id:string;
   title: string;
   description: string;
-  questionCount: number;
-  durationMinutes: number; // Duration in minutes
+  durationMinutes: number; 
   isPremium: boolean;
-  questions: Question[];
+  questionIds: string[]; // Array of IDs from the global question bank
   educationalLevel?: StudentTypeFromRegistrationForm;
   departmentOrGradeName?: string;
+  // questionCount is now derived from questionIds.length
 }
 
 export interface StudyPlanData {
@@ -83,7 +86,6 @@ export interface StudyPlanOutput {
   studyPlan: string;
 }
 
-// Updated ChatMessage for user-to-user chat
 export interface ChatMessage {
   id: string; 
   text: string;
@@ -95,7 +97,7 @@ export interface ChatMessage {
 export interface ExamHistoryEntry {
   examId: string;
   examTitle: string;
-  dateCompleted: string; // ISO string
+  dateCompleted: string; 
   score: number;
   totalQuestions: number;
   percentageScore: number;
@@ -121,32 +123,28 @@ export interface AgentEntry {
   lastUpdated: Date;
 }
 
-// Used for "Manage Institutions" admin page
 export type InstitutionType = StudentTypeFromRegistrationForm;
 export type InstitutionStatus = 'active' | 'inactive';
 
 export interface Institution {
   id: string;
   name: string;
-  type: InstitutionType; // "Primary School", "University", etc.
+  type: InstitutionType; 
   context: string;
   status: InstitutionStatus;
 }
 
-// Used for the "Manage Departments & Grades" admin page
 export type DepartmentOrGradeAssociatedLevel = StudentTypeFromRegistrationForm;
 
 export interface DepartmentOrGradeEntry {
   id: string;
-  name: string; // e.g., "Computer Science" or "Grade 9"
-  type: DepartmentOrGradeAssociatedLevel; // e.g., "University", "High School"
+  name: string; 
+  type: DepartmentOrGradeAssociatedLevel; 
 }
 
-// Used for the "Manage Courses & Subjects" admin page
 export interface CourseOrSubjectEntry {
   id: string;
-  name: string; // e.g., "Calculus I" or "Physics Grade 9"
-  educationalLevel: StudentTypeFromRegistrationForm; // e.g., "University", "High School"
-  departmentOrGradeName?: string; // Stores the name of the selected department or grade (e.g., "Computer Science" or "Grade 9")
+  name: string; 
+  educationalLevel: StudentTypeFromRegistrationForm; 
+  departmentOrGradeName?: string; 
 }
-

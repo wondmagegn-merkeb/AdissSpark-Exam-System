@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ArrowLeft, CheckCircle2, XCircle, AlertCircle, Info, BarChart3, MessageSquareText } from 'lucide-react';
-import type { Exam, Question } from '@/lib/types';
-import { PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip } from 'recharts';
+import type { Exam, Question } from '@/lib/types'; // Question type is now global
+import { PieChart, Pie, Cell, Legend } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 
 interface CompletedExamData {
-  exam: Exam;
+  exam: Exam & { questions: Question[] }; // Ensure questions are part of the stored exam data
   userAnswers: Record<string, string>;
   score: number;
   incorrectCount: number;
@@ -38,7 +38,14 @@ export default function ExamResultsPage() {
       try {
         const storedData = localStorage.getItem(`completedExam_${examId}`);
         if (storedData) {
-          setCompletedData(JSON.parse(storedData));
+          const parsedData = JSON.parse(storedData);
+          // Ensure parsedData.exam.questions exists and is an array
+          if (parsedData.exam && Array.isArray(parsedData.exam.questions)) {
+            setCompletedData(parsedData);
+          } else {
+            console.error("Stored exam data is missing or has an invalid questions array for exam ID:", examId, parsedData);
+            setCompletedData(null); // Or handle this case appropriately
+          }
         }
       } catch (error) {
         console.error("Error loading exam results from localStorage:", error);
@@ -58,14 +65,14 @@ export default function ExamResultsPage() {
     );
   }
 
-  if (!completedData) {
+  if (!completedData || !completedData.exam || !Array.isArray(completedData.exam.questions)) {
     return (
       <div className="container mx-auto py-8 text-center">
         <Alert variant="destructive" className="max-w-lg mx-auto">
-          <AlertTriangle className="h-4 w-4" />
+          <AlertCircle className="h-4 w-4" /> {/* Changed Icon for consistency */}
           <AlertTitle>Results Not Found</AlertTitle>
           <AlertDescription>
-            We couldn't find the results for this exam (ID: {examId}). It's possible they were not saved correctly or have been cleared.
+            We couldn't find the results for this exam (ID: {examId}), or the data is corrupted. It's possible they were not saved correctly or have been cleared.
           </AlertDescription>
         </Alert>
         <Button onClick={() => router.push('/dashboard/exams')} className="mt-6">
@@ -100,12 +107,12 @@ export default function ExamResultsPage() {
       </Card>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Main Content: Questions Review */}
         <div className="flex-1 space-y-6">
           {exam.questions.map((question, index) => {
             const userAnswer = userAnswers[question.id];
             const isCorrect = userAnswer === question.correctAnswer;
             const isAnswered = userAnswer !== undefined;
+            const optionsArray = [question.option1, question.option2, question.option3, question.option4];
 
             let questionStatusIcon = <Info className="h-5 w-5 text-blue-500" />;
             let questionStatusText = "Status: Information";
@@ -141,7 +148,7 @@ export default function ExamResultsPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <ul className="space-y-2">
-                    {question.options.map((option, optIndex) => {
+                    {optionsArray.map((option, optIndex) => {
                       const isUserSelectedOption = userAnswer === option;
                       const isCorrectOption = question.correctAnswer === option;
                       let optionStyle = "border-muted-foreground/30";
@@ -155,7 +162,7 @@ export default function ExamResultsPage() {
                           optionStyle = "border-green-500 bg-green-500/10 text-green-700 dark:text-green-300";
                           icon = <CheckCircle2 className="h-5 w-5 text-green-500 opacity-70" />;
                         }
-                      } else { // Unanswered
+                      } else { 
                         if (isCorrectOption) {
                           optionStyle = "border-yellow-500 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400";
                            icon = <Info className="h-5 w-5 text-yellow-500 opacity-70" />;
@@ -185,9 +192,8 @@ export default function ExamResultsPage() {
           })}
         </div>
 
-        {/* Right Sidebar: Summary */}
         <aside className="w-full lg:w-96 space-y-6">
-          <Card className="shadow-md sticky top-8"> {/* Make summary sticky */}
+          <Card className="shadow-md sticky top-8"> 
             <CardHeader>
               <CardTitle className="text-xl flex items-center">
                 <BarChart3 className="mr-2 h-6 w-6 text-primary" />
