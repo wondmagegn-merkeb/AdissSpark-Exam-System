@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -9,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, Lock, Layers, BookCopy, ListChecks, FileText as FileTextIconLucide } from "lucide-react"; // Renamed FileText
+import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, Lock, Layers, BookCopy, ListChecks, FileText as FileTextIconLucide, Clock } from "lucide-react";
 import type { Exam, StudentTypeFromRegistrationForm } from '@/lib/types';
 import { ADMIN_EXAMS_STORAGE_KEY } from '@/lib/constants';
 
