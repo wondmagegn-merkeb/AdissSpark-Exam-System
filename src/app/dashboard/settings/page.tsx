@@ -9,8 +9,18 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, KeyRound, Bell, Trash2, Save } from 'lucide-react';
+import { Settings, KeyRound, Bell, Trash2, Save, Palette, Sun, Moon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+
+const colorPresets = [
+    { name: 'Yellow', value: '45 100% 50%' },
+    { name: 'Orange', value: '24 95% 53%' },
+    { name: 'Green', value: '142 76% 36%' },
+    { name: 'Blue', value: '221 83% 53%' },
+    { name: 'Purple', value: '262 83% 58%' },
+    { name: 'Pink', value: '340 82% 52%' },
+];
 
 
 export default function SettingsPage() {
@@ -18,6 +28,8 @@ export default function SettingsPage() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [theme, setTheme] = useState('light');
+  const [activeColor, setActiveColor] = useState(colorPresets[0].value);
 
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +58,18 @@ export default function SettingsPage() {
     setNewPassword('');
     setConfirmPassword('');
   };
+  
+  const handleThemeChange = (newTheme: 'light' | 'dark') => {
+    setTheme(newTheme);
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    toast({ title: 'Theme Updated', description: `Switched to ${newTheme} mode.` });
+  };
+  
+  const handleColorChange = (colorHsl: string) => {
+    setActiveColor(colorHsl);
+    document.documentElement.style.setProperty('--primary', colorHsl);
+    toast({ title: 'Accent Color Updated' });
+  };
 
   return (
     <div className="container mx-auto py-8">
@@ -58,9 +82,10 @@ export default function SettingsPage() {
         </div>
 
       <Tabs defaultValue="account" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <TabsList className="grid w-full grid-cols-3 max-w-lg">
           <TabsTrigger value="account">Account</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="theme">Theme</TabsTrigger>
         </TabsList>
         <TabsContent value="account">
           <Card className="shadow-lg mt-4">
@@ -142,6 +167,45 @@ export default function SettingsPage() {
                 </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="theme">
+            <Card className="shadow-lg mt-4">
+                <CardHeader>
+                    <CardTitle className="text-xl flex items-center"><Palette className="mr-2 h-5 w-5"/> Theme & Appearance</CardTitle>
+                    <CardDescription>
+                        Customize the look and feel of your dashboard.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                        <Label>Appearance</Label>
+                        <div className="flex gap-2">
+                            <Button variant={theme === 'light' ? 'default' : 'outline'} onClick={() => handleThemeChange('light')}>
+                                <Sun className="mr-2 h-4 w-4"/> Light
+                            </Button>
+                            <Button variant={theme === 'dark' ? 'default' : 'outline'} onClick={() => handleThemeChange('dark')}>
+                                <Moon className="mr-2 h-4 w-4"/> Dark
+                            </Button>
+                        </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Accent Color</Label>
+                        <div className="flex flex-wrap gap-2">
+                            {colorPresets.map((color) => (
+                                <Button
+                                    key={color.name}
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => handleColorChange(color.value)}
+                                    className={`h-8 w-8 rounded-full ${activeColor === color.value ? 'ring-2 ring-ring ring-offset-2' : ''}`}
+                                    style={{ backgroundColor: `hsl(${color.value})` }}
+                                    aria-label={`Set accent color to ${color.name}`}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
         </TabsContent>
       </Tabs>
     </div>
