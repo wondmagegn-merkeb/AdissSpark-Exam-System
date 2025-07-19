@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef, FormEvent } from 'react';
+import { useState, useEffect, useRef, FormEvent, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -12,17 +12,25 @@ import { MessageSquare, Search, LayoutDashboard, Send, User as UserIcon } from '
 import type { User } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 
-// Mock user data - in a real app, this would come from a database
-const mockUsers: User[] = [
-  { id: 'user2', name: 'Alice Wonderland', email: 'alice@example.com', image: 'https://placehold.co/100x100.png?text=AW' },
-  { id: 'user3', name: 'Bob The Builder', email: 'bob@example.com', image: 'https://placehold.co/100x100.png?text=BB' },
-  { id: 'user4', name: 'Charlie Brown', email: 'charlie@example.com', image: 'https://placehold.co/100x100.png?text=CB' },
-  { id: 'user5', name: 'Diana Prince', email: 'diana@example.com', image: 'https://placehold.co/100x100.png?text=DP' },
-  { id: 'user6', name: 'Edward Scissorhands', email: 'edward@example.com', image: 'https://placehold.co/100x100.png?text=ES' },
+// Mock user data enhanced with chat-specific fields
+interface ChatUser extends User {
+  isOnline: boolean;
+  lastMessage: string;
+  lastMessageTimestamp: Date;
+  unreadCount: number;
+}
+
+const mockUsers: ChatUser[] = [
+  { id: 'user2', name: 'Alice Wonderland', email: 'alice@example.com', image: 'https://placehold.co/100x100.png?text=AW', isOnline: true, lastMessage: "Hey, are you free to chat?", lastMessageTimestamp: new Date(Date.now() - 5 * 60 * 1000), unreadCount: 2 },
+  { id: 'user3', name: 'Bob The Builder', email: 'bob@example.com', image: 'https://placehold.co/100x100.png?text=BB', isOnline: false, lastMessage: "Sure, I'll check it out. Thanks!", lastMessageTimestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), unreadCount: 0 },
+  { id: 'user4', name: 'Charlie Brown', email: 'charlie@example.com', image: 'https://placehold.co/100x100.png?text=CB', isOnline: true, lastMessage: "Haha, that's hilarious! 😂", lastMessageTimestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), unreadCount: 0 },
+  { id: 'user5', name: 'Diana Prince', email: 'diana@example.com', image: 'https://placehold.co/100x100.png?text=DP', isOnline: false, lastMessage: "Okay, sounds good. Let's sync up tomorrow.", lastMessageTimestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), unreadCount: 5 },
+  { id: 'user6', name: 'Edward Scissorhands', email: 'edward@example.com', image: 'https://placehold.co/100x100.png?text=ES', isOnline: true, lastMessage: "You sent an attachment.", lastMessageTimestamp: new Date(Date.now() - 30 * 60 * 1000), unreadCount: 0 },
 ];
 
 interface ChatMessage {
@@ -47,22 +55,18 @@ export default function ChatPage() {
   const router = useRouter();
   const { user: currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredUsers, setFilteredUsers] = useState<User[]>(mockUsers);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<ChatUser | null>(null);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-
-  useEffect(() => {
-    setFilteredUsers(
-      mockUsers.filter(user =>
+  const filteredUsers = useMemo(() => {
+    return mockUsers.filter(user =>
         user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    );
+      ).sort((a, b) => b.lastMessageTimestamp.getTime() - a.lastMessageTimestamp.getTime());
   }, [searchTerm]);
   
   useEffect(() => {
@@ -71,7 +75,7 @@ export default function ChatPage() {
     }
   }, [messages]);
 
-  const handleSelectUser = (user: User) => {
+  const handleSelectUser = (user: ChatUser) => {
     setSelectedUser(user);
     setMessages([]); // Clear previous messages
     // In a real app, you would fetch the message history for this user here.
@@ -155,13 +159,34 @@ export default function ChatPage() {
                         selectedUser?.id === user.id && "bg-muted"
                     )}
                   >
-                    <Avatar className="h-10 w-10 mr-4">
-                      <AvatarImage src={user.image || `https://avatar.vercel.sh/${user.email}.png`} alt={user.name || "User"} data-ai-hint="user avatar" />
-                      <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                    </Avatar>
+                    <div className="relative mr-4">
+                      <Avatar className="h-11 w-11">
+                        <AvatarImage src={user.image || `https://avatar.vercel.sh/${user.email}.png`} alt={user.name || "User"} data-ai-hint="user avatar" />
+                        <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                      </Avatar>
+                      <span className={cn(
+                        "absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-background",
+                        user.isOnline ? "bg-green-500" : "bg-muted-foreground"
+                      )} />
+                    </div>
+
                     <div className="flex-grow">
-                      <p className="font-medium text-foreground">{user.name || 'Unnamed User'}</p>
-                      <p className="text-sm text-muted-foreground">{user.email || 'No email'}</p>
+                      <div className="flex justify-between items-center">
+                        <p className="font-medium text-foreground">{user.name || 'Unnamed User'}</p>
+                        <p className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(user.lastMessageTimestamp, { addSuffix: true })}
+                        </p>
+                      </div>
+                       <div className="flex justify-between items-start">
+                        <p className="text-sm text-muted-foreground truncate max-w-[150px]">
+                            {user.lastMessage}
+                        </p>
+                        {user.unreadCount > 0 && (
+                            <Badge className="h-5 w-5 flex items-center justify-center p-0 text-xs shrink-0">
+                                {user.unreadCount}
+                            </Badge>
+                        )}
+                       </div>
                     </div>
                   </div>
                 ))}
