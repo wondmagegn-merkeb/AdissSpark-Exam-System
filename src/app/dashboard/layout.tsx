@@ -24,6 +24,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   // Regex to match distraction-free pages
   const isExamTakingPage = /^\/dashboard\/exams\/[^/]+\/take$/.test(pathname);
   const isChatPage = /^\/dashboard\/chat/.test(pathname);
+  const isPaymentPage = pathname === '/dashboard/payment';
 
 
   if (loading || !user) {
@@ -53,7 +54,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  if (isExamTakingPage || isChatPage) {
+  if (isExamTakingPage || isChatPage || isPaymentPage) {
     // Render only children for a distraction-free view
     return <div className="min-h-screen bg-background">{children}</div>;
   }
