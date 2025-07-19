@@ -8,8 +8,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MessageSquare, Search } from 'lucide-react';
+import { MessageSquare, Search, LayoutDashboard } from 'lucide-react';
 import type { User } from '@/lib/types'; // Assuming User type is defined
+import { useRouter } from 'next/navigation';
 
 // Mock user data - in a real app, this would come from a database
 const mockUsers: User[] = [
@@ -30,6 +31,7 @@ const getInitials = (name?: string | null) => {
 };
 
 export default function ChatListPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredUsers, setFilteredUsers] = useState<User[]>(mockUsers);
 
@@ -43,14 +45,22 @@ export default function ChatListPage() {
   }, [searchTerm]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-theme(spacing.24))]">
+    <div className="flex flex-col h-screen p-4">
       <Card className="flex-grow flex flex-col shadow-lg">
-        <CardHeader className="border-b">
-          <CardTitle className="text-xl text-foreground flex items-center">
+        <CardHeader className="border-b flex flex-row items-center justify-between">
+          <div className="flex items-center">
             <MessageSquare className="mr-2 h-6 w-6 text-primary" />
-            Chats
-          </CardTitle>
-          <div className="relative mt-2">
+            <CardTitle className="text-xl text-foreground">
+              Chats
+            </CardTitle>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => router.push('/dashboard')}>
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Button>
+        </CardHeader>
+        <div className="p-4 border-b">
+          <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
@@ -60,7 +70,7 @@ export default function ChatListPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-        </CardHeader>
+        </div>
         <CardContent className="flex-grow p-0">
           <ScrollArea className="h-full">
             {filteredUsers.length === 0 ? (
@@ -80,12 +90,6 @@ export default function ChatListPage() {
                         <p className="font-medium text-foreground">{user.name || 'Unnamed User'}</p>
                         <p className="text-sm text-muted-foreground">{user.email || 'No email'}</p>
                       </div>
-                      {/* Placeholder for last message/time if we implement that
-                      <div className="text-xs text-muted-foreground">
-                        <p>10:30 AM</p>
-                        <Badge variant="default" className="mt-1">3</Badge> 
-                      </div>
-                      */}
                     </a>
                   </Link>
                 ))}
@@ -93,13 +97,6 @@ export default function ChatListPage() {
             )}
           </ScrollArea>
         </CardContent>
-        {/* Optional: Footer for new chat button or actions 
-        <div className="p-4 border-t bg-background">
-          <Button className="w-full">
-            <Users className="mr-2 h-4 w-4" /> Start New Group Chat (Example)
-          </Button>
-        </div>
-        */}
       </Card>
     </div>
   );

@@ -21,8 +21,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     }
   }, [user, loading, router]);
 
-  // Regex to match /dashboard/exams/[examId]/take
+  // Regex to match distraction-free pages
   const isExamTakingPage = /^\/dashboard\/exams\/[^/]+\/take$/.test(pathname);
+  const isChatPage = /^\/dashboard\/chat/.test(pathname);
+
 
   if (loading || !user) {
     return (
@@ -51,8 +53,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  if (isExamTakingPage) {
-    // Render only children for the exam taking page, providing a distraction-free view
+  if (isExamTakingPage || isChatPage) {
+    // Render only children for a distraction-free view
     return <div className="min-h-screen bg-background">{children}</div>;
   }
 

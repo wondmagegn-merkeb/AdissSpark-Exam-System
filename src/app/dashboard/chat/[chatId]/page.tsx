@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
-import { Send, ArrowLeft, User as UserIcon } from 'lucide-react';
+import { Send, ArrowLeft, User as UserIcon, LayoutDashboard } from 'lucide-react';
 import { format } from 'date-fns';
 import type { User } from '@/lib/types'; // Assuming User type is defined
 
@@ -130,7 +130,7 @@ export default function IndividualChatPage() {
 
 
   return (
-    <div className="flex flex-col h-[calc(100vh-theme(spacing.24))]">
+    <div className="flex flex-col h-screen">
       <Card className="flex-grow flex flex-col shadow-lg">
         <CardHeader className="border-b flex flex-row items-center justify-between">
           <div className="flex items-center">
@@ -145,7 +145,10 @@ export default function IndividualChatPage() {
               {otherUser?.name || 'Chat'}
             </CardTitle>
           </div>
-           {/* Placeholder for more actions like video call, info etc. */}
+           <Button variant="outline" size="sm" onClick={() => router.push('/dashboard')}>
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                Back to Dashboard
+            </Button>
         </CardHeader>
         <CardContent className="flex-grow p-0">
           <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
