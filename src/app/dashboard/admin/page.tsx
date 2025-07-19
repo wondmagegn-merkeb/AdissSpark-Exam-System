@@ -3,9 +3,20 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { withAdminAuth } from "@/components/auth/withAdminAuth";
-import { ArrowRight, UserCog, UserRound, Building, BookCopy, ListChecks, Edit as EditIconLucide, Library, Cpu, Archive, LayoutDashboard } from "lucide-react";
+import { ArrowRight, UserCog, UserRound, Building, BookCopy, ListChecks, Edit as EditIconLucide, Library, Cpu, Archive, LayoutDashboard, Activity, Users, CreditCard, FileText, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
 
 const adminFeatures = [
   { title: 'Manage Staff', href: '/dashboard/admin/users', icon: UserCog, description: "Add, edit, or remove administrators and instructors." },
@@ -19,17 +30,177 @@ const adminFeatures = [
   { title: 'Manage Feedback', href: '/dashboard/admin/feedback', icon: Archive, description: "Review and respond to user feedback." },
 ];
 
+const chartData = [
+  { month: "January", users: 186 },
+  { month: "February", users: 305 },
+  { month: "March", users: 237 },
+  { month: "April", users: 73 },
+  { month: "May", users: 209 },
+  { month: "June", users: 214 },
+]
+
+const chartConfig = {
+  users: {
+    label: "Users",
+    color: "hsl(var(--primary))",
+  },
+} satisfies ChartConfig
+
 function AdminDashboardPage() {
   const { user } = useAuth();
 
   return (
     <div className="container mx-auto py-8 space-y-8">
-      <div className="text-center">
+      <div className="text-left">
         <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           Admin Dashboard
         </h1>
         <p className="mt-2 text-lg text-muted-foreground">
-          Welcome, {user?.name || 'Admin'}. Manage your platform from here.
+          Welcome, {user?.name || 'Admin'}. Here is a snapshot of your platform's activity.
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+        <Card className="shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">12,234</div>
+            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Subscriptions</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+2,350</div>
+            <p className="text-xs text-muted-foreground">+180.1% from last month</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Exams</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">573</div>
+            <p className="text-xs text-muted-foreground">+19 from last month</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Agents</CardTitle>
+            <Cpu className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">4</div>
+            <p className="text-xs text-muted-foreground">All systems operational</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+        <Card className="shadow-lg xl:col-span-2">
+          <CardHeader>
+            <CardTitle>User Overview</CardTitle>
+          </CardHeader>
+          <CardContent className="pl-2">
+             <ChartContainer config={chartConfig} className="h-[300px] w-full">
+              <BarChart accessibilityLayer data={chartData}>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  tickLine={false}
+                  tickMargin={10}
+                  axisLine={false}
+                  tickFormatter={(value) => value.slice(0, 3)}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent indicator="dashed" />}
+                />
+                <Bar dataKey="users" fill="var(--color-users)" radius={4} />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+            <CardDescription>
+              New users who have recently signed up.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-8">
+            <div className="flex items-center gap-4">
+              <Avatar className="hidden h-9 w-9 sm:flex">
+                <AvatarImage src="https://placehold.co/100x100.png?text=SO" alt="Avatar" />
+                <AvatarFallback>SO</AvatarFallback>
+              </Avatar>
+              <div className="grid gap-1">
+                <p className="text-sm font-medium leading-none">Sofia Davis</p>
+                <p className="text-sm text-muted-foreground">sofia.davis@email.com</p>
+              </div>
+              <div className="ml-auto font-medium">Student</div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Avatar className="hidden h-9 w-9 sm:flex">
+                <AvatarImage src="https://placehold.co/100x100.png?text=JD" alt="Avatar" />
+                <AvatarFallback>JD</AvatarFallback>
+              </Avatar>
+              <div className="grid gap-1">
+                <p className="text-sm font-medium leading-none">Jackson Lee</p>
+                <p className="text-sm text-muted-foreground">jackson.lee@email.com</p>
+              </div>
+              <div className="ml-auto font-medium">Student</div>
+            </div>
+             <div className="flex items-center gap-4">
+              <Avatar className="hidden h-9 w-9 sm:flex">
+                <AvatarImage src="https://placehold.co/100x100.png?text=AK" alt="Avatar" />
+                <AvatarFallback>AK</AvatarFallback>
+              </Avatar>
+              <div className="grid gap-1">
+                <p className="text-sm font-medium leading-none">Abebe Kebede</p>
+                <p className="text-sm text-muted-foreground">abebe.admin@example.com</p>
+              </div>
+              <div className="ml-auto font-medium text-primary">Admin</div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Avatar className="hidden h-9 w-9 sm:flex">
+                <AvatarImage src="https://placehold.co/100x100.png?text=LM" alt="Avatar" />
+                <AvatarFallback>LM</AvatarFallback>
+              </Avatar>
+              <div className="grid gap-1">
+                <p className="text-sm font-medium leading-none">Liam Martin</p>
+                <p className="text-sm text-muted-foreground">liam.martin@email.com</p>
+              </div>
+              <div className="ml-auto font-medium">Student</div>
+            </div>
+             <div className="flex items-center gap-4">
+              <Avatar className="hidden h-9 w-9 sm:flex">
+                <AvatarImage src="https://placehold.co/100x100.png?text=OW" alt="Avatar" />
+                <AvatarFallback>OW</AvatarFallback>
+              </Avatar>
+              <div className="grid gap-1">
+                <p className="text-sm font-medium leading-none">Olivia Wilson</p>
+                <p className="text-sm text-muted-foreground">olivia.wilson@email.com</p>
+              </div>
+              <div className="ml-auto font-medium">Student</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="text-left">
+        <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          Management Sections
+        </h2>
+        <p className="mt-2 text-md text-muted-foreground">
+          Access all administrative functions to manage your platform.
         </p>
       </div>
 
