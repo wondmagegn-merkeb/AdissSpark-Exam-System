@@ -37,7 +37,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="py-16 md:py-24 bg-gradient-to-br from-background to-accent/20">
         <div className="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
-          <div className="md:order-1">
+          <div className="animate-fade-in-up">
             <Image
               src="https://placehold.co/800x600.png"
               alt="ADDISSPARK dashboard preview"
@@ -48,7 +48,7 @@ export default function HomePage() {
               priority
             />
           </div>
-          <div className="text-center md:text-left md:order-2">
+          <div className="text-center md:text-left animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
             <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
               Ace Your Exit Exams with <span className="text-primary">ADDISSPARK</span>
             </h1>
@@ -70,26 +70,32 @@ export default function HomePage() {
       {/* Features Section */}
       <section id="features" className="py-16 md:py-24">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-foreground sm:text-4xl">
-            Everything you need to succeed
-          </h2>
-          <p className="mt-4 max-w-2xl mx-auto text-center text-lg text-muted-foreground">
-            Our platform is packed with features designed to help you prepare effectively and efficiently.
-          </p>
+          <div className="animate-fade-in-up">
+            <h2 className="text-3xl font-bold text-center text-foreground sm:text-4xl">
+              Everything you need to succeed
+            </h2>
+            <p className="mt-4 max-w-2xl mx-auto text-center text-lg text-muted-foreground">
+              Our platform is packed with features designed to help you prepare effectively and efficiently.
+            </p>
+          </div>
           <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {features.map((feature) => (
-              <Card key={feature.title} className="flex flex-col items-center text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <CardHeader>
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mb-4">
-                    {feature.icon}
-                  </div>
-                  <CardTitle className="text-xl font-semibold">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">{feature.description}</p>
-                  <Image src={`https://placehold.co/300x200.png`} alt={feature.title} width={300} height={200} className="mt-4 rounded-md" data-ai-hint={feature.dataAiHint} />
-                </CardContent>
-              </Card>
+            {features.map((feature, index) => (
+              <div key={feature.title} className="animate-fade-in-up" style={{ animationDelay: `${0.2 * (index + 1)}s` }}>
+                <Card className="flex flex-col items-center text-center shadow-lg hover:shadow-xl transition-shadow duration-300 h-full">
+                  <CardHeader>
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mb-4">
+                      {feature.icon}
+                    </div>
+                    <CardTitle className="text-xl font-semibold">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-col flex-grow">
+                    <p className="text-muted-foreground">{feature.description}</p>
+                    <div className="mt-4 flex-grow flex items-end">
+                      <Image src={`https://placehold.co/300x200.png`} alt={feature.title} width={300} height={200} className="rounded-md" data-ai-hint={feature.dataAiHint} />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             ))}
           </div>
         </div>
@@ -97,7 +103,7 @@ export default function HomePage() {
 
       {/* Call to Action Section */}
       <section className="py-16 md:py-24 bg-primary/5">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto px-4 text-center animate-fade-in-up">
           <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
             Ready to start preparing?
           </h2>
