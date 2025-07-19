@@ -40,28 +40,27 @@ const getInitials = (name?: string | null) => {
   return names.length > 1 ? (names[0][0] + names[names.length - 1][0]).toUpperCase() : name[0].toUpperCase();
 };
 
-const DAILY_RATE = 5; // 5 ETB per day
-
 function ManageSubscriptionsPage() {
   const { toast } = useToast();
   const [durationDays, setDurationDays] = useState<number>(30);
   const [discountPercent, setDiscountPercent] = useState<number>(0);
+  const [dailyRate, setDailyRate] = useState<number>(5);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
-  const { originalPrice, finalPrice, discountAmount } = useMemo(() => {
+  const { finalPrice, discountAmount } = useMemo(() => {
     const days = isNaN(durationDays) || durationDays < 0 ? 0 : durationDays;
     const discount = isNaN(discountPercent) || discountPercent < 0 ? 0 : discountPercent > 100 ? 100 : discountPercent;
+    const rate = isNaN(dailyRate) || dailyRate < 0 ? 0 : dailyRate;
     
-    const original = days * DAILY_RATE;
+    const original = days * rate;
     const discountAmt = (original * discount) / 100;
     const final = original - discountAmt;
 
     return {
-      originalPrice: original,
       finalPrice: final,
       discountAmount: discountAmt,
     };
-  }, [durationDays, discountPercent]);
+  }, [durationDays, discountPercent, dailyRate]);
 
   const [subscriptions, setSubscriptions] = useState<SubscriptionWithUser[]>(() => {
     return mockUsers.map(user => {
@@ -87,6 +86,10 @@ function ManageSubscriptionsPage() {
     }
     if (durationDays <= 0) {
       toast({ title: "Invalid Duration", description: "Please enter a positive number of days.", variant: "destructive" });
+      return;
+    }
+    if (dailyRate <= 0) {
+      toast({ title: "Invalid Price", description: "Price per day must be a positive number.", variant: "destructive" });
       return;
     }
 
@@ -140,7 +143,7 @@ function ManageSubscriptionsPage() {
                </div>
              </div>
            </CardHeader>
-           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
              <div className="space-y-2">
                 <Label htmlFor="duration">Subscription Days</Label>
                 <Input 
@@ -149,6 +152,16 @@ function ManageSubscriptionsPage() {
                     value={durationDays}
                     onChange={(e) => setDurationDays(parseInt(e.target.value, 10) || 0)}
                     placeholder="e.g., 30"
+                />
+             </div>
+              <div className="space-y-2">
+                <Label htmlFor="dailyRate">Price Per Day (ETB)</Label>
+                <Input 
+                    id="dailyRate" 
+                    type="number" 
+                    value={dailyRate}
+                    onChange={(e) => setDailyRate(parseInt(e.target.value, 10) || 0)}
+                    placeholder="e.g., 5"
                 />
              </div>
              <div className="space-y-2">
@@ -162,7 +175,7 @@ function ManageSubscriptionsPage() {
                 />
              </div>
              <div className="text-center pt-4 sm:pt-0 border-t sm:border-t-0 sm:border-l border-dashed w-full sm:w-auto sm:pl-4">
-                 <p className="text-sm text-muted-foreground">Final Price ({durationDays} days @ {DAILY_RATE} ETB/day)</p>
+                 <p className="text-sm text-muted-foreground">Final Price ({durationDays} days @ {dailyRate} ETB/day)</p>
                  <p className="text-4xl font-bold text-primary">{finalPrice.toLocaleString()} ETB</p>
                  {discountAmount > 0 && <p className="text-xs text-green-600">You saved {discountAmount.toLocaleString()} ETB!</p>}
               </div>
