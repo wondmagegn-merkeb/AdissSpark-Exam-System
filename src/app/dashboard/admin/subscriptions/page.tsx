@@ -1,27 +1,26 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { CheckSquare, Ban, RotateCcw, AlertCircle, Search, Calendar as CalendarIcon, CreditCard } from "lucide-react";
+import { CheckSquare, Ban, RotateCcw, AlertCircle, Search, Calendar as CalendarIcon, CreditCard, User, Tag, Percent, Save } from "lucide-react";
 import { withAdminAuth } from '@/components/auth/withAdminAuth';
-import type { User, Subscription } from "@/lib/types";
+import type { User as UserType, Subscription } from "@/lib/types"; // Renamed to avoid conflict
 import { format, addDays, differenceInCalendarDays } from 'date-fns';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import type { DateRange } from 'react-day-picker';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 
-type SubscriptionWithUser = Subscription & { user: User };
+type SubscriptionWithUser = Subscription & { user: UserType };
 
-const mockUsers: User[] = [
+const mockUsers: UserType[] = [
   { id: "usr2", name: "Fatuma Ali", email: "fatuma@example.com", image: "https://placehold.co/100x100.png?text=FA" },
   { id: "usr4", name: "Jane Smith", email: "jane.smith@example.com" },
   { id: "usr5", name: "Carlos Rodriguez", email: "carlos@example.com", image: "https://placehold.co/100x100.png?text=CR" },
@@ -30,9 +29,9 @@ const mockUsers: User[] = [
 ];
 
 const mockSubscriptions: Subscription[] = [
-  { id: "sub1", userId: "usr2", plan: "yearly", status: "active", startDate: new Date(2024, 0, 15), endDate: new Date(2025, 0, 15) },
-  { id: "sub2", userId: "usr5", plan: "monthly", status: "active", startDate: new Date(2024, 6, 5), endDate: new Date(2024, 7, 5) },
-  { id: "sub3", userId: "usr8", plan: "monthly", status: "canceled", startDate: new Date(2024, 5, 20), endDate: new Date(2024, 6, 20) },
+  { id: "sub1", userId: "usr2", plan: "Yearly", status: "active", startDate: new Date(2024, 0, 15), endDate: new Date(2025, 0, 15) },
+  { id: "sub2", userId: "usr5", plan: "Monthly", status: "active", startDate: new Date(2024, 6, 5), endDate: new Date(2024, 7, 5) },
+  { id: "sub3", userId: "usr8", plan: "Monthly", status: "canceled", startDate: new Date(2024, 5, 20), endDate: new Date(2024, 6, 20) },
 ];
 
 const getInitials = (name?: string | null) => {
@@ -44,13 +43,25 @@ const getInitials = (name?: string | null) => {
 const DAILY_RATE = 5; // 5 ETB per day
 
 function ManageSubscriptionsPage() {
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(),
-    to: addDays(new Date(), 30),
-  });
+  const { toast } = useToast();
+  const [durationDays, setDurationDays] = useState<number>(30);
+  const [discountPercent, setDiscountPercent] = useState<number>(0);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
-  const durationInDays = date?.from && date?.to ? differenceInCalendarDays(date.to, date.from) + 1 : 0;
-  const calculatedCost = durationInDays * DAILY_RATE;
+  const { originalPrice, finalPrice, discountAmount } = useMemo(() => {
+    const days = isNaN(durationDays) || durationDays < 0 ? 0 : durationDays;
+    const discount = isNaN(discountPercent) || discountPercent < 0 ? 0 : discountPercent > 100 ? 100 : discountPercent;
+    
+    const original = days * DAILY_RATE;
+    const discountAmt = (original * discount) / 100;
+    const final = original - discountAmt;
+
+    return {
+      originalPrice: original,
+      finalPrice: final,
+      discountAmount: discountAmt,
+    };
+  }, [durationDays, discountPercent]);
 
   const [subscriptions, setSubscriptions] = useState<SubscriptionWithUser[]>(() => {
     return mockUsers.map(user => {
@@ -59,7 +70,7 @@ function ManageSubscriptionsPage() {
         ...(sub || { 
             id: `sub-none-${user.id}`, 
             userId: user.id, 
-            plan: 'none', 
+            plan: 'None', 
             status: 'inactive', 
             startDate: new Date(), 
             endDate: new Date() 
@@ -69,15 +80,40 @@ function ManageSubscriptionsPage() {
     });
   });
 
-  const handleToggleSubscription = (subId: string, currentStatus: Subscription['status']) => {
+  const handleApplySubscription = () => {
+    if (!selectedUserId) {
+      toast({ title: "No User Selected", description: "Please select a user from the table first.", variant: "destructive" });
+      return;
+    }
+    if (durationDays <= 0) {
+      toast({ title: "Invalid Duration", description: "Please enter a positive number of days.", variant: "destructive" });
+      return;
+    }
+
     setSubscriptions(prevSubs => prevSubs.map(sub => {
-      if (sub.id === subId) {
-        const newStatus = currentStatus === 'active' ? 'canceled' : 'active';
-        return { ...sub, status: newStatus };
+      if (sub.userId === selectedUserId) {
+        const startDate = new Date();
+        const endDate = addDays(startDate, durationDays);
+        const planName = discountPercent > 15 ? 'Yearly Special' : `${durationDays}-Day Pass`;
+        
+        toast({
+          title: "Subscription Updated!",
+          description: `${sub.user.name}'s plan is now '${planName}', ending on ${format(endDate, 'PP')}.`,
+        });
+
+        return {
+          ...sub,
+          plan: planName,
+          status: 'active',
+          startDate,
+          endDate,
+        };
       }
       return sub;
     }));
+    setSelectedUserId(null); // Deselect user after applying
   };
+
 
   const getStatusVariant = (status: Subscription['status']) => {
     if (status === 'active') return 'default';
@@ -99,52 +135,41 @@ function ManageSubscriptionsPage() {
              <div className="flex items-center gap-4">
                <CreditCard className="h-8 w-8 text-primary" />
                <div>
-                  <CardTitle className="text-xl">Subscription Cost Calculator</CardTitle>
-                  <CardDescription>Quickly calculate subscription cost for a given date range.</CardDescription>
+                  <CardTitle className="text-xl">Create & Apply Subscription</CardTitle>
+                  <CardDescription>Create a custom plan and apply it to a selected user below.</CardDescription>
                </div>
              </div>
            </CardHeader>
-           <CardContent className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="date"
-                    variant={"outline"}
-                    className={cn(
-                      "w-[300px] justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date?.from ? (
-                      date.to ? (
-                        <>
-                          {format(date.from, "LLL dd, y")} -{" "}
-                          {format(date.to, "LLL dd, y")}
-                        </>
-                      ) : (
-                        format(date.from, "LLL dd, y")
-                      )
-                    ) : (
-                      <span>Pick a date range</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    initialFocus
-                    mode="range"
-                    defaultMonth={date?.from}
-                    selected={date}
-                    onSelect={setDate}
-                    numberOfMonths={2}
-                  />
-                </PopoverContent>
-              </Popover>
-              <div className="text-center pt-4 sm:pt-0 border-t sm:border-t-0 sm:border-l border-dashed w-full sm:w-auto sm:pl-8">
-                 <p className="text-sm text-muted-foreground">{durationInDays} days @ {DAILY_RATE} ETB/day</p>
-                 <p className="text-4xl font-bold text-primary">{calculatedCost.toLocaleString()} ETB</p>
+           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+             <div className="space-y-2">
+                <Label htmlFor="duration">Subscription Days</Label>
+                <Input 
+                    id="duration" 
+                    type="number" 
+                    value={durationDays}
+                    onChange={(e) => setDurationDays(parseInt(e.target.value, 10) || 0)}
+                    placeholder="e.g., 30"
+                />
+             </div>
+             <div className="space-y-2">
+                <Label htmlFor="discount">Discount (%)</Label>
+                <Input 
+                    id="discount" 
+                    type="number"
+                    value={discountPercent}
+                    onChange={(e) => setDiscountPercent(parseInt(e.target.value, 10) || 0)}
+                    placeholder="e.g., 20"
+                />
+             </div>
+             <div className="text-center pt-4 sm:pt-0 border-t sm:border-t-0 sm:border-l border-dashed w-full sm:w-auto sm:pl-4">
+                 <p className="text-sm text-muted-foreground">Final Price ({durationDays} days @ {DAILY_RATE} ETB/day)</p>
+                 <p className="text-4xl font-bold text-primary">{finalPrice.toLocaleString()} ETB</p>
+                 {discountAmount > 0 && <p className="text-xs text-green-600">You saved {discountAmount.toLocaleString()} ETB!</p>}
               </div>
+             <Button onClick={handleApplySubscription} disabled={!selectedUserId}>
+                <Save className="mr-2 h-4 w-4" />
+                Apply to Selected User
+             </Button>
            </CardContent>
       </Card>
 
@@ -152,7 +177,7 @@ function ManageSubscriptionsPage() {
         <CardHeader>
           <CardTitle className="text-2xl">Manage User Subscriptions</CardTitle>
           <CardDescription>
-            View and manage student and staff subscription plans.
+            {selectedUserId ? `Selected User: ${subscriptions.find(s => s.userId === selectedUserId)?.user.name}` : "Select a user from the table to apply a custom subscription."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -176,7 +201,14 @@ function ManageSubscriptionsPage() {
             </TableHeader>
             <TableBody>
               {subscriptions.map((sub) => (
-                <TableRow key={sub.id}>
+                <TableRow 
+                  key={sub.id} 
+                  onClick={() => setSelectedUserId(sub.userId)}
+                  className={cn(
+                    "cursor-pointer hover:bg-muted/50",
+                    selectedUserId === sub.userId && "bg-primary/10 hover:bg-primary/20"
+                  )}
+                >
                   <TableCell>
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-9 w-9">
@@ -197,15 +229,18 @@ function ManageSubscriptionsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {sub.plan !== 'none' ? format(sub.endDate, 'PP') : 'N/A'}
+                    {sub.plan !== 'None' ? format(sub.endDate, 'PP') : 'N/A'}
                   </TableCell>
                   <TableCell className="text-right">
-                    {sub.plan !== 'none' && (
+                    {sub.plan !== 'None' && (
                       <div className="flex items-center justify-end space-x-2">
                           <span className="text-sm text-muted-foreground">{sub.status === 'active' ? 'Active' : 'Inactive'}</span>
                           <Switch
                               checked={sub.status === 'active'}
-                              onCheckedChange={() => handleToggleSubscription(sub.id, sub.status)}
+                              onClick={(e) => e.stopPropagation()} // Prevent row click
+                              onCheckedChange={(checked) => {
+                                setSubscriptions(prevSubs => prevSubs.map(s => s.id === sub.id ? { ...s, status: checked ? 'active' : 'canceled' } : s));
+                              }}
                               aria-label={`Toggle subscription for ${sub.user.name}`}
                           />
                       </div>
@@ -229,3 +264,5 @@ function ManageSubscriptionsPage() {
 }
 
 export default withAdminAuth(ManageSubscriptionsPage);
+
+    
