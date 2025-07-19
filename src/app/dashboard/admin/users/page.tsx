@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Edit, Trash2, ShieldCheck, UserCog } from "lucide-react";
 import type { User } from "@/lib/types"; 
+import { withAdminAuth } from "@/components/auth/withAdminAuth";
 
 // Mock staff data (admins/instructors)
 const mockStaff: (User & { role: 'admin' | 'instructor', lastLogin?: Date })[] = [
@@ -26,7 +27,7 @@ const getInitials = (name?: string | null) => {
   return name[0].toUpperCase();
 };
 
-export default function ManageStaffPage() { // Renamed component
+function ManageStaffPage() { // Renamed component
   const getRoleIcon = (role: string) => {
     if (role === 'admin') return <ShieldCheck className="mr-2 h-4 w-4 text-primary" />;
     return <UserCog className="mr-2 h-4 w-4 text-muted-foreground" />; // Changed icon for instructor
@@ -76,8 +77,8 @@ export default function ManageStaffPage() { // Renamed component
                 </TableCell>
                 <TableCell>{staff.email}</TableCell>
                 <TableCell>
-                  <Badge variant={getRoleVariant(staff.role)} className="capitalize">
-                    {getRoleIcon(staff.role)}
+                  <Badge variant={getRoleVariant(staff.role!)} className="capitalize">
+                    {getRoleIcon(staff.role!)}
                     {staff.role}
                   </Badge>
                 </TableCell>
@@ -107,3 +108,5 @@ export default function ManageStaffPage() { // Renamed component
     </Card>
   );
 }
+
+export default withAdminAuth(ManageStaffPage);

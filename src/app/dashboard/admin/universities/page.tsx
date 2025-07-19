@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, Eye, EyeOff } from "lucide-react";
 import type { Institution, InstitutionType, InstitutionStatus } from '@/lib/types';
 import { INSTITUTIONS_STORAGE_KEY } from '@/lib/constants';
+import { withAdminAuth } from '@/components/auth/withAdminAuth';
 
 
 // Initial seed data if localStorage is empty
@@ -27,7 +28,7 @@ const initialSeedItems: Institution[] = [
 
 const ITEMS_PER_PAGE = 5;
 
-export default function ManageInstitutionsPage() {
+function ManageInstitutionsPage() {
   const [items, setItems] = useState<Institution[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof Institution | null; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
@@ -250,3 +251,5 @@ export default function ManageInstitutionsPage() {
     </Card>
   );
 }
+
+export default withAdminAuth(ManageInstitutionsPage);

@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Edit, Trash2, Cpu, Power, PowerOff } from "lucide-react";
 import type { AgentEntry } from "@/lib/types"; // Assuming Agent type will be defined
+import { withAdminAuth } from "@/components/auth/withAdminAuth";
 
 const mockAgents: AgentEntry[] = [
   { id: "agent1", name: "Study Plan Generator", description: "Generates personalized study schedules.", type: "study_planner", status: "active", lastUpdated: new Date(2024, 6, 15) },
@@ -15,7 +16,7 @@ const mockAgents: AgentEntry[] = [
   { id: "agent4", name: "Content Recommender", description: "Suggests relevant study materials.", type: "study_planner", status: "maintenance", lastUpdated: new Date(2024, 6, 22) },
 ];
 
-export default function ManageAgentsPage() {
+function ManageAgentsPage() {
   const getStatusVariant = (status: AgentEntry['status']) => {
     if (status === 'active') return 'default'; // Or a green variant if you have one
     if (status === 'inactive') return 'secondary';
@@ -93,3 +94,5 @@ export default function ManageAgentsPage() {
     </Card>
   );
 }
+
+export default withAdminAuth(ManageAgentsPage);

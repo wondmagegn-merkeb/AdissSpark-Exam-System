@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, Lock, BookOpen, Video, FileText as FileTextIcon } from "lucide-react";
 import type { Resource } from '@/lib/types';
 import { ADMIN_RESOURCES_STORAGE_KEY } from '@/lib/constants';
+import { withAdminAuth } from '@/components/auth/withAdminAuth';
 
 // Mock resource data to seed localStorage if empty
 const initialSeedResources: Resource[] = [
@@ -22,7 +23,7 @@ const initialSeedResources: Resource[] = [
 
 const ITEMS_PER_PAGE = 5;
 
-export default function ManageAdminResourcesPage() {
+function ManageAdminResourcesPage() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof Resource | null; direction: 'ascending' | 'descending' }>({ key: 'title', direction: 'ascending' });
@@ -255,3 +256,5 @@ export default function ManageAdminResourcesPage() {
     </Card>
   );
 }
+
+export default withAdminAuth(ManageAdminResourcesPage);

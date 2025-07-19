@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { PlusCircle, Edit, Trash2, ArrowUpDown, Search } from "lucide-react";
 import type { CourseOrSubjectEntry, StudentTypeFromRegistrationForm } from '@/lib/types';
 import { ADMIN_COURSES_SUBJECTS_STORAGE_KEY } from '@/lib/constants';
+import { withAdminAuth } from '@/components/auth/withAdminAuth';
 
 const initialSeedCoursesSubjects: CourseOrSubjectEntry[] = [
   { id: "cs1", name: "Calculus I", educationalLevel: "University", departmentOrGradeName: "Mathematics" },
@@ -23,7 +24,7 @@ const initialSeedCoursesSubjects: CourseOrSubjectEntry[] = [
 
 const ITEMS_PER_PAGE = 5;
 
-export default function ManageCoursesAndSubjectsPage() {
+function ManageCoursesAndSubjectsPage() {
   const [items, setItems] = useState<CourseOrSubjectEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof CourseOrSubjectEntry | 'departmentOrGradeName' | null; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
@@ -244,3 +245,5 @@ export default function ManageCoursesAndSubjectsPage() {
     </Card>
   );
 }
+
+export default withAdminAuth(ManageCoursesAndSubjectsPage);

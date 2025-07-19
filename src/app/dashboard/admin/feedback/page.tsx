@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Archive, Eye, CheckCircle, MessageCircle, CircleDot, Filter } from "lucide-react";
 import type { FeedbackEntry } from "@/lib/types"; 
 import { formatDistanceToNow } from 'date-fns';
+import { withAdminAuth } from '@/components/auth/withAdminAuth';
 
 const mockFeedback: FeedbackEntry[] = [
   { id: "fb1", userId: "usr1", userName: "Abebe K.", userEmail: "abebe@example.com", subject: "Exam timer bug", message: "The timer on Model Exam 2 didn't stop correctly.", submittedAt: new Date(2024, 6, 20, 10, 30), status: "new" },
@@ -21,7 +22,7 @@ const mockFeedback: FeedbackEntry[] = [
 
 type FeedbackStatus = FeedbackEntry['status'];
 
-export default function ManageFeedbackPage() {
+function ManageFeedbackPage() {
   const [filterStatus, setFilterStatus] = useState<FeedbackStatus | 'all'>('all');
   
   const filteredFeedback = mockFeedback.filter(fb => 
@@ -121,3 +122,5 @@ export default function ManageFeedbackPage() {
     </Card>
   );
 }
+
+export default withAdminAuth(ManageFeedbackPage);

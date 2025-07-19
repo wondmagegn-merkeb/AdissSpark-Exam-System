@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { PlusCircle, Edit, Trash2, ArrowUpDown, Search } from "lucide-react";
 import type { DepartmentOrGradeEntry, DepartmentOrGradeType } from '@/lib/types';
 import { DEPARTMENTS_GRADES_STORAGE_KEY } from '@/lib/constants';
+import { withAdminAuth } from '@/components/auth/withAdminAuth';
 
 const initialSeedItems: DepartmentOrGradeEntry[] = [
   { id: "dept1", name: "Computer Science", type: "University" },
@@ -25,7 +26,7 @@ const initialSeedItems: DepartmentOrGradeEntry[] = [
 
 const ITEMS_PER_PAGE = 5;
 
-export default function ManageDepartmentsAndGradesPage() {
+function ManageDepartmentsAndGradesPage() {
   const [items, setItems] = useState<DepartmentOrGradeEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof DepartmentOrGradeEntry | null; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
@@ -250,3 +251,5 @@ export default function ManageDepartmentsAndGradesPage() {
     </Card>
   );
 }
+
+export default withAdminAuth(ManageDepartmentsAndGradesPage);

@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Edit, Trash2, UserRound } from "lucide-react";
 import type { User, StudentTypeFromRegistrationFormKey } from "@/lib/types"; 
+import { withAdminAuth } from "@/components/auth/withAdminAuth";
 
 const mockStudents: (User & { role: 'student', lastLogin?: Date })[] = [
   { id: "usr2", name: "Fatuma Ali", email: "fatuma@example.com", image: "https://placehold.co/100x100.png?text=FA", role: "student", studentType: "high_school", lastLogin: new Date(2024, 6, 21) },
@@ -30,7 +31,7 @@ const studentTypeToString = (studentType?: StudentTypeFromRegistrationFormKey | 
   return studentType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 };
 
-export default function ManageStudentsPage() {
+function ManageStudentsPage() {
   return (
     <Card className="shadow-lg">
       <CardHeader>
@@ -108,3 +109,5 @@ export default function ManageStudentsPage() {
     </Card>
   );
 }
+
+export default withAdminAuth(ManageStudentsPage);

@@ -65,27 +65,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (email: string) => {
-    const storedUser = localStorage.getItem('examPrepUser');
-    let existingUserDetails: Partial<User> = {};
-    if (storedUser) {
-      try {
-        const parsedUser: User = JSON.parse(storedUser);
-        if (parsedUser.email === email) {
-          existingUserDetails = parsedUser;
-        }
-      } catch (e) { console.error("Error parsing stored user for login:", e)}
-    }
+    // Mock role assignment: one admin, everyone else is a student
+    const role = email.toLowerCase() === 'admin@example.com' ? 'admin' : 'student';
+
     const mockUser: User = {
         id: '1',
         email,
-        name: existingUserDetails.name || email.split('@')[0],
-        username: existingUserDetails.username,
-        gender: existingUserDetails.gender,
-        studentType: existingUserDetails.studentType,
-        institutionName: existingUserDetails.institutionName,
-        department: existingUserDetails.department,
-        gradeLevel: existingUserDetails.gradeLevel,
-        image: existingUserDetails.image,
+        name: role === 'admin' ? 'Admin User' : email.split('@')[0],
+        role: role,
+        // Other fields can be populated from a stored profile if needed
     };
     setUser(mockUser);
     localStorage.setItem('examPrepUser', JSON.stringify(mockUser));
@@ -102,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       name: data.name,
       username: data.username,
       gender: data.gender,
+      role: 'student', // All registered users are students
       studentType: userStudentTypeForStorage,
     };
 

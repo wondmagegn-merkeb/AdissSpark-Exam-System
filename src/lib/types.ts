@@ -5,6 +5,7 @@ export interface User {
   username?: string | null;
   email?: string | null;
   image?: string | null; 
+  role?: 'admin' | 'student';
   gender?: "male" | "female" | "other" | "prefer_not_to_say" | null;
   studentType?: StudentTypeFromRegistrationFormKey | null;
   institutionName?: string | null; 
@@ -150,4 +151,3 @@ export interface CourseOrSubjectEntry {
   educationalLevel: StudentTypeFromRegistrationForm; 
   departmentOrGradeName?: string; 
 }
-

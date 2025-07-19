@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -11,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, Lock, Layers, BookCopy, ListChecks, FileText as FileTextIconLucide, Clock } from "lucide-react";
 import type { Exam, StudentTypeFromRegistrationForm } from '@/lib/types';
 import { ADMIN_EXAMS_STORAGE_KEY } from '@/lib/constants';
+import { withAdminAuth } from '@/components/auth/withAdminAuth';
 
 const initialSeedExams: Exam[] = [
   {
@@ -50,7 +52,7 @@ const initialSeedExams: Exam[] = [
 
 const ITEMS_PER_PAGE = 5;
 
-export default function ManageAdminExamsPage() {
+function ManageAdminExamsPage() {
   const [exams, setExams] = useState<Exam[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof Exam | 'departmentOrGradeName' | 'questionCount' | null; direction: 'ascending' | 'descending' }>({ key: 'title', direction: 'ascending' });
@@ -305,3 +307,5 @@ export default function ManageAdminExamsPage() {
     </Card>
   );
 }
+
+export default withAdminAuth(ManageAdminExamsPage);

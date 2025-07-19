@@ -48,7 +48,8 @@ const adminNavItems: NavItem[] = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const { logout, isSubscribed, toggleSubscription } = useAuth();
+  const { user, logout, isSubscribed, toggleSubscription } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   return (
     <>
@@ -77,34 +78,35 @@ export function DashboardSidebar() {
           ))}
         </SidebarMenu>
         
-        <SidebarSeparator />
-        
-        <SidebarMenu>
-            <SidebarMenuItem>
-                 <div className="px-2 py-1 text-xs font-semibold text-sidebar-foreground/70 flex items-center">
-                    <ShieldCheck className="mr-2 h-4 w-4" />
-                    Admin Panel
-                </div>
-            </SidebarMenuItem>
-          {adminNavItems.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname.startsWith(item.href)} 
-                tooltip={item.title}
-              >
-                <Link href={item.href}>
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-        <SidebarSeparator />
+        {isAdmin && (
+          <>
+            <SidebarSeparator />
+            <SidebarMenu>
+                <SidebarMenuItem>
+                     <div className="px-2 py-1 text-xs font-semibold text-sidebar-foreground/70 flex items-center">
+                        <ShieldCheck className="mr-2 h-4 w-4" />
+                        Admin Panel
+                    </div>
+                </SidebarMenuItem>
+              {adminNavItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith(item.href)} 
+                    tooltip={item.title}
+                  >
+                    <Link href={item.href}>
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </>
+        )}
 
-
-        {!isSubscribed && (
+        {!isAdmin && !isSubscribed && (
           <Card className="m-2 mt-4 bg-primary/10 border-primary/30">
             <CardHeader className="p-4">
               <CardTitle className="text-base text-primary-foreground">Unlock All Features</CardTitle>
@@ -122,7 +124,7 @@ export function DashboardSidebar() {
             </CardContent>
           </Card>
         )}
-         {isSubscribed && (
+         {!isAdmin && isSubscribed && (
           <Card className="m-2 mt-4 bg-green-500/10 border-green-500/30">
             <CardHeader className="p-4">
               <CardTitle className="text-base text-green-700 dark:text-green-300">Premium Active</CardTitle>
@@ -195,4 +197,3 @@ const CardDescription = ({ className, ...props }: React.HTMLAttributes<HTMLParag
 const CardContent = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={`${className}`} {...props} />
 );
-

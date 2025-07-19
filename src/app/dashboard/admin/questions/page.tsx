@@ -12,6 +12,7 @@ import { PlusCircle, Edit, Trash2, ArrowUpDown, Search, HelpCircle } from "lucid
 import type { Question } from '@/lib/types';
 // import { ADMIN_GLOBAL_QUESTIONS_STORAGE_KEY } from '@/lib/constants'; // Removed import
 import { useToast } from '@/hooks/use-toast';
+import { withAdminAuth } from '@/components/auth/withAdminAuth';
 
 const initialSeedQuestions: Question[] = [
   { id: "gq1", text: "What is the capital of Ethiopia?", option1: "Nairobi", option2: "Addis Ababa", option3: "Cairo", option4: "Lagos", correctAnswer: "Addis Ababa", explanation: "Addis Ababa is the capital and largest city of Ethiopia." },
@@ -24,7 +25,7 @@ const initialSeedQuestions: Question[] = [
 
 const ITEMS_PER_PAGE = 10;
 
-export default function ManageGlobalQuestionsPage() {
+function ManageGlobalQuestionsPage() {
   const [questions, setQuestions] = useState<Question[]>(initialSeedQuestions); // Operates with in-memory data
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof Question | null; direction: 'ascending' | 'descending' }>({ key: 'text', direction: 'ascending' });
@@ -248,4 +249,4 @@ export default function ManageGlobalQuestionsPage() {
   );
 }
 
-    
+export default withAdminAuth(ManageGlobalQuestionsPage);
