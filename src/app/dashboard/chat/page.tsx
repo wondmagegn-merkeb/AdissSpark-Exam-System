@@ -343,6 +343,10 @@ export default function ChatPage() {
                               <span className="text-foreground">{selectedUser.department || selectedUser.gradeLevel || 'N/A'}</span>
                           </div>
                       </div>
+                      <Button variant="outline" className="mt-8" onClick={() => setIsProfileViewActive(false)}>
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Chat
+                      </Button>
                   </div>
                  ) : chatPermissionStatus === 'accepted' ? (
                     <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
@@ -434,6 +438,3 @@ export default function ChatPage() {
     </div>
   );
 }
-
-
-    
