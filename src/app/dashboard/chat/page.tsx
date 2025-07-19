@@ -85,7 +85,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Effect to handle textarea auto-resizing
@@ -154,11 +154,8 @@ export default function ChatPage() {
   
   // Effect to scroll to the bottom of the chat
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollElement = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
-      if (scrollElement) {
-        scrollElement.scrollTop = scrollElement.scrollHeight;
-      }
+    if (scrollViewportRef.current) {
+      scrollViewportRef.current.scrollTop = scrollViewportRef.current.scrollHeight;
     }
   }, [messages, selectedUser]);
 
@@ -391,8 +388,8 @@ export default function ChatPage() {
                       </Button>
                   </div>
                  ) : chatPermissionStatus === 'accepted' ? (
-                    <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
-                      <div className="space-y-6">
+                    <ScrollArea className="h-full" viewportRef={scrollViewportRef}>
+                      <div className="p-4 space-y-6">
                       {messages.map((msg) => (
                           <div
                               key={msg.id}
