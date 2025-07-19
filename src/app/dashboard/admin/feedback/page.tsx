@@ -1,13 +1,13 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Archive, Eye, CheckCircle, MessageCircle, CircleDot, Filter } from "lucide-react";
+import { Archive, Eye, CheckCircle, MessageCircle, CircleDot, Filter, ArrowUpDown } from "lucide-react";
 import type { FeedbackEntry } from "@/lib/types"; 
 import { formatDistanceToNow } from 'date-fns';
 import { withAdminAuth } from '@/components/auth/withAdminAuth';
@@ -21,13 +21,47 @@ const mockFeedback: FeedbackEntry[] = [
 ];
 
 type FeedbackStatus = FeedbackEntry['status'];
+type SortableFeedbackKeys = keyof FeedbackEntry;
 
 function ManageFeedbackPage() {
   const [filterStatus, setFilterStatus] = useState<FeedbackStatus | 'all'>('all');
+  const [sortConfig, setSortConfig] = useState<{ key: SortableFeedbackKeys | null; direction: 'ascending' | 'descending' }>({ key: 'submittedAt', direction: 'descending' });
   
-  const filteredFeedback = mockFeedback.filter(fb => 
+  const filteredFeedback = useMemo(() => mockFeedback.filter(fb => 
     filterStatus === 'all' || fb.status === filterStatus
-  );
+  ), [filterStatus]);
+
+  const sortedFeedback = useMemo(() => {
+    let sortableItems = [...filteredFeedback];
+    if (sortConfig.key) {
+      sortableItems.sort((a, b) => {
+        const valA = a[sortConfig.key!];
+        const valB = b[sortConfig.key!];
+
+        if (valA! < valB!) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (valA! > valB!) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [filteredFeedback, sortConfig]);
+
+  const requestSort = (key: SortableFeedbackKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  const renderSortIcon = (columnKey: SortableFeedbackKeys) => {
+    if (sortConfig.key !== columnKey) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30 group-hover:opacity-100" />;
+    return sortConfig.direction === 'ascending' ? <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-0" /> : <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-180" />;
+  };
 
   const getStatusVariant = (status: FeedbackStatus) => {
     if (status === 'new') return 'default'; // Primary (Yellow in your theme)
@@ -75,16 +109,26 @@ function ManageFeedbackPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Subject</TableHead>
-              <TableHead>Submitted</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead onClick={() => requestSort('id')} className="cursor-pointer group hover:bg-muted/50">
+                <div className="flex items-center">ID {renderSortIcon('id')}</div>
+              </TableHead>
+              <TableHead onClick={() => requestSort('userName')} className="cursor-pointer group hover:bg-muted/50">
+                 <div className="flex items-center">User {renderSortIcon('userName')}</div>
+              </TableHead>
+              <TableHead onClick={() => requestSort('subject')} className="cursor-pointer group hover:bg-muted/50">
+                 <div className="flex items-center">Subject {renderSortIcon('subject')}</div>
+              </TableHead>
+              <TableHead onClick={() => requestSort('submittedAt')} className="cursor-pointer group hover:bg-muted/50">
+                 <div className="flex items-center">Submitted {renderSortIcon('submittedAt')}</div>
+              </TableHead>
+              <TableHead onClick={() => requestSort('status')} className="cursor-pointer group hover:bg-muted/50">
+                 <div className="flex items-center">Status {renderSortIcon('status')}</div>
+              </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredFeedback.map((fb) => (
+            {sortedFeedback.map((fb) => (
               <TableRow key={fb.id}>
                 <TableCell>{fb.id}</TableCell>
                 <TableCell className="font-medium">
@@ -109,7 +153,7 @@ function ManageFeedbackPage() {
                 </TableCell>
               </TableRow>
             ))}
-            {filteredFeedback.length === 0 && (
+            {sortedFeedback.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   No feedback entries match the current filter.

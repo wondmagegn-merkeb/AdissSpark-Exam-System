@@ -1,12 +1,13 @@
 
 "use client";
 
+import { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Trash2, UserRound } from "lucide-react";
+import { PlusCircle, Edit, Trash2, UserRound, ArrowUpDown } from "lucide-react";
 import type { User, StudentTypeFromRegistrationFormKey } from "@/lib/types"; 
 import { withAdminAuth } from "@/components/auth/withAdminAuth";
 
@@ -16,6 +17,8 @@ const mockStudents: (User & { role: 'student', lastLogin?: Date })[] = [
   { id: "usr5", name: "Carlos Rodriguez", email: "carlos@example.com", image: "https://placehold.co/100x100.png?text=CR", role: "student", studentType: "university", department: "Computer Science", institutionName: "Addis Ababa University", lastLogin: new Date(2024, 6, 23) },
   { id: "usr6", name: "Aisha Ahmed", email: "aisha@example.com", role: "student", studentType: "college", department: "Marketing", institutionName: "Unity College", lastLogin: new Date(2024, 6, 24) },
 ];
+
+type SortableStudentKeys = keyof (User & { lastLogin?: Date });
 
 const getInitials = (name?: string | null) => {
   if (!name) return "U";
@@ -32,6 +35,43 @@ const studentTypeToString = (studentType?: StudentTypeFromRegistrationFormKey | 
 };
 
 function ManageStudentsPage() {
+  const [sortConfig, setSortConfig] = useState<{ key: SortableStudentKeys | null; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
+
+  const sortedStudents = useMemo(() => {
+    let sortableItems = [...mockStudents];
+    if (sortConfig.key) {
+      sortableItems.sort((a, b) => {
+        const valA = a[sortConfig.key as keyof typeof a];
+        const valB = b[sortConfig.key as keyof typeof b];
+
+        if (valA === undefined || valA === null) return 1;
+        if (valB === undefined || valB === null) return -1;
+        
+        if (valA < valB) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (valA > valB) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [sortConfig]);
+
+  const requestSort = (key: SortableStudentKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  const renderSortIcon = (columnKey: SortableStudentKeys) => {
+    if (sortConfig.key !== columnKey) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30 group-hover:opacity-100" />;
+    return sortConfig.direction === 'ascending' ? <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-0" /> : <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-180" />;
+  };
+
   return (
     <Card className="shadow-lg">
       <CardHeader>
@@ -49,17 +89,29 @@ function ManageStudentsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Student</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Student Type</TableHead>
-              <TableHead>Details (Dept/Grade)</TableHead>
-              <TableHead>Institution</TableHead>
-              <TableHead>Last Login</TableHead>
+              <TableHead onClick={() => requestSort('name')} className="cursor-pointer group hover:bg-muted/50">
+                <div className="flex items-center">Student {renderSortIcon('name')}</div>
+              </TableHead>
+              <TableHead onClick={() => requestSort('email')} className="cursor-pointer group hover:bg-muted/50">
+                <div className="flex items-center">Email {renderSortIcon('email')}</div>
+              </TableHead>
+              <TableHead onClick={() => requestSort('studentType')} className="cursor-pointer group hover:bg-muted/50">
+                <div className="flex items-center">Student Type {renderSortIcon('studentType')}</div>
+              </TableHead>
+              <TableHead onClick={() => requestSort('department')} className="cursor-pointer group hover:bg-muted/50">
+                <div className="flex items-center">Details (Dept/Grade) {renderSortIcon('department')}</div>
+              </TableHead>
+              <TableHead onClick={() => requestSort('institutionName')} className="cursor-pointer group hover:bg-muted/50">
+                <div className="flex items-center">Institution {renderSortIcon('institutionName')}</div>
+              </TableHead>
+              <TableHead onClick={() => requestSort('lastLogin')} className="cursor-pointer group hover:bg-muted/50">
+                <div className="flex items-center">Last Login {renderSortIcon('lastLogin')}</div>
+              </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockStudents.map((student) => (
+            {sortedStudents.map((student) => (
               <TableRow key={student.id}>
                 <TableCell>
                   <div className="flex items-center space-x-3">
@@ -96,7 +148,7 @@ function ManageStudentsPage() {
                 </TableCell>
               </TableRow>
             ))}
-            {mockStudents.length === 0 && (
+            {sortedStudents.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground">
                   No students found.

@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { CheckSquare, Ban, RotateCcw, AlertCircle, Search, Calendar as CalendarIcon, CreditCard, User, Tag, Percent, Save } from "lucide-react";
+import { CheckSquare, Ban, RotateCcw, AlertCircle, Search, Calendar as CalendarIcon, CreditCard, User, Tag, Percent, Save, ArrowUpDown } from "lucide-react";
 import { withAdminAuth } from '@/components/auth/withAdminAuth';
 import type { User as UserType, Subscription } from "@/lib/types"; // Renamed to avoid conflict
 import { format, addDays, differenceInCalendarDays } from 'date-fns';
@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 
 
 type SubscriptionWithUser = Subscription & { user: UserType };
+type SortableSubscriptionKeys = keyof SubscriptionWithUser | 'userName';
 
 const mockUsers: UserType[] = [
   { id: "usr2", name: "Fatuma Ali", email: "fatuma@example.com", image: "https://placehold.co/100x100.png?text=FA" },
@@ -46,6 +47,8 @@ function ManageSubscriptionsPage() {
   const [discountPercent, setDiscountPercent] = useState<number>(0);
   const [dailyRate, setDailyRate] = useState<number>(5);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState<{ key: SortableSubscriptionKeys | null; direction: 'ascending' | 'descending' }>({ key: 'userName', direction: 'ascending' });
 
   const { finalPrice, discountAmount } = useMemo(() => {
     const days = isNaN(durationDays) || durationDays < 0 ? 0 : durationDays;
@@ -78,6 +81,54 @@ function ManageSubscriptionsPage() {
       };
     });
   });
+  
+  const filteredSubscriptions = useMemo(() => {
+      return subscriptions.filter(sub => 
+        sub.user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sub.user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+  }, [subscriptions, searchTerm]);
+
+  const sortedSubscriptions = useMemo(() => {
+    let sortableItems = [...filteredSubscriptions];
+    if (sortConfig.key) {
+      sortableItems.sort((a, b) => {
+        let valA, valB;
+        if (sortConfig.key === 'userName') {
+            valA = a.user.name;
+            valB = b.user.name;
+        } else {
+            valA = a[sortConfig.key as keyof Subscription];
+            valB = b[sortConfig.key as keyof Subscription];
+        }
+
+        if (valA === undefined || valA === null) return 1;
+        if (valB === undefined || valB === null) return -1;
+        
+        if (valA < valB) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (valA > valB) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [filteredSubscriptions, sortConfig]);
+
+  const requestSort = (key: SortableSubscriptionKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const renderSortIcon = (columnKey: SortableSubscriptionKeys) => {
+    if (sortConfig.key !== columnKey) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30 group-hover:opacity-100" />;
+    return sortConfig.direction === 'ascending' ? <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-0" /> : <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-180" />;
+  };
 
   const handleApplySubscription = () => {
     if (!selectedUserId) {
@@ -200,20 +251,30 @@ function ManageSubscriptionsPage() {
               type="search"
               placeholder="Search by name or email..."
               className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Subscription Plan</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>End Date</TableHead>
+                <TableHead onClick={() => requestSort('userName')} className="cursor-pointer group hover:bg-muted/50">
+                  <div className="flex items-center">User {renderSortIcon('userName')}</div>
+                </TableHead>
+                <TableHead onClick={() => requestSort('plan')} className="cursor-pointer group hover:bg-muted/50">
+                   <div className="flex items-center">Subscription Plan {renderSortIcon('plan')}</div>
+                </TableHead>
+                <TableHead onClick={() => requestSort('status')} className="cursor-pointer group hover:bg-muted/50">
+                   <div className="flex items-center">Status {renderSortIcon('status')}</div>
+                </TableHead>
+                <TableHead onClick={() => requestSort('endDate')} className="cursor-pointer group hover:bg-muted/50">
+                   <div className="flex items-center">End Date {renderSortIcon('endDate')}</div>
+                </TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {subscriptions.map((sub) => (
+              {sortedSubscriptions.map((sub) => (
                 <TableRow 
                   key={sub.id} 
                   onClick={() => setSelectedUserId(sub.userId)}
@@ -261,7 +322,7 @@ function ManageSubscriptionsPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {subscriptions.length === 0 && (
+              {sortedSubscriptions.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                     No subscriptions found.
@@ -277,5 +338,3 @@ function ManageSubscriptionsPage() {
 }
 
 export default withAdminAuth(ManageSubscriptionsPage);
-
-    

@@ -1,12 +1,13 @@
 
 "use client";
 
+import { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Trash2, ShieldCheck, UserCog } from "lucide-react";
+import { PlusCircle, Edit, Trash2, ShieldCheck, UserCog, ArrowUpDown } from "lucide-react";
 import type { User } from "@/lib/types"; 
 import { withAdminAuth } from "@/components/auth/withAdminAuth";
 
@@ -18,6 +19,8 @@ const mockStaff: (User & { role: 'admin' | 'instructor', lastLogin?: Date })[] =
   { id: "usr8", name: "Prof. Bekele Girma (Instructor)", email: "bekele.instructor@example.com", image: "https://placehold.co/100x100.png?text=BG", role: "instructor", studentType: undefined, lastLogin: new Date(2024, 6, 1) },
 ];
 
+type SortableStaffKeys = keyof (User & { lastLogin?: Date });
+
 const getInitials = (name?: string | null) => {
   if (!name) return "U";
   const names = name.split(' ');
@@ -27,7 +30,44 @@ const getInitials = (name?: string | null) => {
   return name[0].toUpperCase();
 };
 
-function ManageStaffPage() { // Renamed component
+function ManageStaffPage() {
+  const [sortConfig, setSortConfig] = useState<{ key: SortableStaffKeys | null; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
+
+  const sortedStaff = useMemo(() => {
+    let sortableItems = [...mockStaff];
+    if (sortConfig.key) {
+      sortableItems.sort((a, b) => {
+        const valA = a[sortConfig.key as keyof typeof a];
+        const valB = b[sortConfig.key as keyof typeof b];
+
+        if (valA === undefined || valA === null) return 1;
+        if (valB === undefined || valB === null) return -1;
+        
+        if (valA < valB) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (valA > valB) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [sortConfig]);
+
+  const requestSort = (key: SortableStaffKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  const renderSortIcon = (columnKey: SortableStaffKeys) => {
+    if (sortConfig.key !== columnKey) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30 group-hover:opacity-100" />;
+    return sortConfig.direction === 'ascending' ? <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-0" /> : <ArrowUpDown className="ml-2 h-4 w-4 transform rotate-180" />;
+  };
+
   const getRoleIcon = (role: string) => {
     if (role === 'admin') return <ShieldCheck className="mr-2 h-4 w-4 text-primary" />;
     return <UserCog className="mr-2 h-4 w-4 text-muted-foreground" />; // Changed icon for instructor
@@ -56,15 +96,23 @@ function ManageStaffPage() { // Renamed component
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Staff Member</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Last Login</TableHead>
+              <TableHead onClick={() => requestSort('name')} className="cursor-pointer group hover:bg-muted/50">
+                <div className="flex items-center">Staff Member {renderSortIcon('name')}</div>
+              </TableHead>
+              <TableHead onClick={() => requestSort('email')} className="cursor-pointer group hover:bg-muted/50">
+                <div className="flex items-center">Email {renderSortIcon('email')}</div>
+              </TableHead>
+              <TableHead onClick={() => requestSort('role')} className="cursor-pointer group hover:bg-muted/50">
+                <div className="flex items-center">Role {renderSortIcon('role')}</div>
+              </TableHead>
+              <TableHead onClick={() => requestSort('lastLogin')} className="cursor-pointer group hover:bg-muted/50">
+                <div className="flex items-center">Last Login {renderSortIcon('lastLogin')}</div>
+              </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockStaff.map((staff) => (
+            {sortedStaff.map((staff) => (
               <TableRow key={staff.id}>
                 <TableCell>
                   <div className="flex items-center space-x-3">
@@ -95,7 +143,7 @@ function ManageStaffPage() { // Renamed component
                 </TableCell>
               </TableRow>
             ))}
-            {mockStaff.length === 0 && (
+            {sortedStaff.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground">
                   No staff members found.
