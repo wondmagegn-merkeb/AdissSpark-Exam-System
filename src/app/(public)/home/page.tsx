@@ -36,31 +36,33 @@ export default function HomePage() {
     <>
       {/* Hero Section */}
       <section className="py-16 md:py-24 bg-gradient-to-br from-background to-accent/20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-            Ace Your Exit Exams with <span className="text-primary">ADDISSPARK</span>
-          </h1>
-          <p className="mt-6 max-w-2xl mx-auto text-lg leading-8 text-muted-foreground">
-            Your all-in-one solution for comprehensive study materials, realistic practice exams, and AI-powered personalized study plans. Start your journey to success with ADDISSPARK today!
-          </p>
-          <div className="mt-10 flex items-center justify-center gap-x-6">
-            <Button size="lg" asChild>
-              <Link href="/register">Get Started for Free</Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="#features">Learn More</Link>
-            </Button>
-          </div>
-          <div className="mt-16">
+        <div className="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+          <div className="md:order-1">
             <Image
-              src="https://placehold.co/800x450.png"
+              src="https://placehold.co/800x600.png"
               alt="ADDISSPARK dashboard preview"
               width={800}
-              height={450}
-              className="rounded-lg shadow-xl mx-auto"
+              height={600}
+              className="rounded-lg shadow-xl"
               data-ai-hint="dashboard interface"
               priority
             />
+          </div>
+          <div className="text-center md:text-left md:order-2">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
+              Ace Your Exit Exams with <span className="text-primary">ADDISSPARK</span>
+            </h1>
+            <p className="mt-6 max-w-2xl mx-auto md:mx-0 text-lg leading-8 text-muted-foreground">
+              Your all-in-one solution for comprehensive study materials, realistic practice exams, and AI-powered personalized study plans. Start your journey to success with ADDISSPARK today!
+            </p>
+            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
+              <Button size="lg" asChild>
+                <Link href="/register">Get Started for Free</Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link href="#features">Learn More</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
