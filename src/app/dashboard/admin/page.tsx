@@ -1,9 +1,10 @@
 
 "use client";
 
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { withAdminAuth } from "@/components/auth/withAdminAuth";
-import { ArrowRight, UserCog, UserRound, Building, BookCopy, ListChecks, Edit as EditIconLucide, Library, Archive, Users, CreditCard, FileText, CheckSquare } from "lucide-react";
+import { ArrowRight, UserCog, UserRound, Building, BookCopy, ListChecks, Edit as EditIconLucide, Library, Archive, Users, CreditCard, FileText, CheckSquare, Calendar as CalendarIcon } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -14,6 +15,12 @@ import {
 } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { addDays, format, differenceInCalendarDays } from 'date-fns';
+import type { DateRange } from 'react-day-picker';
 
 const adminFeatures = [
   { title: 'Manage Staff', href: '/dashboard/admin/users', icon: UserCog, description: "Add, edit, or remove administrators and instructors." },
@@ -43,8 +50,17 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+const DAILY_RATE = 5; // 5 ETB per day
+
 function AdminDashboardPage() {
   const { user } = useAuth();
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: new Date(),
+    to: addDays(new Date(), 30),
+  });
+
+  const durationInDays = date?.from && date?.to ? differenceInCalendarDays(date.to, date.from) + 1 : 0;
+  const calculatedCost = durationInDays * DAILY_RATE;
 
   return (
     <div className="container mx-auto py-8 space-y-8">
@@ -192,16 +208,69 @@ function AdminDashboardPage() {
         </Card>
       </div>
 
-      <div className="text-left">
+       <div className="text-left">
         <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Management Sections
+          Management & Tools
         </h2>
         <p className="mt-2 text-md text-muted-foreground">
-          Access all administrative functions to manage your platform.
+          Access all administrative functions and utilities.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+         <Card className="shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col">
+           <CardHeader>
+             <div className="flex items-center gap-4">
+               <CreditCard className="h-8 w-8 text-primary" />
+               <div>
+                  <CardTitle className="text-xl">Subscription Calculator</CardTitle>
+                  <CardDescription>Calculate cost for a date range.</CardDescription>
+               </div>
+             </div>
+           </CardHeader>
+           <CardContent className="flex-grow flex flex-col justify-center items-center gap-4">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="date"
+                    variant={"outline"}
+                    className={cn(
+                      "w-[300px] justify-start text-left font-normal",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date?.from ? (
+                      date.to ? (
+                        <>
+                          {format(date.from, "LLL dd, y")} -{" "}
+                          {format(date.to, "LLL dd, y")}
+                        </>
+                      ) : (
+                        format(date.from, "LLL dd, y")
+                      )
+                    ) : (
+                      <span>Pick a date range</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    initialFocus
+                    mode="range"
+                    defaultMonth={date?.from}
+                    selected={date}
+                    onSelect={setDate}
+                    numberOfMonths={2}
+                  />
+                </PopoverContent>
+              </Popover>
+              <div className="text-center">
+                 <p className="text-sm text-muted-foreground">{durationInDays} days @ {DAILY_RATE} ETB/day</p>
+                 <p className="text-3xl font-bold text-primary">{calculatedCost.toLocaleString()} ETB</p>
+              </div>
+           </CardContent>
+         </Card>
         {adminFeatures.map((feature) => (
           <Card key={feature.title} className="shadow-lg hover:shadow-xl hover:border-primary/50 transition-all duration-300 flex flex-col">
             <CardHeader className="flex-row items-center gap-4 space-y-0">
