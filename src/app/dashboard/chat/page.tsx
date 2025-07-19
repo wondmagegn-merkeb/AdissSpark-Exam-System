@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { MessageSquare, Search, LayoutDashboard, Send, User as UserIcon, ArrowLeft } from 'lucide-react';
+import { MessageSquare, Search, LayoutDashboard, Send, User as UserIcon, ArrowLeft, Building, Mail, GraduationCap } from 'lucide-react';
 import type { User } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -27,11 +27,11 @@ interface ChatUser extends User {
 }
 
 const initialMockUsers: ChatUser[] = [
-  { id: 'user2', name: 'Alice Wonderland', email: 'alice@example.com', image: 'https://placehold.co/100x100.png?text=AW', isOnline: true, lastMessage: "Hey, are you free to chat?", lastMessageTimestamp: new Date(Date.now() - 5 * 60 * 1000), unreadCount: 2 },
-  { id: 'user3', name: 'Bob The Builder', email: 'bob@example.com', image: 'https://placehold.co/100x100.png?text=BB', isOnline: false, lastMessage: "Sure, I'll check it out. Thanks!", lastMessageTimestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), unreadCount: 0 },
-  { id: 'user4', name: 'Charlie Brown', email: 'charlie@example.com', image: 'https://placehold.co/100x100.png?text=CB', isOnline: true, lastMessage: "Haha, that's hilarious! 😂", lastMessageTimestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), unreadCount: 0 },
-  { id: 'user5', name: 'Diana Prince', email: 'diana@example.com', image: 'https://placehold.co/100x100.png?text=DP', isOnline: false, lastMessage: "Okay, sounds good. Let's sync up tomorrow.", lastMessageTimestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), unreadCount: 5 },
-  { id: 'user6', name: 'Edward Scissorhands', email: 'edward@example.com', image: 'https://placehold.co/100x100.png?text=ES', isOnline: true, lastMessage: "You sent an attachment.", lastMessageTimestamp: new Date(Date.now() - 30 * 60 * 1000), unreadCount: 0 },
+  { id: 'user2', name: 'Alice Wonderland', email: 'alice@example.com', image: 'https://placehold.co/100x100.png?text=AW', isOnline: true, lastMessage: "Hey, are you free to chat?", lastMessageTimestamp: new Date(Date.now() - 5 * 60 * 1000), unreadCount: 2, studentType: 'university', department: 'Computer Science', institutionName: 'Addis Ababa University' },
+  { id: 'user3', name: 'Bob The Builder', email: 'bob@example.com', image: 'https://placehold.co/100x100.png?text=BB', isOnline: false, lastMessage: "Sure, I'll check it out. Thanks!", lastMessageTimestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), unreadCount: 0, studentType: 'college', department: 'Construction', institutionName: 'Tegbare-Id Polytechnic' },
+  { id: 'user4', name: 'Charlie Brown', email: 'charlie@example.com', image: 'https://placehold.co/100x100.png?text=CB', isOnline: true, lastMessage: "Haha, that's hilarious! 😂", lastMessageTimestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), unreadCount: 0, studentType: 'high_school', gradeLevel: 'Grade 11', institutionName: 'Black Lion High School' },
+  { id: 'user5', name: 'Diana Prince', email: 'diana@example.com', image: 'https://placehold.co/100x100.png?text=DP', isOnline: false, lastMessage: "Okay, sounds good. Let's sync up tomorrow.", lastMessageTimestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), unreadCount: 5, studentType: 'university', department: 'Archaeology', institutionName: 'Axum University' },
+  { id: 'user6', name: 'Edward Scissorhands', email: 'edward@example.com', image: 'https://placehold.co/100x100.png?text=ES', isOnline: true, lastMessage: "You sent an attachment.", lastMessageTimestamp: new Date(Date.now() - 30 * 60 * 1000), unreadCount: 0, studentType: 'preparatory_school', gradeLevel: 'Grade 12', institutionName: 'Finishing Touch Academy' },
 ];
 
 interface ChatMessage {
@@ -52,6 +52,12 @@ const getInitials = (name?: string | null) => {
   return name[0].toUpperCase();
 };
 
+const formatStudentType = (studentType?: string | null) => {
+  if (!studentType) return 'N/A';
+  return studentType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+};
+
+
 export default function ChatPage() {
   const router = useRouter();
   const { user: currentUser } = useAuth();
@@ -59,6 +65,7 @@ export default function ChatPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<ChatUser | null>(null);
   const [users, setUsers] = useState<ChatUser[]>(initialMockUsers);
+  const [isProfileViewActive, setIsProfileViewActive] = useState(false);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -68,13 +75,11 @@ export default function ChatPage() {
   // Effect to simulate receiving a new message
   useEffect(() => {
     const timer = setTimeout(() => {
-      // Pick a random user to send a message (that isn't the current selected user)
       const potentialSenders = users.filter(u => u.id !== selectedUser?.id);
       if (potentialSenders.length > 0) {
         const randomSender = potentialSenders[Math.floor(Math.random() * potentialSenders.length)];
         const newMessage = "Just checking in, let me know when you're free!";
         
-        // Update the user's state in the main list
         setUsers(currentUsers => 
           currentUsers.map(u => 
             u.id === randomSender.id ? { 
@@ -86,17 +91,16 @@ export default function ChatPage() {
           )
         );
 
-        // Show a notification toast
         toast({
           title: `New Message from ${randomSender.name}`,
           description: newMessage,
         });
       }
-    }, 5000); // 5-second delay to simulate a real-time event
+    }, 15000); // Increased delay to 15 seconds
 
     return () => clearTimeout(timer);
      // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedUser]); // Rerun if the selected user changes
+  }, [selectedUser]);
 
 
   const filteredUsers = useMemo(() => {
@@ -114,7 +118,7 @@ export default function ChatPage() {
 
   const handleSelectUser = (user: ChatUser) => {
     setSelectedUser(user);
-    // When a user is selected, mark their messages as read
+    setIsProfileViewActive(false); // Always show chat first when selecting a new user
     setUsers(currentUsers => currentUsers.map(u => u.id === user.id ? { ...u, unreadCount: 0 } : u));
     setMessages([]); 
   };
@@ -135,13 +139,11 @@ export default function ChatPage() {
     setMessages(prevMessages => [...prevMessages, newMessage]);
     setInput('');
 
-    // Update the last message in the user list
     setUsers(currentUsers => currentUsers.map(u => u.id === selectedUser.id ? { ...u, lastMessage: `You: ${input.trim()}`, lastMessageTimestamp: new Date() } : u));
 
 
-    // Simulate a reply from the other user for demonstration
     setTimeout(() => {
-      if(selectedUser) { // Check if user is still selected
+      if(selectedUser) {
         const replyMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
           text: `Thanks for your message! (This is a simulated reply from ${selectedUser.name})`,
@@ -151,7 +153,6 @@ export default function ChatPage() {
           isCurrentUser: false,
         };
         setMessages(prevMessages => [...prevMessages, replyMessage]);
-         // Update the last message in the user list with the reply
         setUsers(currentUsers => currentUsers.map(u => u.id === selectedUser.id ? { ...u, lastMessage: replyMessage.text, lastMessageTimestamp: new Date() } : u));
       }
       setIsLoading(false);
@@ -249,82 +250,129 @@ export default function ChatPage() {
       )}>
         {selectedUser ? (
           <>
-            <CardHeader className="border-b flex flex-row items-center">
-                <Button variant="ghost" size="icon" className="mr-2 md:hidden" onClick={() => setSelectedUser(null)}>
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <Avatar className="h-9 w-9 mr-3">
-                <AvatarImage src={selectedUser.image || `https://avatar.vercel.sh/${selectedUser.email}.png`} alt={selectedUser.name || "Chat partner"} data-ai-hint="user avatar"/>
-                <AvatarFallback>{getInitials(selectedUser.name)}</AvatarFallback>
-                </Avatar>
-                <CardTitle className="text-xl text-foreground">
-                {selectedUser.name || 'Chat'}
-                </CardTitle>
+            <CardHeader className="border-b">
+              <button
+                className="flex flex-row items-center w-full text-left rounded-md p-2 -m-2 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                onClick={() => setIsProfileViewActive(prev => !prev)}
+                aria-label={`View ${selectedUser.name}'s profile`}
+              >
+                  <div className="flex items-center flex-grow">
+                      <Button variant="ghost" size="icon" className="mr-2 md:hidden" onClick={(e) => { e.stopPropagation(); setSelectedUser(null); }}>
+                          <ArrowLeft className="h-5 w-5" />
+                      </Button>
+                      <Avatar className="h-9 w-9 mr-3">
+                          <AvatarImage src={selectedUser.image || `https://avatar.vercel.sh/${selectedUser.email}.png`} alt={selectedUser.name || "Chat partner"} data-ai-hint="user avatar"/>
+                          <AvatarFallback>{getInitials(selectedUser.name)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <CardTitle className="text-xl text-foreground">
+                            {selectedUser.name || 'Chat'}
+                        </CardTitle>
+                        <span className="text-xs text-muted-foreground flex items-center">
+                           {isProfileViewActive ? 'Click to return to chat' : 'Click to view profile'}
+                        </span>
+                      </div>
+                  </div>
+              </button>
             </CardHeader>
             <CardContent className="flex-grow p-0 overflow-hidden">
-                 <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
-                    <div className="space-y-6">
-                    {messages.map((msg) => (
-                        <div
-                            key={msg.id}
-                            className={`flex items-end gap-2 ${
-                            msg.isCurrentUser ? 'justify-end' : 'justify-start'
-                            }`}
-                        >
-                            {!msg.isCurrentUser && (
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src={selectedUser.image || `https://avatar.vercel.sh/${selectedUser.email}.png`} alt={msg.senderName} data-ai-hint="user avatar"/>
-                                <AvatarFallback>{getInitials(msg.senderName)}</AvatarFallback>
-                            </Avatar>
-                            )}
-                            <div
-                            className={`max-w-[70%] p-3 rounded-xl shadow ${
-                                msg.isCurrentUser
-                                ? 'bg-primary text-primary-foreground rounded-br-none'
-                                : 'bg-muted text-muted-foreground rounded-bl-none'
-                            }`}
-                            >
-                            {!msg.isCurrentUser && (
-                                <p className="text-xs font-medium mb-1 text-foreground/80">{msg.senderName}</p>
-                            )}
-                            <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
-                            <p className={`text-xs mt-1 ${msg.isCurrentUser ? 'text-primary-foreground/70 text-right' : 'text-muted-foreground/70 text-left'}`}>
-                                {format(new Date(msg.timestamp), 'p')}
-                            </p>
-                            </div>
-                            {msg.isCurrentUser && currentUser && (
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src={currentUser.image || `https://avatar.vercel.sh/${currentUser.email}.png`} alt={currentUser.name || "User"} data-ai-hint="user avatar"/>
-                                <AvatarFallback>{getInitials(currentUser.name)}</AvatarFallback>
-                            </Avatar>
-                            )}
-                        </div>
-                        ))}
-                    </div>
-                 </ScrollArea>
+                 {isProfileViewActive ? (
+                  <div className="p-6 flex flex-col items-center justify-center h-full text-center">
+                      <Avatar className="h-24 w-24 mb-4 ring-2 ring-offset-2 ring-offset-background ring-primary">
+                          <AvatarImage src={selectedUser.image || `https://avatar.vercel.sh/${selectedUser.email}.png`} alt={selectedUser.name || "Chat partner"} data-ai-hint="user avatar"/>
+                          <AvatarFallback className="text-3xl">{getInitials(selectedUser.name)}</AvatarFallback>
+                      </Avatar>
+                      <h2 className="text-2xl font-bold text-foreground">{selectedUser.name}</h2>
+                      <div className="flex items-center gap-2 mt-1">
+                          <span className={cn("h-2.5 w-2.5 rounded-full", selectedUser.isOnline ? "bg-green-500" : "bg-muted-foreground")} />
+                          <p className="text-sm text-muted-foreground">{selectedUser.isOnline ? 'Online' : 'Offline'}</p>
+                      </div>
+                      <div className="mt-6 text-left space-y-3 w-full max-w-sm">
+                          <div className="flex items-center text-sm">
+                              <Mail className="h-4 w-4 mr-3 text-muted-foreground" />
+                              <span className="text-foreground">{selectedUser.email}</span>
+                          </div>
+                          <div className="flex items-center text-sm">
+                              <UserIcon className="h-4 w-4 mr-3 text-muted-foreground" />
+                              <span className="text-foreground">{formatStudentType(selectedUser.studentType)}</span>
+                          </div>
+                          <div className="flex items-center text-sm">
+                              <Building className="h-4 w-4 mr-3 text-muted-foreground" />
+                              <span className="text-foreground">{selectedUser.institutionName || 'N/A'}</span>
+                          </div>
+                          <div className="flex items-center text-sm">
+                              <GraduationCap className="h-4 w-4 mr-3 text-muted-foreground" />
+                              <span className="text-foreground">{selectedUser.department || selectedUser.gradeLevel || 'N/A'}</span>
+                          </div>
+                      </div>
+                  </div>
+                 ) : (
+                    <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
+                      <div className="space-y-6">
+                      {messages.map((msg) => (
+                          <div
+                              key={msg.id}
+                              className={`flex items-end gap-2 ${
+                              msg.isCurrentUser ? 'justify-end' : 'justify-start'
+                              }`}
+                          >
+                              {!msg.isCurrentUser && (
+                              <Avatar className="h-8 w-8">
+                                  <AvatarImage src={selectedUser.image || `https://avatar.vercel.sh/${selectedUser.email}.png`} alt={msg.senderName} data-ai-hint="user avatar"/>
+                                  <AvatarFallback>{getInitials(msg.senderName)}</AvatarFallback>
+                              </Avatar>
+                              )}
+                              <div
+                              className={`max-w-[70%] p-3 rounded-xl shadow ${
+                                  msg.isCurrentUser
+                                  ? 'bg-primary text-primary-foreground rounded-br-none'
+                                  : 'bg-muted text-muted-foreground rounded-bl-none'
+                              }`}
+                              >
+                              {!msg.isCurrentUser && (
+                                  <p className="text-xs font-medium mb-1 text-foreground/80">{msg.senderName}</p>
+                              )}
+                              <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                              <p className={`text-xs mt-1 ${msg.isCurrentUser ? 'text-primary-foreground/70 text-right' : 'text-muted-foreground/70 text-left'}`}>
+                                  {format(new Date(msg.timestamp), 'p')}
+                              </p>
+                              </div>
+                              {msg.isCurrentUser && currentUser && (
+                              <Avatar className="h-8 w-8">
+                                  <AvatarImage src={currentUser.image || `https://avatar.vercel.sh/${currentUser.email}.png`} alt={currentUser.name || "User"} data-ai-hint="user avatar"/>
+                                  <AvatarFallback>{getInitials(currentUser.name)}</AvatarFallback>
+                              </Avatar>
+                              )}
+                          </div>
+                          ))}
+                      </div>
+                   </ScrollArea>
+                 )}
             </CardContent>
-            <form onSubmit={handleSendMessage} className="p-4 border-t bg-background">
-                <div className="flex items-center gap-2">
-                    <Textarea
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder={`Message ${selectedUser.name || ''}...`}
-                    className="flex-grow resize-none"
-                    rows={1}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage(e as any);
-                        }
-                    }}
-                    disabled={isLoading}
-                    />
-                    <Button type="submit" disabled={!input.trim() || isLoading}>
-                        {isLoading ? <div className="h-4 w-4 border-2 border-background border-t-transparent rounded-full animate-spin mr-2"></div> : <Send className="mr-2 h-4 w-4" />}
-                        Send
-                    </Button>
-                </div>
-            </form>
+            {!isProfileViewActive && (
+                <form onSubmit={handleSendMessage} className="p-4 border-t bg-background">
+                    <div className="flex items-center gap-2">
+                        <Textarea
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder={`Message ${selectedUser.name || ''}...`}
+                        className="flex-grow resize-none"
+                        rows={1}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendMessage(e as any);
+                            }
+                        }}
+                        disabled={isLoading}
+                        />
+                        <Button type="submit" disabled={!input.trim() || isLoading}>
+                            {isLoading ? <div className="h-4 w-4 border-2 border-background border-t-transparent rounded-full animate-spin mr-2"></div> : <Send className="mr-2 h-4 w-4" />}
+                            Send
+                        </Button>
+                    </div>
+                </form>
+            )}
           </>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8">
