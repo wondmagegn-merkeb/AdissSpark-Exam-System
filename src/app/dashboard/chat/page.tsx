@@ -120,7 +120,7 @@ export default function ChatPage() {
     <div className="flex h-screen p-4 gap-4">
       {/* Left Panel: User List */}
       <Card className={cn(
-        "w-full max-w-sm flex-shrink-0 flex-col shadow-lg",
+        "w-full md:max-w-sm flex-shrink-0 flex-col shadow-lg",
         selectedUser ? "hidden md:flex" : "flex"
       )}>
         <CardHeader className="border-b flex flex-row items-center justify-between">
