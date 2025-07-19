@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Archive, Eye, CheckCircle, MessageCircle, CircleDot, Filter, ArrowUpDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Archive, Eye, CheckCircle, MessageCircle, CircleDot, Filter, ArrowUpDown, Search } from "lucide-react";
 import type { FeedbackEntry } from "@/lib/types"; 
 import { formatDistanceToNow } from 'date-fns';
 import { withAdminAuth } from '@/components/auth/withAdminAuth';
@@ -29,13 +30,22 @@ type SortableFeedbackKeys = keyof FeedbackEntry;
 const ITEMS_PER_PAGE = 5;
 
 function ManageFeedbackPage() {
+  const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<FeedbackStatus | 'all'>('all');
   const [sortConfig, setSortConfig] = useState<{ key: SortableFeedbackKeys | null; direction: 'ascending' | 'descending' }>({ key: 'submittedAt', direction: 'descending' });
   const [currentPage, setCurrentPage] = useState(1);
   
-  const filteredFeedback = useMemo(() => mockFeedback.filter(fb => 
-    filterStatus === 'all' || fb.status === filterStatus
-  ), [filterStatus]);
+  const filteredFeedback = useMemo(() => {
+    return mockFeedback.filter(fb => {
+      const statusMatch = filterStatus === 'all' || fb.status === filterStatus;
+      const searchMatch = searchTerm === '' ||
+        fb.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        fb.userEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        fb.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        fb.message.toLowerCase().includes(searchTerm.toLowerCase());
+      return statusMatch && searchMatch;
+    });
+  }, [filterStatus, searchTerm]);
 
   const sortedFeedback = useMemo(() => {
     let sortableItems = [...filteredFeedback];
@@ -106,20 +116,32 @@ function ManageFeedbackPage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="mb-6 flex items-center gap-4">
-            <Filter className="h-5 w-5 text-muted-foreground" />
-            <Select value={filterStatus} onValueChange={(value) => { setFilterStatus(value as FeedbackStatus | 'all'); setCurrentPage(1); }}>
-                <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="new">New</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="resolved">Resolved</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
-                </SelectContent>
-            </Select>
+        <div className="mb-6 flex flex-col sm:flex-row items-center gap-4">
+            <div className="relative w-full sm:w-auto sm:max-w-xs">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search feedback..."
+                className="pl-8 w-full"
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Filter className="h-5 w-5 text-muted-foreground" />
+              <Select value={filterStatus} onValueChange={(value) => { setFilterStatus(value as FeedbackStatus | 'all'); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-full sm:w-[200px]">
+                      <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="resolved">Resolved</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+              </Select>
+            </div>
         </div>
         <Table>
           <TableHeader>

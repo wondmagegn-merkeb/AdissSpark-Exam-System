@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Trash2, ShieldCheck, UserCog, ArrowUpDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { PlusCircle, Edit, Trash2, ShieldCheck, UserCog, ArrowUpDown, Search } from "lucide-react";
 import type { User } from "@/lib/types"; 
 import { withAdminAuth } from "@/components/auth/withAdminAuth";
 
@@ -38,11 +39,19 @@ const getInitials = (name?: string | null) => {
 };
 
 function ManageStaffPage() {
+  const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: SortableStaffKeys | null; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
   const [currentPage, setCurrentPage] = useState(1);
+  
+  const filteredStaff = useMemo(() => {
+    return mockStaff.filter(staff =>
+      (staff.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (staff.email?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm]);
 
   const sortedStaff = useMemo(() => {
-    let sortableItems = [...mockStaff];
+    let sortableItems = [...filteredStaff];
     if (sortConfig.key) {
       sortableItems.sort((a, b) => {
         const valA = a[sortConfig.key as keyof typeof a];
@@ -61,7 +70,7 @@ function ManageStaffPage() {
       });
     }
     return sortableItems;
-  }, [sortConfig]);
+  }, [filteredStaff, sortConfig]);
 
   const paginatedStaff = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -104,7 +113,17 @@ function ManageStaffPage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+          <div className="relative w-full sm:w-auto sm:max-w-xs">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search staff..."
+              className="pl-8 w-full"
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            />
+          </div>
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" /> Add New Staff Member
           </Button>
@@ -204,5 +223,3 @@ function ManageStaffPage() {
 }
 
 export default withAdminAuth(ManageStaffPage);
-
-    

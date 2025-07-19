@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Trash2, UserRound, ArrowUpDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { PlusCircle, Edit, Trash2, UserRound, ArrowUpDown, Search } from "lucide-react";
 import type { User, StudentTypeFromRegistrationFormKey } from "@/lib/types"; 
 import { withAdminAuth } from "@/components/auth/withAdminAuth";
 
@@ -43,11 +44,22 @@ const studentTypeToString = (studentType?: StudentTypeFromRegistrationFormKey | 
 };
 
 function ManageStudentsPage() {
+  const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: SortableStudentKeys | null; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
   const [currentPage, setCurrentPage] = useState(1);
+  
+  const filteredStudents = useMemo(() => {
+    return mockStudents.filter(student =>
+      (student.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (student.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (student.institutionName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (student.department?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (student.gradeLevel?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm]);
 
   const sortedStudents = useMemo(() => {
-    let sortableItems = [...mockStudents];
+    let sortableItems = [...filteredStudents];
     if (sortConfig.key) {
       sortableItems.sort((a, b) => {
         const valA = a[sortConfig.key as keyof typeof a];
@@ -66,7 +78,7 @@ function ManageStudentsPage() {
       });
     }
     return sortableItems;
-  }, [sortConfig]);
+  }, [filteredStudents, sortConfig]);
   
   const paginatedStudents = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -98,7 +110,17 @@ function ManageStudentsPage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+          <div className="relative w-full sm:w-auto sm:max-w-xs">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search students..."
+              className="pl-8 w-full"
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            />
+          </div>
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" /> Add New Student
           </Button>
@@ -162,7 +184,7 @@ function ManageStudentsPage() {
             {paginatedStudents.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  No students found.
+                  No students found matching your criteria.
                 </TableCell>
               </TableRow>
             )}
@@ -204,5 +226,3 @@ function ManageStudentsPage() {
 }
 
 export default withAdminAuth(ManageStudentsPage);
-
-    
