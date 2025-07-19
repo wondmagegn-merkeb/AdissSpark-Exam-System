@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -268,82 +268,140 @@ function ManageSubscriptionsPage() {
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
             />
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead onClick={() => requestSort('userName')} className="cursor-pointer group hover:bg-muted/50">
-                  <div className="flex items-center">User {renderSortIcon('userName')}</div>
-                </TableHead>
-                <TableHead onClick={() => requestSort('plan')} className="cursor-pointer group hover:bg-muted/50">
-                   <div className="flex items-center">Subscription Plan {renderSortIcon('plan')}</div>
-                </TableHead>
-                <TableHead onClick={() => requestSort('status')} className="cursor-pointer group hover:bg-muted/50">
-                   <div className="flex items-center">Status {renderSortIcon('status')}</div>
-                </TableHead>
-                <TableHead onClick={() => requestSort('endDate')} className="cursor-pointer group hover:bg-muted/50">
-                   <div className="flex items-center">End Date {renderSortIcon('endDate')}</div>
-                </TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedSubscriptions.map((sub) => (
-                <TableRow 
-                  key={sub.id} 
-                  onClick={() => setSelectedUserId(sub.userId)}
-                  className={cn(
-                    "cursor-pointer hover:bg-muted/50",
-                    selectedUserId === sub.userId && "bg-primary/10 hover:bg-primary/20"
-                  )}
-                >
-                  <TableCell>
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src={sub.user.image || `https://avatar.vercel.sh/${sub.user.email}.png`} alt={sub.user.name || "User"} data-ai-hint="user avatar"/>
-                        <AvatarFallback>{getInitials(sub.user.name)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{sub.user.name || 'N/A'}</div>
-                        <div className="text-xs text-muted-foreground">{sub.user.email}</div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="capitalize">{sub.plan === 'none' ? 'No Plan' : sub.plan}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusVariant(sub.status)} className="capitalize">
-                      {getStatusIcon(sub.status)}
-                      {sub.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {sub.plan !== 'None' ? format(sub.endDate, 'PP') : 'N/A'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {sub.plan !== 'None' && (
-                      <div className="flex items-center justify-end space-x-2">
-                          <span className="text-sm text-muted-foreground">{sub.status === 'active' ? 'Active' : 'Inactive'}</span>
-                          <Switch
-                              checked={sub.status === 'active'}
-                              onClick={(e) => e.stopPropagation()} // Prevent row click
-                              onCheckedChange={(checked) => {
-                                setSubscriptions(prevSubs => prevSubs.map(s => s.id === sub.id ? { ...s, status: checked ? 'active' : 'canceled' } : s));
-                              }}
-                              aria-label={`Toggle subscription for ${sub.user.name}`}
-                          />
-                      </div>
-                    )}
-                  </TableCell>
+          {/* Table for larger screens */}
+          <div className="hidden md:block">
+            <Table>
+                <TableHeader>
+                <TableRow>
+                    <TableHead onClick={() => requestSort('userName')} className="cursor-pointer group hover:bg-muted/50">
+                    <div className="flex items-center">User {renderSortIcon('userName')}</div>
+                    </TableHead>
+                    <TableHead onClick={() => requestSort('plan')} className="cursor-pointer group hover:bg-muted/50">
+                    <div className="flex items-center">Subscription Plan {renderSortIcon('plan')}</div>
+                    </TableHead>
+                    <TableHead onClick={() => requestSort('status')} className="cursor-pointer group hover:bg-muted/50">
+                    <div className="flex items-center">Status {renderSortIcon('status')}</div>
+                    </TableHead>
+                    <TableHead onClick={() => requestSort('endDate')} className="cursor-pointer group hover:bg-muted/50">
+                    <div className="flex items-center">End Date {renderSortIcon('endDate')}</div>
+                    </TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
+                </TableHeader>
+                <TableBody>
+                {paginatedSubscriptions.map((sub) => (
+                    <TableRow 
+                    key={sub.id} 
+                    onClick={() => setSelectedUserId(sub.userId)}
+                    className={cn(
+                        "cursor-pointer hover:bg-muted/50",
+                        selectedUserId === sub.userId && "bg-primary/10 hover:bg-primary/20"
+                    )}
+                    >
+                    <TableCell>
+                        <div className="flex items-center space-x-3">
+                        <Avatar className="h-9 w-9">
+                            <AvatarImage src={sub.user.image || `https://avatar.vercel.sh/${sub.user.email}.png`} alt={sub.user.name || "User"} data-ai-hint="user avatar"/>
+                            <AvatarFallback>{getInitials(sub.user.name)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <div className="font-medium">{sub.user.name || 'N/A'}</div>
+                            <div className="text-xs text-muted-foreground">{sub.user.email}</div>
+                        </div>
+                        </div>
+                    </TableCell>
+                    <TableCell className="capitalize">{sub.plan === 'none' ? 'No Plan' : sub.plan}</TableCell>
+                    <TableCell>
+                        <Badge variant={getStatusVariant(sub.status)} className="capitalize">
+                        {getStatusIcon(sub.status)}
+                        {sub.status}
+                        </Badge>
+                    </TableCell>
+                    <TableCell>
+                        {sub.plan !== 'None' ? format(sub.endDate, 'PP') : 'N/A'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                        {sub.plan !== 'None' && (
+                        <div className="flex items-center justify-end space-x-2">
+                            <span className="text-sm text-muted-foreground">{sub.status === 'active' ? 'Active' : 'Inactive'}</span>
+                            <Switch
+                                checked={sub.status === 'active'}
+                                onClick={(e) => e.stopPropagation()} // Prevent row click
+                                onCheckedChange={(checked) => {
+                                    setSubscriptions(prevSubs => prevSubs.map(s => s.id === sub.id ? { ...s, status: checked ? 'active' : 'canceled' } : s));
+                                }}
+                                aria-label={`Toggle subscription for ${sub.user.name}`}
+                            />
+                        </div>
+                        )}
+                    </TableCell>
+                    </TableRow>
+                ))}
+                {paginatedSubscriptions.length === 0 && (
+                    <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                        No subscriptions found.
+                    </TableCell>
+                    </TableRow>
+                )}
+                </TableBody>
+            </Table>
+          </div>
+
+          {/* Cards for smaller screens */}
+          <div className="grid grid-cols-1 gap-4 md:hidden">
+              {paginatedSubscriptions.map((sub) => (
+                  <Card 
+                      key={sub.id} 
+                      onClick={() => setSelectedUserId(sub.userId)}
+                      className={cn(
+                          "p-4",
+                          selectedUserId === sub.userId && "border-primary ring-2 ring-primary"
+                      )}
+                  >
+                      <div className="flex items-center space-x-3 mb-4">
+                           <Avatar className="h-10 w-10">
+                              <AvatarImage src={sub.user.image || `https://avatar.vercel.sh/${sub.user.email}.png`} alt={sub.user.name || "User"} data-ai-hint="user avatar"/>
+                              <AvatarFallback>{getInitials(sub.user.name)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                              <p className="font-medium">{sub.user.name || 'N/A'}</p>
+                              <p className="text-sm text-muted-foreground">{sub.user.email}</p>
+                          </div>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                          <p><strong>Plan:</strong> <span className="capitalize">{sub.plan === 'none' ? 'No Plan' : sub.plan}</span></p>
+                          <p className="flex items-center"><strong>Status:</strong> 
+                            <Badge variant={getStatusVariant(sub.status)} className="capitalize ml-2">
+                                {getStatusIcon(sub.status)}
+                                {sub.status}
+                            </Badge>
+                          </p>
+                          <p><strong>End Date:</strong> {sub.plan !== 'None' ? format(sub.endDate, 'PP') : 'N/A'}</p>
+                      </div>
+                       {sub.plan !== 'None' && (
+                          <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                              <Label htmlFor={`switch-${sub.id}`}>Toggle Status</Label>
+                              <Switch
+                                  id={`switch-${sub.id}`}
+                                  checked={sub.status === 'active'}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onCheckedChange={(checked) => {
+                                      setSubscriptions(prevSubs => prevSubs.map(s => s.id === sub.id ? { ...s, status: checked ? 'active' : 'canceled' } : s));
+                                  }}
+                                  aria-label={`Toggle subscription for ${sub.user.name}`}
+                              />
+                          </div>
+                        )}
+                  </Card>
               ))}
               {paginatedSubscriptions.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    No subscriptions found.
-                  </TableCell>
-                </TableRow>
+                  <p className="text-center text-muted-foreground py-8">
+                      No subscriptions found.
+                  </p>
               )}
-            </TableBody>
-          </Table>
+          </div>
+
           {totalPages > 1 && (
             <div className="flex justify-center items-center space-x-2 mt-6">
               <Button
@@ -354,16 +412,9 @@ function ManageSubscriptionsPage() {
               >
                 Previous
               </Button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
-                <Button
-                  key={pageNumber}
-                  variant={currentPage === pageNumber ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCurrentPage(pageNumber)}
-                >
-                  {pageNumber}
-                </Button>
-              ))}
+               <span className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+               </span>
               <Button
                 variant="outline"
                 size="sm"

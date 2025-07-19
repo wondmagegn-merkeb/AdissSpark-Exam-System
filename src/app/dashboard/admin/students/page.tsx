@@ -125,71 +125,117 @@ function ManageStudentsPage() {
             <PlusCircle className="mr-2 h-4 w-4" /> Add New Student
           </Button>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead onClick={() => requestSort('name')} className="cursor-pointer group hover:bg-muted/50">
-                <div className="flex items-center">Student {renderSortIcon('name')}</div>
-              </TableHead>
-              <TableHead onClick={() => requestSort('email')} className="cursor-pointer group hover:bg-muted/50">
-                <div className="flex items-center">Email {renderSortIcon('email')}</div>
-              </TableHead>
-              <TableHead onClick={() => requestSort('studentType')} className="cursor-pointer group hover:bg-muted/50">
-                <div className="flex items-center">Student Type {renderSortIcon('studentType')}</div>
-              </TableHead>
-              <TableHead onClick={() => requestSort('department')} className="cursor-pointer group hover:bg-muted/50">
-                <div className="flex items-center">Details (Dept/Grade) {renderSortIcon('department')}</div>
-              </TableHead>
-              <TableHead onClick={() => requestSort('institutionName')} className="cursor-pointer group hover:bg-muted/50">
-                <div className="flex items-center">Institution {renderSortIcon('institutionName')}</div>
-              </TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+
+        {/* Table for larger screens */}
+        <div className="hidden md:block">
+            <Table>
+            <TableHeader>
+                <TableRow>
+                <TableHead onClick={() => requestSort('name')} className="cursor-pointer group hover:bg-muted/50">
+                    <div className="flex items-center">Student {renderSortIcon('name')}</div>
+                </TableHead>
+                <TableHead onClick={() => requestSort('email')} className="cursor-pointer group hover:bg-muted/50">
+                    <div className="flex items-center">Email {renderSortIcon('email')}</div>
+                </TableHead>
+                <TableHead onClick={() => requestSort('studentType')} className="cursor-pointer group hover:bg-muted/50">
+                    <div className="flex items-center">Student Type {renderSortIcon('studentType')}</div>
+                </TableHead>
+                <TableHead onClick={() => requestSort('department')} className="cursor-pointer group hover:bg-muted/50">
+                    <div className="flex items-center">Details (Dept/Grade) {renderSortIcon('department')}</div>
+                </TableHead>
+                <TableHead onClick={() => requestSort('institutionName')} className="cursor-pointer group hover:bg-muted/50">
+                    <div className="flex items-center">Institution {renderSortIcon('institutionName')}</div>
+                </TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {paginatedStudents.map((student) => (
+                <TableRow key={student.id}>
+                    <TableCell>
+                    <div className="flex items-center space-x-3">
+                        <Avatar className="h-9 w-9">
+                        <AvatarImage src={student.image || `https://avatar.vercel.sh/${student.email}.png`} alt={student.name || "User"} data-ai-hint="user avatar"/>
+                        <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{student.name || 'N/A'}</span>
+                    </div>
+                    </TableCell>
+                    <TableCell>{student.email}</TableCell>
+                    <TableCell>
+                    <Badge variant="outline" className="capitalize">
+                        <UserRound className="mr-2 h-4 w-4 text-muted-foreground" />
+                        {studentTypeToString(student.studentType)}
+                    </Badge>
+                    </TableCell>
+                    <TableCell className="capitalize">
+                    {student.department || student.gradeLevel || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                    {student.institutionName || 'N/A'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                    <Button variant="outline" size="sm" className="mr-2">
+                        <Edit className="mr-1 h-3 w-3" /> Edit
+                    </Button>
+                    <Button variant="destructive" size="sm">
+                        <Trash2 className="mr-1 h-3 w-3" /> Delete
+                    </Button>
+                    </TableCell>
+                </TableRow>
+                ))}
+                {paginatedStudents.length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    No students found matching your criteria.
+                    </TableCell>
+                </TableRow>
+                )}
+            </TableBody>
+            </Table>
+        </div>
+
+        {/* Cards for smaller screens */}
+        <div className="grid grid-cols-1 gap-4 md:hidden">
             {paginatedStudents.map((student) => (
-              <TableRow key={student.id}>
-                <TableCell>
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage src={student.image || `https://avatar.vercel.sh/${student.email}.png`} alt={student.name || "User"} data-ai-hint="user avatar"/>
-                      <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium">{student.name || 'N/A'}</span>
-                  </div>
-                </TableCell>
-                <TableCell>{student.email}</TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="capitalize">
-                    <UserRound className="mr-2 h-4 w-4 text-muted-foreground" />
-                    {studentTypeToString(student.studentType)}
-                  </Badge>
-                </TableCell>
-                <TableCell className="capitalize">
-                  {student.department || student.gradeLevel || 'N/A'}
-                </TableCell>
-                <TableCell>
-                  {student.institutionName || 'N/A'}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="outline" size="sm" className="mr-2">
-                    <Edit className="mr-1 h-3 w-3" /> Edit
-                  </Button>
-                  <Button variant="destructive" size="sm">
-                    <Trash2 className="mr-1 h-3 w-3" /> Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
+                <Card key={student.id} className="p-4">
+                    <div className="flex items-start justify-between">
+                        <div className="flex items-center space-x-3">
+                            <Avatar className="h-10 w-10">
+                                <AvatarImage src={student.image || `https://avatar.vercel.sh/${student.email}.png`} alt={student.name || "User"} data-ai-hint="user avatar" />
+                                <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <p className="font-medium">{student.name || 'N/A'}</p>
+                                <p className="text-sm text-muted-foreground">{student.email}</p>
+                            </div>
+                        </div>
+                         <Badge variant="outline" className="capitalize shrink-0">
+                            <UserRound className="mr-2 h-4 w-4 text-muted-foreground" />
+                            {studentTypeToString(student.studentType)}
+                        </Badge>
+                    </div>
+                    <div className="mt-4 pt-4 border-t text-sm text-muted-foreground space-y-1">
+                        <p><strong>Institution:</strong> {student.institutionName || 'N/A'}</p>
+                        <p className="capitalize"><strong>Details:</strong> {student.department || student.gradeLevel || 'N/A'}</p>
+                    </div>
+                    <div className="mt-4 flex justify-end gap-2">
+                        <Button variant="outline" size="sm">
+                            <Edit className="mr-1 h-3 w-3" /> Edit
+                        </Button>
+                        <Button variant="destructive" size="sm">
+                            <Trash2 className="mr-1 h-3 w-3" /> Delete
+                        </Button>
+                    </div>
+                </Card>
             ))}
-            {paginatedStudents.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  No students found matching your criteria.
-                </TableCell>
-              </TableRow>
+             {paginatedStudents.length === 0 && (
+              <p className="text-center text-muted-foreground py-8">
+                No students found matching your criteria.
+              </p>
             )}
-          </TableBody>
-        </Table>
+        </div>
+
         {totalPages > 1 && (
           <div className="flex justify-center items-center space-x-2 mt-6">
             <Button
@@ -200,16 +246,9 @@ function ManageStudentsPage() {
             >
               Previous
             </Button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
-              <Button
-                key={pageNumber}
-                variant={currentPage === pageNumber ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCurrentPage(pageNumber)}
-              >
-                {pageNumber}
-              </Button>
-            ))}
+             <span className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
+            </span>
             <Button
               variant="outline"
               size="sm"

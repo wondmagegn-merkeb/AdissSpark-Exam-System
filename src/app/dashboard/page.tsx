@@ -171,7 +171,6 @@ export default function DashboardPage() {
                         borderColor: 'hsl(var(--border))',
                       }}
                     />
-                    <Legend />
                     <Line
                       dataKey="score"
                       type="monotone"
@@ -239,32 +238,54 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           {examHistory.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Exam Title</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Score</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {examHistory.map((entry) => (
-                  <TableRow key={entry.examId + entry.dateCompleted}>
-                    <TableCell className="font-medium truncate max-w-[200px] sm:max-w-xs">{entry.examTitle}</TableCell>
-                    <TableCell>{format(new Date(entry.dateCompleted), 'PPp')}</TableCell>
-                    <TableCell className="text-right">{`${entry.score}/${entry.totalQuestions} (${entry.percentageScore}%)`}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/dashboard/exams/${entry.examId}/results`}>
-                          View <ExternalLink className="ml-1.5 h-3 w-3" />
-                        </Link>
-                      </Button>
-                    </TableCell>
+            <>
+            {/* Table for larger screens */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Exam Title</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Score</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {examHistory.map((entry) => (
+                    <TableRow key={entry.examId + entry.dateCompleted}>
+                      <TableCell className="font-medium truncate max-w-[200px] sm:max-w-xs">{entry.examTitle}</TableCell>
+                      <TableCell>{format(new Date(entry.dateCompleted), 'PPp')}</TableCell>
+                      <TableCell className="text-right">{`${entry.score}/${entry.totalQuestions} (${entry.percentageScore}%)`}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/dashboard/exams/${entry.examId}/results`}>
+                            View <ExternalLink className="ml-1.5 h-3 w-3" />
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            {/* Cards for smaller screens */}
+            <div className="grid grid-cols-1 gap-4 md:hidden">
+              {examHistory.map((entry) => (
+                <Card key={entry.examId + entry.dateCompleted} className="p-4">
+                  <div className="flex flex-col space-y-2">
+                    <p className="font-medium">{entry.examTitle}</p>
+                    <p className="text-sm text-muted-foreground">{format(new Date(entry.dateCompleted), 'PPp')}</p>
+                    <p className="text-lg font-semibold">{`${entry.score}/${entry.totalQuestions} (${entry.percentageScore}%)`}</p>
+                    <Button variant="outline" size="sm" asChild className="mt-2 w-full">
+                        <Link href={`/dashboard/exams/${entry.examId}/results`}>
+                          View Results <ExternalLink className="ml-1.5 h-3 w-3" />
+                        </Link>
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center h-[150px] text-center">
               <History className="h-12 w-12 text-muted-foreground mb-2" />

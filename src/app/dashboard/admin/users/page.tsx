@@ -128,65 +128,110 @@ function ManageStaffPage() {
             <PlusCircle className="mr-2 h-4 w-4" /> Add New Staff Member
           </Button>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead onClick={() => requestSort('name')} className="cursor-pointer group hover:bg-muted/50">
-                <div className="flex items-center">Staff Member {renderSortIcon('name')}</div>
-              </TableHead>
-              <TableHead onClick={() => requestSort('email')} className="cursor-pointer group hover:bg-muted/50">
-                <div className="flex items-center">Email {renderSortIcon('email')}</div>
-              </TableHead>
-              <TableHead onClick={() => requestSort('role')} className="cursor-pointer group hover:bg-muted/50">
-                <div className="flex items-center">Role {renderSortIcon('role')}</div>
-              </TableHead>
-              <TableHead onClick={() => requestSort('lastLogin')} className="cursor-pointer group hover:bg-muted/50">
-                <div className="flex items-center">Last Login {renderSortIcon('lastLogin')}</div>
-              </TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedStaff.map((staff) => (
-              <TableRow key={staff.id}>
-                <TableCell>
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage src={staff.image || `https://avatar.vercel.sh/${staff.email}.png`} alt={staff.name || "User"} data-ai-hint="user avatar" />
-                      <AvatarFallback>{getInitials(staff.name)}</AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium">{staff.name || 'N/A'}</span>
-                  </div>
-                </TableCell>
-                <TableCell>{staff.email}</TableCell>
-                <TableCell>
-                  <Badge variant={getRoleVariant(staff.role!)} className="capitalize">
-                    {getRoleIcon(staff.role!)}
-                    {staff.role}
-                  </Badge>
-                </TableCell>
-                 <TableCell>
-                  {staff.lastLogin ? staff.lastLogin.toLocaleDateString() : 'N/A'}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="outline" size="sm" className="mr-2">
-                    <Edit className="mr-1 h-3 w-3" /> Edit
-                  </Button>
-                  <Button variant="destructive" size="sm">
-                    <Trash2 className="mr-1 h-3 w-3" /> Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {paginatedStaff.length === 0 && (
+        
+        {/* Table for larger screens */}
+        <div className="hidden md:block">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                  No staff members found.
-                </TableCell>
+                <TableHead onClick={() => requestSort('name')} className="cursor-pointer group hover:bg-muted/50">
+                  <div className="flex items-center">Staff Member {renderSortIcon('name')}</div>
+                </TableHead>
+                <TableHead onClick={() => requestSort('email')} className="cursor-pointer group hover:bg-muted/50">
+                  <div className="flex items-center">Email {renderSortIcon('email')}</div>
+                </TableHead>
+                <TableHead onClick={() => requestSort('role')} className="cursor-pointer group hover:bg-muted/50">
+                  <div className="flex items-center">Role {renderSortIcon('role')}</div>
+                </TableHead>
+                <TableHead onClick={() => requestSort('lastLogin')} className="cursor-pointer group hover:bg-muted/50">
+                  <div className="flex items-center">Last Login {renderSortIcon('lastLogin')}</div>
+                </TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedStaff.map((staff) => (
+                <TableRow key={staff.id}>
+                  <TableCell>
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={staff.image || `https://avatar.vercel.sh/${staff.email}.png`} alt={staff.name || "User"} data-ai-hint="user avatar" />
+                        <AvatarFallback>{getInitials(staff.name)}</AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">{staff.name || 'N/A'}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>{staff.email}</TableCell>
+                  <TableCell>
+                    <Badge variant={getRoleVariant(staff.role!)} className="capitalize">
+                      {getRoleIcon(staff.role!)}
+                      {staff.role}
+                    </Badge>
+                  </TableCell>
+                   <TableCell>
+                    {staff.lastLogin ? staff.lastLogin.toLocaleDateString() : 'N/A'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="outline" size="sm" className="mr-2">
+                      <Edit className="mr-1 h-3 w-3" /> Edit
+                    </Button>
+                    <Button variant="destructive" size="sm">
+                      <Trash2 className="mr-1 h-3 w-3" /> Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {paginatedStaff.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    No staff members found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Cards for smaller screens */}
+        <div className="grid grid-cols-1 gap-4 md:hidden">
+            {paginatedStaff.map((staff) => (
+                <Card key={staff.id} className="p-4">
+                    <div className="flex items-start justify-between">
+                        <div className="flex items-center space-x-3">
+                            <Avatar className="h-10 w-10">
+                                <AvatarImage src={staff.image || `https://avatar.vercel.sh/${staff.email}.png`} alt={staff.name || "User"} data-ai-hint="user avatar" />
+                                <AvatarFallback>{getInitials(staff.name)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <p className="font-medium">{staff.name || 'N/A'}</p>
+                                <p className="text-sm text-muted-foreground">{staff.email}</p>
+                            </div>
+                        </div>
+                        <Badge variant={getRoleVariant(staff.role!)} className="capitalize shrink-0">
+                           {getRoleIcon(staff.role!)} {staff.role}
+                        </Badge>
+                    </div>
+                    <div className="mt-4 pt-4 border-t text-sm text-muted-foreground">
+                        <p><strong>Last Login:</strong> {staff.lastLogin ? staff.lastLogin.toLocaleDateString() : 'N/A'}</p>
+                    </div>
+                    <div className="mt-4 flex justify-end gap-2">
+                         <Button variant="outline" size="sm">
+                            <Edit className="mr-1 h-3 w-3" /> Edit
+                        </Button>
+                        <Button variant="destructive" size="sm">
+                            <Trash2 className="mr-1 h-3 w-3" /> Delete
+                        </Button>
+                    </div>
+                </Card>
+            ))}
+             {paginatedStaff.length === 0 && (
+              <p className="text-center text-muted-foreground py-8">
+                No staff members found.
+              </p>
             )}
-          </TableBody>
-        </Table>
+        </div>
+
+
         {totalPages > 1 && (
           <div className="flex justify-center items-center space-x-2 mt-6">
             <Button
@@ -197,16 +242,9 @@ function ManageStaffPage() {
             >
               Previous
             </Button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
-              <Button
-                key={pageNumber}
-                variant={currentPage === pageNumber ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCurrentPage(pageNumber)}
-              >
-                {pageNumber}
-              </Button>
-            ))}
+            <span className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
+            </span>
             <Button
               variant="outline"
               size="sm"

@@ -22,7 +22,9 @@ const mockFeedback: FeedbackEntry[] = [
   { id: "fb6", userId: "usr5", userName: "Carlos R.", userEmail: "carlos@example.com", subject: "Login Issue", message: "I was unable to log in this morning.", submittedAt: new Date(2024, 6, 23, 8, 0), status: "new" },
   { id: "fb7", userId: "usr6", userName: "Aisha A.", userEmail: "aisha@example.com", subject: "Payment Question", message: "Do you accept Telebirr for payments?", submittedAt: new Date(2024, 6, 23, 12, 45), status: "in_progress" },
   { id: "fb8", userId: "usr2", userName: "Fatuma A.", userEmail: "fatuma@example.com", subject: "Positive Feedback", message: "The new resources are fantastic! Thank you!", submittedAt: new Date(2024, 6, 23, 15, 20), status: "resolved" },
-
+  { id: "fb9", userId: "usr7", userName: "David L.", userEmail: "david@example.com", subject: "Feature Request: Bookmarks", message: "I would love to be able to bookmark resources to find them easily later.", submittedAt: new Date(2024, 6, 24, 10, 0), status: "new" },
+  { id: "fb10", userId: "usr8", userName: "Emily W.", userEmail: "emily@example.com", subject: "Question about premium", message: "What are the exact benefits of the premium subscription?", submittedAt: new Date(2024, 6, 25, 16, 30), status: "in_progress" },
+  { id: "fb11", userId: "usr9", userName: "Michael Z.", userEmail: "michael@example.com", subject: "Video playback issue", message: "The video for Ethiopian History keeps buffering on my connection.", submittedAt: new Date(2024, 6, 26, 9, 45), status: "new" },
 ];
 
 type FeedbackStatus = FeedbackEntry['status'];
@@ -143,62 +145,99 @@ function ManageFeedbackPage() {
               </Select>
             </div>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead onClick={() => requestSort('id')} className="cursor-pointer group hover:bg-muted/50">
-                <div className="flex items-center">ID {renderSortIcon('id')}</div>
-              </TableHead>
-              <TableHead onClick={() => requestSort('userName')} className="cursor-pointer group hover:bg-muted/50">
-                 <div className="flex items-center">User {renderSortIcon('userName')}</div>
-              </TableHead>
-              <TableHead onClick={() => requestSort('subject')} className="cursor-pointer group hover:bg-muted/50">
-                 <div className="flex items-center">Subject {renderSortIcon('subject')}</div>
-              </TableHead>
-              <TableHead onClick={() => requestSort('submittedAt')} className="cursor-pointer group hover:bg-muted/50">
-                 <div className="flex items-center">Submitted {renderSortIcon('submittedAt')}</div>
-              </TableHead>
-              <TableHead onClick={() => requestSort('status')} className="cursor-pointer group hover:bg-muted/50">
-                 <div className="flex items-center">Status {renderSortIcon('status')}</div>
-              </TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        {/* Table for larger screens */}
+        <div className="hidden md:block">
+            <Table>
+            <TableHeader>
+                <TableRow>
+                <TableHead onClick={() => requestSort('id')} className="cursor-pointer group hover:bg-muted/50">
+                    <div className="flex items-center">ID {renderSortIcon('id')}</div>
+                </TableHead>
+                <TableHead onClick={() => requestSort('userName')} className="cursor-pointer group hover:bg-muted/50">
+                    <div className="flex items-center">User {renderSortIcon('userName')}</div>
+                </TableHead>
+                <TableHead onClick={() => requestSort('subject')} className="cursor-pointer group hover:bg-muted/50">
+                    <div className="flex items-center">Subject {renderSortIcon('subject')}</div>
+                </TableHead>
+                <TableHead onClick={() => requestSort('submittedAt')} className="cursor-pointer group hover:bg-muted/50">
+                    <div className="flex items-center">Submitted {renderSortIcon('submittedAt')}</div>
+                </TableHead>
+                <TableHead onClick={() => requestSort('status')} className="cursor-pointer group hover:bg-muted/50">
+                    <div className="flex items-center">Status {renderSortIcon('status')}</div>
+                </TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {paginatedFeedback.map((fb) => (
+                <TableRow key={fb.id}>
+                    <TableCell>{fb.id}</TableCell>
+                    <TableCell className="font-medium">
+                    <div>{fb.userName || 'N/A'}</div>
+                    <div className="text-xs text-muted-foreground">{fb.userEmail}</div>
+                    </TableCell>
+                    <TableCell className="max-w-xs truncate">{fb.subject}</TableCell>
+                    <TableCell>
+                    {formatDistanceToNow(fb.submittedAt, { addSuffix: true })}
+                    </TableCell>
+                    <TableCell>
+                    <Badge variant={getStatusVariant(fb.status)} className="capitalize">
+                        {getStatusIcon(fb.status)}
+                        {fb.status.replace('_', ' ')}
+                    </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                    <Button variant="outline" size="sm" className="mr-2">
+                        <Eye className="mr-1 h-3 w-3" /> View
+                    </Button>
+                    {/* Add more actions like 'Mark as Resolved', 'Archive' based on status */}
+                    </TableCell>
+                </TableRow>
+                ))}
+                {paginatedFeedback.length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    No feedback entries match the current filter.
+                    </TableCell>
+                </TableRow>
+                )}
+            </TableBody>
+            </Table>
+        </div>
+
+         {/* Cards for smaller screens */}
+        <div className="grid grid-cols-1 gap-4 md:hidden">
             {paginatedFeedback.map((fb) => (
-              <TableRow key={fb.id}>
-                <TableCell>{fb.id}</TableCell>
-                <TableCell className="font-medium">
-                  <div>{fb.userName || 'N/A'}</div>
-                  <div className="text-xs text-muted-foreground">{fb.userEmail}</div>
-                </TableCell>
-                <TableCell className="max-w-xs truncate">{fb.subject}</TableCell>
-                <TableCell>
-                  {formatDistanceToNow(fb.submittedAt, { addSuffix: true })}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={getStatusVariant(fb.status)} className="capitalize">
-                    {getStatusIcon(fb.status)}
-                    {fb.status.replace('_', ' ')}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="outline" size="sm" className="mr-2">
-                    <Eye className="mr-1 h-3 w-3" /> View
-                  </Button>
-                  {/* Add more actions like 'Mark as Resolved', 'Archive' based on status */}
-                </TableCell>
-              </TableRow>
+                <Card key={fb.id} className="p-4">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <p className="font-medium">{fb.userName || 'N/A'}</p>
+                            <p className="text-xs text-muted-foreground mb-2">{fb.userEmail}</p>
+                            <p className="font-semibold text-foreground truncate">{fb.subject}</p>
+                        </div>
+                        <Badge variant={getStatusVariant(fb.status)} className="capitalize shrink-0">
+                            {getStatusIcon(fb.status)}
+                            {fb.status.replace('_', ' ')}
+                        </Badge>
+                    </div>
+                    <div className="mt-4 pt-4 border-t text-sm text-muted-foreground space-y-2">
+                       <p className="line-clamp-3">"{fb.message}"</p>
+                       <p><strong>Submitted:</strong> {formatDistanceToNow(fb.submittedAt, { addSuffix: true })}</p>
+                    </div>
+                    <div className="mt-4 flex justify-end">
+                        <Button variant="outline" size="sm">
+                            <Eye className="mr-1 h-3 w-3" /> View
+                        </Button>
+                    </div>
+                </Card>
             ))}
             {paginatedFeedback.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  No feedback entries match the current filter.
-                </TableCell>
-              </TableRow>
+                <p className="text-center text-muted-foreground py-8">
+                    No feedback entries match the current filter.
+                </p>
             )}
-          </TableBody>
-        </Table>
+        </div>
+
         {totalPages > 1 && (
           <div className="flex justify-center items-center space-x-2 mt-6">
             <Button
@@ -209,16 +248,9 @@ function ManageFeedbackPage() {
             >
               Previous
             </Button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
-              <Button
-                key={pageNumber}
-                variant={currentPage === pageNumber ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCurrentPage(pageNumber)}
-              >
-                {pageNumber}
-              </Button>
-            ))}
+             <span className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+            </span>
             <Button
               variant="outline"
               size="sm"
