@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { MessageSquare, Search, LayoutDashboard, Send, User as UserIcon } from 'lucide-react';
+import { MessageSquare, Search, LayoutDashboard, Send, User as UserIcon, ArrowLeft } from 'lucide-react';
 import type { User } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -119,7 +119,10 @@ export default function ChatPage() {
   return (
     <div className="flex h-screen p-4 gap-4">
       {/* Left Panel: User List */}
-      <Card className="w-full max-w-sm flex-shrink-0 flex flex-col shadow-lg">
+      <Card className={cn(
+        "w-full max-w-sm flex-shrink-0 flex-col shadow-lg",
+        selectedUser ? "hidden md:flex" : "flex"
+      )}>
         <CardHeader className="border-b flex flex-row items-center justify-between">
             <div className="flex items-center">
                 <MessageSquare className="mr-2 h-6 w-6 text-primary" />
@@ -197,10 +200,16 @@ export default function ChatPage() {
       </Card>
 
       {/* Right Panel: Chat Window */}
-      <Card className="flex-grow flex flex-col shadow-lg">
+      <Card className={cn(
+        "flex-grow flex-col shadow-lg",
+        selectedUser ? "flex" : "hidden md:flex"
+      )}>
         {selectedUser ? (
           <>
             <CardHeader className="border-b flex flex-row items-center">
+                <Button variant="ghost" size="icon" className="mr-2 md:hidden" onClick={() => setSelectedUser(null)}>
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
                 <Avatar className="h-9 w-9 mr-3">
                 <AvatarImage src={selectedUser.image || `https://avatar.vercel.sh/${selectedUser.email}.png`} alt={selectedUser.name || "Chat partner"} data-ai-hint="user avatar"/>
                 <AvatarFallback>{getInitials(selectedUser.name)}</AvatarFallback>
@@ -285,5 +294,3 @@ export default function ChatPage() {
     </div>
   );
 }
-
-    
