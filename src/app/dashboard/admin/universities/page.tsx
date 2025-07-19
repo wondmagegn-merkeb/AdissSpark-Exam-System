@@ -19,7 +19,10 @@ import { withAdminAuth } from '@/components/auth/withAdminAuth';
 const initialSeedItems: Institution[] = [
   { id: "uni1", name: "Addis Ababa University", type: "University", context: "Addis Ababa", status: "active" },
   { id: "uni2", name: "Bahir Dar University", type: "University", context: "Bahir Dar", status: "active" },
+  { id: "uni3", name: "Gondar University", type: "University", context: "Gondar", status: "active" },
+  { id: "uni4", name: "Mekelle University", type: "University", context: "Mekelle", status: "active" },
   { id: "col1", name: "Admas University College", type: "College", context: "Addis Ababa", status: "active" },
+  { id: "col2", name: "Unity University", type: "College", context: "Addis Ababa", status: "active" },
   { id: "hs1", name: "Menelik II High School", type: "High School", context: "Addis Ababa", status: "active" },
   { id: "ps1", name: "Bright Future Preparatory", type: "Preparatory School", context: "City Level", status: "inactive" },
   { id: "ss1", name: "Example Secondary School", type: "Secondary School", context: "Regional", status: "active" },
@@ -253,3 +256,5 @@ function ManageInstitutionsPage() {
 }
 
 export default withAdminAuth(ManageInstitutionsPage);
+
+    

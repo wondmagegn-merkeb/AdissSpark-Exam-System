@@ -19,7 +19,10 @@ const mockStaff: (User & { role: 'admin' | 'instructor', lastLogin?: Date })[] =
   { id: "usr8", name: "Prof. Bekele Girma (Instructor)", email: "bekele.instructor@example.com", image: "https://placehold.co/100x100.png?text=BG", role: "instructor", studentType: undefined, lastLogin: new Date(2024, 6, 1) },
   { id: "usr12", name: "Sara T. (Instructor)", email: "sara.t@example.com", role: "instructor", studentType: undefined, lastLogin: new Date(2024, 6, 25) },
   { id: "usr13", name: "Daniel M. (Admin)", email: "daniel.m@example.com", image: "https://placehold.co/100x100.png?text=DM", role: "admin", studentType: undefined, lastLogin: new Date(2024, 6, 26) },
-
+  { id: "usr18", name: "Helen G. (Instructor)", email: "helen.g@example.com", role: "instructor", studentType: undefined, lastLogin: new Date(2024, 7, 2) },
+  { id: "usr19", name: "Tewodros K. (Instructor)", email: "tewodros.k@example.com", image: "https://placehold.co/100x100.png?text=TK", role: "instructor", studentType: undefined, lastLogin: new Date(2024, 7, 3) },
+  { id: "usr20", name: "Fikir A. (Admin)", email: "fikir.a@example.com", role: "admin", studentType: undefined, lastLogin: new Date(2024, 7, 4) },
+  { id: "usr21", name: "Mekdes B. (Instructor)", email: "mekdes.b@example.com", image: "https://placehold.co/100x100.png?text=MB", role: "instructor", studentType: undefined, lastLogin: new Date(2024, 7, 5) },
 ];
 
 type SortableStaffKeys = keyof (User & { lastLogin?: Date });
@@ -201,3 +204,5 @@ function ManageStaffPage() {
 }
 
 export default withAdminAuth(ManageStaffPage);
+
+    

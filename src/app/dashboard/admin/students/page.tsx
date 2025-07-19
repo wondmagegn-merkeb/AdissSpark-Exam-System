@@ -12,13 +12,17 @@ import type { User, StudentTypeFromRegistrationFormKey } from "@/lib/types";
 import { withAdminAuth } from "@/components/auth/withAdminAuth";
 
 const mockStudents: (User & { role: 'student', lastLogin?: Date })[] = [
-  { id: "usr2", name: "Fatuma Ali", email: "fatuma@example.com", image: "https://placehold.co/100x100.png?text=FA", role: "student", studentType: "high_school", lastLogin: new Date(2024, 6, 21) },
+  { id: "usr2", name: "Fatuma Ali", email: "fatuma@example.com", image: "https://placehold.co/100x100.png?text=FA", role: "student", studentType: "high_school", gradeLevel: "Grade 11", lastLogin: new Date(2024, 6, 21) },
   { id: "usr4", name: "Jane Smith", email: "jane.smith@example.com", role: "student", studentType: "primary_school", gradeLevel: "Grade 5", lastLogin: new Date(2024, 6, 22) },
   { id: "usr5", name: "Carlos Rodriguez", email: "carlos@example.com", image: "https://placehold.co/100x100.png?text=CR", role: "student", studentType: "university", department: "Computer Science", institutionName: "Addis Ababa University", lastLogin: new Date(2024, 6, 23) },
   { id: "usr6", name: "Aisha Ahmed", email: "aisha@example.com", role: "student", studentType: "college", department: "Marketing", institutionName: "Unity College", lastLogin: new Date(2024, 6, 24) },
   { id: "usr9", name: "Bereket T.", email: "bereket@example.com", role: "student", studentType: "preparatory_school", gradeLevel: "Grade 12", lastLogin: new Date(2024, 6, 25) },
   { id: "usr10", name: "Sofia D.", email: "sofia@example.com", role: "student", studentType: "secondary_school", gradeLevel: "Grade 10", lastLogin: new Date(2024, 6, 26) },
   { id: "usr11", name: "Michael B.", email: "michael@example.com", image: "https://placehold.co/100x100.png?text=MB", role: "student", studentType: "university", department: "Electrical Engineering", institutionName: "Bahir Dar University", lastLogin: new Date(2024, 6, 27) },
+  { id: "usr14", name: "Liya Getachew", email: "liya.g@example.com", role: "student", studentType: "university", department: "Medicine", institutionName: "Gondar University", lastLogin: new Date(2024, 6, 28) },
+  { id: "usr15", name: "Samuel Hailu", email: "samuel.h@example.com", image: "https://placehold.co/100x100.png?text=SH", role: "student", studentType: "college", department: "Accounting", institutionName: "Admas University", lastLogin: new Date(2024, 6, 29) },
+  { id: "usr16", name: "Hana Tesfaye", email: "hana.t@example.com", role: "student", studentType: "high_school", gradeLevel: "Grade 12", lastLogin: new Date(2024, 6, 30) },
+  { id: "usr17", name: "Yosef Lemma", email: "yosef.l@example.com", role: "student", studentType: "preparatory_school", gradeLevel: "Grade 11", lastLogin: new Date(2024, 7, 1) },
 ];
 
 type SortableStudentKeys = keyof (User & { lastLogin?: Date });
@@ -206,3 +210,5 @@ function ManageStudentsPage() {
 }
 
 export default withAdminAuth(ManageStudentsPage);
+
+    
