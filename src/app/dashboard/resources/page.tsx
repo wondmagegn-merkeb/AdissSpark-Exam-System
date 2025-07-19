@@ -112,8 +112,9 @@ export default function ResourcesPage() {
         }
       } else if (user?.studentType && ['primary_school', 'secondary_school', 'high_school', 'preparatory_school'].includes(user.studentType)) {
         subjectOrCourseMatch = SCHOOL_SUBJECTS.includes(resource.subjectOrCourse);
-      } else { // Not logged in or student type not set - show nothing or everything depending on requirements
-        subjectOrCourseMatch = false; 
+      } else { 
+        // If user type is not set or doesn't match, show all non-premium generic resources
+        subjectOrCourseMatch = !resource.isPremium;
       }
 
       const searchTermMatch = searchTerm === '' ||
@@ -134,7 +135,7 @@ export default function ResourcesPage() {
   };
   
   const getRelevantSubjectContext = () => {
-    if (!user) return "all resources";
+    if (!user || !user.studentType) return "all resources";
     if ((user.studentType === 'university' || user.studentType === 'college') && selectedSubjectOrCourse !== 'all' && selectedSubjectOrCourse !== ALL_UNIVERSITY_COURSES_OPTION && selectedSubjectOrCourse !== ALL_COLLEGE_COURSES_OPTION) {
       return `for ${selectedSubjectOrCourse}`;
     }
@@ -295,5 +296,3 @@ export default function ResourcesPage() {
     </div>
   );
 }
-
-    
