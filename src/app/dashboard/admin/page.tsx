@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { withAdminAuth } from "@/components/auth/withAdminAuth";
-import { ArrowRight, UserCog, UserRound, Building, BookCopy, ListChecks, Edit as EditIconLucide, Library, Cpu, Archive, LayoutDashboard, Activity, Users, CreditCard, FileText, MoreHorizontal } from "lucide-react";
+import { ArrowRight, UserCog, UserRound, Building, BookCopy, ListChecks, Edit as EditIconLucide, Library, Archive, Users, CreditCard, FileText } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -14,9 +14,6 @@ import {
 } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-
 
 const adminFeatures = [
   { title: 'Manage Staff', href: '/dashboard/admin/users', icon: UserCog, description: "Add, edit, or remove administrators and instructors." },
@@ -26,7 +23,6 @@ const adminFeatures = [
   { title: 'Manage Courses & Subjects', href: '/dashboard/admin/courses', icon: ListChecks, description: "Define courses and subjects for resources." },
   { title: 'Manage Exams', href: '/dashboard/admin/exams', icon: EditIconLucide, description: "Create, edit, and manage all practice exams." },
   { title: 'Manage Resources', href: '/dashboard/admin/resources', icon: Library, description: "Upload and organize study materials." },
-  { title: 'Manage Agents', href: '/dashboard/admin/agents', icon: Cpu, description: "Configure and monitor AI agents." },
   { title: 'Manage Feedback', href: '/dashboard/admin/feedback', icon: Archive, description: "Review and respond to user feedback." },
 ];
 
@@ -93,12 +89,12 @@ function AdminDashboardPage() {
         </Card>
         <Card className="shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Agents</CardTitle>
-            <Cpu className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Resources</CardTitle>
+            <Library className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4</div>
-            <p className="text-xs text-muted-foreground">All systems operational</p>
+            <div className="text-2xl font-bold">1,250</div>
+            <p className="text-xs text-muted-foreground">+52 from last month</p>
           </CardContent>
         </Card>
       </div>

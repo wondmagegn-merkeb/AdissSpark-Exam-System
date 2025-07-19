@@ -16,16 +16,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import type { NavItem } from '@/lib/types';
-import { LayoutDashboard, Library, FileText as FileTextIconLucide, Brain, User, Settings, LogOut, CreditCard, MessageSquare, Building, BookCopy, ListChecks, Edit as EditIconLucide, ShieldCheck, Users, MessageSquarePlus, Bot, Cpu, Archive, UserCog, UserRound } from 'lucide-react';
+import { LayoutDashboard, Library, FileText as FileTextIconLucide, User, Settings, LogOut, CreditCard, MessageSquare, Building, BookCopy, ListChecks, Edit as EditIconLucide, ShieldCheck, Users, MessageSquarePlus, Archive, UserCog, UserRound } from 'lucide-react';
 
 const mainNavItems: NavItem[] = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { title: 'Resources', href: '/dashboard/resources', icon: Library },
   { title: 'Exams', href: '/dashboard/exams', icon: FileTextIconLucide },
-  { title: 'AI Study Plan', href: '/dashboard/study-plan', icon: Brain, requiresSubscription: true },
   { title: 'Chat', href: '/dashboard/chat', icon: MessageSquare },
   { title: 'Submit Feedback', href: '/dashboard/feedback', icon: MessageSquarePlus },
-  { title: 'AI Agent', href: '/dashboard/agent', icon: Bot },
 ];
 
 const userNavItems: NavItem[] = [
@@ -42,7 +40,6 @@ const adminNavItems: NavItem[] = [
   { title: 'Manage Courses & Subjects', href: '/dashboard/admin/courses', icon: ListChecks },
   { title: 'Manage Exams', href: '/dashboard/admin/exams', icon: EditIconLucide },
   { title: 'Manage Resources', href: '/dashboard/admin/resources', icon: Library },
-  { title: 'Manage Agents', href: '/dashboard/admin/agents', icon: Cpu },
   { title: 'Manage Feedback', href: '/dashboard/admin/feedback', icon: Archive },
 ];
 
@@ -110,7 +107,7 @@ export function DashboardSidebar() {
             <CardHeader className="p-4">
               <CardTitle className="text-base text-primary-foreground">Unlock All Features</CardTitle>
               <CardDescription className="text-sm text-primary-foreground/80">
-                Upgrade to premium to access AI Study Plans and more.
+                Upgrade to premium to access exclusive content and features.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-4 pt-0">
