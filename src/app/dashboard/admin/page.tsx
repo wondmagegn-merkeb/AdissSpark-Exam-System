@@ -15,12 +15,6 @@ import {
 } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { addDays, format, differenceInCalendarDays } from 'date-fns';
-import type { DateRange } from 'react-day-picker';
 
 const adminFeatures = [
   { title: 'Manage Staff', href: '/dashboard/admin/users', icon: UserCog, description: "Add, edit, or remove administrators and instructors." },
@@ -50,17 +44,8 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-const DAILY_RATE = 5; // 5 ETB per day
-
 function AdminDashboardPage() {
   const { user } = useAuth();
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(),
-    to: addDays(new Date(), 30),
-  });
-
-  const durationInDays = date?.from && date?.to ? differenceInCalendarDays(date.to, date.from) + 1 : 0;
-  const calculatedCost = durationInDays * DAILY_RATE;
 
   return (
     <div className="container mx-auto py-8 space-y-8">
@@ -120,6 +105,7 @@ function AdminDashboardPage() {
         <Card className="shadow-lg xl:col-span-2">
           <CardHeader>
             <CardTitle>User Overview</CardTitle>
+            <CardDescription>New user registrations over the last 6 months.</CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
              <ChartContainer config={chartConfig} className="h-[300px] w-full">
@@ -151,7 +137,7 @@ function AdminDashboardPage() {
           <CardContent className="grid gap-8">
             <div className="flex items-center gap-4">
               <Avatar className="hidden h-9 w-9 sm:flex">
-                <AvatarImage src="https://placehold.co/100x100.png?text=SO" alt="Avatar" />
+                <AvatarImage src="https://placehold.co/100x100.png?text=SO" alt="Avatar" data-ai-hint="user avatar" />
                 <AvatarFallback>SO</AvatarFallback>
               </Avatar>
               <div className="grid gap-1">
@@ -162,7 +148,7 @@ function AdminDashboardPage() {
             </div>
             <div className="flex items-center gap-4">
               <Avatar className="hidden h-9 w-9 sm:flex">
-                <AvatarImage src="https://placehold.co/100x100.png?text=JD" alt="Avatar" />
+                <AvatarImage src="https://placehold.co/100x100.png?text=JD" alt="Avatar" data-ai-hint="user avatar" />
                 <AvatarFallback>JD</AvatarFallback>
               </Avatar>
               <div className="grid gap-1">
@@ -173,7 +159,7 @@ function AdminDashboardPage() {
             </div>
              <div className="flex items-center gap-4">
               <Avatar className="hidden h-9 w-9 sm:flex">
-                <AvatarImage src="https://placehold.co/100x100.png?text=AK" alt="Avatar" />
+                <AvatarImage src="https://placehold.co/100x100.png?text=AK" alt="Avatar" data-ai-hint="user avatar" />
                 <AvatarFallback>AK</AvatarFallback>
               </Avatar>
               <div className="grid gap-1">
@@ -184,7 +170,7 @@ function AdminDashboardPage() {
             </div>
             <div className="flex items-center gap-4">
               <Avatar className="hidden h-9 w-9 sm:flex">
-                <AvatarImage src="https://placehold.co/100x100.png?text=LM" alt="Avatar" />
+                <AvatarImage src="https://placehold.co/100x100.png?text=LM" alt="Avatar" data-ai-hint="user avatar" />
                 <AvatarFallback>LM</AvatarFallback>
               </Avatar>
               <div className="grid gap-1">
@@ -195,7 +181,7 @@ function AdminDashboardPage() {
             </div>
              <div className="flex items-center gap-4">
               <Avatar className="hidden h-9 w-9 sm:flex">
-                <AvatarImage src="https://placehold.co/100x100.png?text=OW" alt="Avatar" />
+                <AvatarImage src="https://placehold.co/100x100.png?text=OW" alt="Avatar" data-ai-hint="user avatar" />
                 <AvatarFallback>OW</AvatarFallback>
               </Avatar>
               <div className="grid gap-1">
@@ -218,59 +204,6 @@ function AdminDashboardPage() {
       </div>
 
        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-         <Card className="shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col">
-           <CardHeader>
-             <div className="flex items-center gap-4">
-               <CreditCard className="h-8 w-8 text-primary" />
-               <div>
-                  <CardTitle className="text-xl">Subscription Calculator</CardTitle>
-                  <CardDescription>Calculate cost for a date range.</CardDescription>
-               </div>
-             </div>
-           </CardHeader>
-           <CardContent className="flex-grow flex flex-col justify-center items-center gap-4">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="date"
-                    variant={"outline"}
-                    className={cn(
-                      "w-[300px] justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date?.from ? (
-                      date.to ? (
-                        <>
-                          {format(date.from, "LLL dd, y")} -{" "}
-                          {format(date.to, "LLL dd, y")}
-                        </>
-                      ) : (
-                        format(date.from, "LLL dd, y")
-                      )
-                    ) : (
-                      <span>Pick a date range</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    initialFocus
-                    mode="range"
-                    defaultMonth={date?.from}
-                    selected={date}
-                    onSelect={setDate}
-                    numberOfMonths={2}
-                  />
-                </PopoverContent>
-              </Popover>
-              <div className="text-center">
-                 <p className="text-sm text-muted-foreground">{durationInDays} days @ {DAILY_RATE} ETB/day</p>
-                 <p className="text-3xl font-bold text-primary">{calculatedCost.toLocaleString()} ETB</p>
-              </div>
-           </CardContent>
-         </Card>
         {adminFeatures.map((feature) => (
           <Card key={feature.title} className="shadow-lg hover:shadow-xl hover:border-primary/50 transition-all duration-300 flex flex-col">
             <CardHeader className="flex-row items-center gap-4 space-y-0">
