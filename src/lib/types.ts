@@ -5,7 +5,7 @@ export interface User {
   username?: string | null;
   email?: string | null;
   image?: string | null; 
-  role?: 'admin' | 'student';
+  role?: 'admin' | 'student' | 'instructor';
   gender?: "male" | "female" | "other" | "prefer_not_to_say" | null;
   studentType?: StudentTypeFromRegistrationFormKey | null;
   institutionName?: string | null; 
@@ -155,7 +155,7 @@ export interface CourseOrSubjectEntry {
 export interface Subscription {
   id: string;
   userId: string;
-  plan: 'monthly' | 'yearly' | 'none';
+  plan: string; // Changed to string to allow custom plan names like "30-Day Pass"
   status: 'active' | 'canceled' | 'expired' | 'inactive';
   startDate: Date;
   endDate: Date;

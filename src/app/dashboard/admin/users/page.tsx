@@ -17,9 +17,13 @@ const mockStaff: (User & { role: 'admin' | 'instructor', lastLogin?: Date })[] =
   { id: "usr3", name: "Instructor John Doe", email: "john.instructor@example.com", image: "https://placehold.co/100x100.png?text=JD", role: "instructor", studentType: undefined, lastLogin: new Date(2024, 6, 19) },
   { id: "usr7", name: "Dr. Almaz Lemma (Admin)", email: "almaz.admin@example.com", image: "https://placehold.co/100x100.png?text=AL", role: "admin", studentType: undefined, lastLogin: new Date(2024, 5, 15) },
   { id: "usr8", name: "Prof. Bekele Girma (Instructor)", email: "bekele.instructor@example.com", image: "https://placehold.co/100x100.png?text=BG", role: "instructor", studentType: undefined, lastLogin: new Date(2024, 6, 1) },
+  { id: "usr12", name: "Sara T. (Instructor)", email: "sara.t@example.com", role: "instructor", studentType: undefined, lastLogin: new Date(2024, 6, 25) },
+  { id: "usr13", name: "Daniel M. (Admin)", email: "daniel.m@example.com", image: "https://placehold.co/100x100.png?text=DM", role: "admin", studentType: undefined, lastLogin: new Date(2024, 6, 26) },
+
 ];
 
 type SortableStaffKeys = keyof (User & { lastLogin?: Date });
+const ITEMS_PER_PAGE = 5;
 
 const getInitials = (name?: string | null) => {
   if (!name) return "U";
@@ -32,6 +36,7 @@ const getInitials = (name?: string | null) => {
 
 function ManageStaffPage() {
   const [sortConfig, setSortConfig] = useState<{ key: SortableStaffKeys | null; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
+  const [currentPage, setCurrentPage] = useState(1);
 
   const sortedStaff = useMemo(() => {
     let sortableItems = [...mockStaff];
@@ -55,12 +60,20 @@ function ManageStaffPage() {
     return sortableItems;
   }, [sortConfig]);
 
+  const paginatedStaff = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return sortedStaff.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [sortedStaff, currentPage]);
+
+  const totalPages = Math.ceil(sortedStaff.length / ITEMS_PER_PAGE);
+
   const requestSort = (key: SortableStaffKeys) => {
     let direction: 'ascending' | 'descending' = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
       direction = 'descending';
     }
     setSortConfig({ key, direction });
+    setCurrentPage(1);
   };
   
   const renderSortIcon = (columnKey: SortableStaffKeys) => {
@@ -112,7 +125,7 @@ function ManageStaffPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedStaff.map((staff) => (
+            {paginatedStaff.map((staff) => (
               <TableRow key={staff.id}>
                 <TableCell>
                   <div className="flex items-center space-x-3">
@@ -143,15 +156,45 @@ function ManageStaffPage() {
                 </TableCell>
               </TableRow>
             ))}
-            {sortedStaff.length === 0 && (
+            {paginatedStaff.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground">
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   No staff members found.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center space-x-2 mt-6">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
+              <Button
+                key={pageNumber}
+                variant={currentPage === pageNumber ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCurrentPage(pageNumber)}
+              >
+                {pageNumber}
+              </Button>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

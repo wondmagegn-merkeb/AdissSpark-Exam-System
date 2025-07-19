@@ -18,14 +18,20 @@ const mockFeedback: FeedbackEntry[] = [
   { id: "fb3", userId: "usr3", userName: "John D.", userEmail: "john@example.com", subject: "Typo in Resource RES003", message: "There's a small typo on page 5 of the Calculus I note.", submittedAt: new Date(2024, 6, 19, 9, 0), status: "resolved" },
   { id: "fb4", userId: "usr4", userName: "Jane S.", userEmail: "jane@example.com", subject: "Suggestion: Dark Mode", message: "The platform would be great with a dark mode option.", submittedAt: new Date(2024, 6, 22, 11, 15), status: "new" },
   { id: "fb5", userId: "usr1", userName: "Abebe K.", userEmail: "abebe@example.com", subject: "Old feedback", message: "This is an older feedback entry that has been archived.", submittedAt: new Date(2024, 3, 10), status: "archived" },
+  { id: "fb6", userId: "usr5", userName: "Carlos R.", userEmail: "carlos@example.com", subject: "Login Issue", message: "I was unable to log in this morning.", submittedAt: new Date(2024, 6, 23, 8, 0), status: "new" },
+  { id: "fb7", userId: "usr6", userName: "Aisha A.", userEmail: "aisha@example.com", subject: "Payment Question", message: "Do you accept Telebirr for payments?", submittedAt: new Date(2024, 6, 23, 12, 45), status: "in_progress" },
+  { id: "fb8", userId: "usr2", userName: "Fatuma A.", userEmail: "fatuma@example.com", subject: "Positive Feedback", message: "The new resources are fantastic! Thank you!", submittedAt: new Date(2024, 6, 23, 15, 20), status: "resolved" },
+
 ];
 
 type FeedbackStatus = FeedbackEntry['status'];
 type SortableFeedbackKeys = keyof FeedbackEntry;
+const ITEMS_PER_PAGE = 5;
 
 function ManageFeedbackPage() {
   const [filterStatus, setFilterStatus] = useState<FeedbackStatus | 'all'>('all');
   const [sortConfig, setSortConfig] = useState<{ key: SortableFeedbackKeys | null; direction: 'ascending' | 'descending' }>({ key: 'submittedAt', direction: 'descending' });
+  const [currentPage, setCurrentPage] = useState(1);
   
   const filteredFeedback = useMemo(() => mockFeedback.filter(fb => 
     filterStatus === 'all' || fb.status === filterStatus
@@ -50,12 +56,21 @@ function ManageFeedbackPage() {
     return sortableItems;
   }, [filteredFeedback, sortConfig]);
 
+  const paginatedFeedback = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return sortedFeedback.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [sortedFeedback, currentPage]);
+
+  const totalPages = Math.ceil(sortedFeedback.length / ITEMS_PER_PAGE);
+
+
   const requestSort = (key: SortableFeedbackKeys) => {
     let direction: 'ascending' | 'descending' = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
       direction = 'descending';
     }
     setSortConfig({ key, direction });
+    setCurrentPage(1);
   };
   
   const renderSortIcon = (columnKey: SortableFeedbackKeys) => {
@@ -93,7 +108,7 @@ function ManageFeedbackPage() {
       <CardContent>
         <div className="mb-6 flex items-center gap-4">
             <Filter className="h-5 w-5 text-muted-foreground" />
-            <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as FeedbackStatus | 'all')}>
+            <Select value={filterStatus} onValueChange={(value) => { setFilterStatus(value as FeedbackStatus | 'all'); setCurrentPage(1); }}>
                 <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
@@ -128,7 +143,7 @@ function ManageFeedbackPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedFeedback.map((fb) => (
+            {paginatedFeedback.map((fb) => (
               <TableRow key={fb.id}>
                 <TableCell>{fb.id}</TableCell>
                 <TableCell className="font-medium">
@@ -153,7 +168,7 @@ function ManageFeedbackPage() {
                 </TableCell>
               </TableRow>
             ))}
-            {sortedFeedback.length === 0 && (
+            {paginatedFeedback.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   No feedback entries match the current filter.
@@ -162,6 +177,36 @@ function ManageFeedbackPage() {
             )}
           </TableBody>
         </Table>
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center space-x-2 mt-6">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
+              <Button
+                key={pageNumber}
+                variant={currentPage === pageNumber ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCurrentPage(pageNumber)}
+              >
+                {pageNumber}
+              </Button>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

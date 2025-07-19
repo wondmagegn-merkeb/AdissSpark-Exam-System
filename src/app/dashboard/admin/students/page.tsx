@@ -16,9 +16,13 @@ const mockStudents: (User & { role: 'student', lastLogin?: Date })[] = [
   { id: "usr4", name: "Jane Smith", email: "jane.smith@example.com", role: "student", studentType: "primary_school", gradeLevel: "Grade 5", lastLogin: new Date(2024, 6, 22) },
   { id: "usr5", name: "Carlos Rodriguez", email: "carlos@example.com", image: "https://placehold.co/100x100.png?text=CR", role: "student", studentType: "university", department: "Computer Science", institutionName: "Addis Ababa University", lastLogin: new Date(2024, 6, 23) },
   { id: "usr6", name: "Aisha Ahmed", email: "aisha@example.com", role: "student", studentType: "college", department: "Marketing", institutionName: "Unity College", lastLogin: new Date(2024, 6, 24) },
+  { id: "usr9", name: "Bereket T.", email: "bereket@example.com", role: "student", studentType: "preparatory_school", gradeLevel: "Grade 12", lastLogin: new Date(2024, 6, 25) },
+  { id: "usr10", name: "Sofia D.", email: "sofia@example.com", role: "student", studentType: "secondary_school", gradeLevel: "Grade 10", lastLogin: new Date(2024, 6, 26) },
+  { id: "usr11", name: "Michael B.", email: "michael@example.com", image: "https://placehold.co/100x100.png?text=MB", role: "student", studentType: "university", department: "Electrical Engineering", institutionName: "Bahir Dar University", lastLogin: new Date(2024, 6, 27) },
 ];
 
 type SortableStudentKeys = keyof (User & { lastLogin?: Date });
+const ITEMS_PER_PAGE = 5;
 
 const getInitials = (name?: string | null) => {
   if (!name) return "U";
@@ -36,6 +40,7 @@ const studentTypeToString = (studentType?: StudentTypeFromRegistrationFormKey | 
 
 function ManageStudentsPage() {
   const [sortConfig, setSortConfig] = useState<{ key: SortableStudentKeys | null; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
+  const [currentPage, setCurrentPage] = useState(1);
 
   const sortedStudents = useMemo(() => {
     let sortableItems = [...mockStudents];
@@ -58,6 +63,13 @@ function ManageStudentsPage() {
     }
     return sortableItems;
   }, [sortConfig]);
+  
+  const paginatedStudents = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return sortedStudents.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [sortedStudents, currentPage]);
+
+  const totalPages = Math.ceil(sortedStudents.length / ITEMS_PER_PAGE);
 
   const requestSort = (key: SortableStudentKeys) => {
     let direction: 'ascending' | 'descending' = 'ascending';
@@ -65,6 +77,7 @@ function ManageStudentsPage() {
       direction = 'descending';
     }
     setSortConfig({ key, direction });
+    setCurrentPage(1);
   };
   
   const renderSortIcon = (columnKey: SortableStudentKeys) => {
@@ -111,7 +124,7 @@ function ManageStudentsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedStudents.map((student) => (
+            {paginatedStudents.map((student) => (
               <TableRow key={student.id}>
                 <TableCell>
                   <div className="flex items-center space-x-3">
@@ -148,15 +161,45 @@ function ManageStudentsPage() {
                 </TableCell>
               </TableRow>
             ))}
-            {sortedStudents.length === 0 && (
+            {paginatedStudents.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   No students found.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center space-x-2 mt-6">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
+              <Button
+                key={pageNumber}
+                variant={currentPage === pageNumber ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCurrentPage(pageNumber)}
+              >
+                {pageNumber}
+              </Button>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 
 type SubscriptionWithUser = Subscription & { user: UserType };
 type SortableSubscriptionKeys = keyof SubscriptionWithUser | 'userName';
+const ITEMS_PER_PAGE = 5;
 
 const mockUsers: UserType[] = [
   { id: "usr2", name: "Fatuma Ali", email: "fatuma@example.com", image: "https://placehold.co/100x100.png?text=FA" },
@@ -27,6 +28,9 @@ const mockUsers: UserType[] = [
   { id: "usr5", name: "Carlos Rodriguez", email: "carlos@example.com", image: "https://placehold.co/100x100.png?text=CR" },
   { id: "usr6", name: "Aisha Ahmed", email: "aisha@example.com" },
   { id: "usr8", name: "Prof. Bekele Girma", email: "bekele.instructor@example.com", image: "https://placehold.co/100x100.png?text=BG" },
+  { id: "usr9", name: "Bereket T.", email: "bereket@example.com" },
+  { id: "usr10", name: "Sofia D.", email: "sofia@example.com" },
+  { id: "usr11", name: "Michael B.", email: "michael@example.com", image: "https://placehold.co/100x100.png?text=MB" },
 ];
 
 const mockSubscriptions: Subscription[] = [
@@ -49,6 +53,7 @@ function ManageSubscriptionsPage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: SortableSubscriptionKeys | null; direction: 'ascending' | 'descending' }>({ key: 'userName', direction: 'ascending' });
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { finalPrice, discountAmount } = useMemo(() => {
     const days = isNaN(durationDays) || durationDays < 0 ? 0 : durationDays;
@@ -117,12 +122,20 @@ function ManageSubscriptionsPage() {
     return sortableItems;
   }, [filteredSubscriptions, sortConfig]);
 
+  const paginatedSubscriptions = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return sortedSubscriptions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [sortedSubscriptions, currentPage]);
+
+  const totalPages = Math.ceil(sortedSubscriptions.length / ITEMS_PER_PAGE);
+
   const requestSort = (key: SortableSubscriptionKeys) => {
     let direction: 'ascending' | 'descending' = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
       direction = 'descending';
     }
     setSortConfig({ key, direction });
+    setCurrentPage(1);
   };
 
   const renderSortIcon = (columnKey: SortableSubscriptionKeys) => {
@@ -157,7 +170,7 @@ function ManageSubscriptionsPage() {
 
         return {
           ...sub,
-          plan: planName,
+          plan: planName as any, // Cast to any to allow custom plan names
           status: 'active',
           startDate,
           endDate,
@@ -252,7 +265,7 @@ function ManageSubscriptionsPage() {
               placeholder="Search by name or email..."
               className="pl-8"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
             />
           </div>
           <Table>
@@ -274,7 +287,7 @@ function ManageSubscriptionsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedSubscriptions.map((sub) => (
+              {paginatedSubscriptions.map((sub) => (
                 <TableRow 
                   key={sub.id} 
                   onClick={() => setSelectedUserId(sub.userId)}
@@ -322,7 +335,7 @@ function ManageSubscriptionsPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {sortedSubscriptions.length === 0 && (
+              {paginatedSubscriptions.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                     No subscriptions found.
@@ -331,6 +344,36 @@ function ManageSubscriptionsPage() {
               )}
             </TableBody>
           </Table>
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center space-x-2 mt-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
+                <Button
+                  key={pageNumber}
+                  variant={currentPage === pageNumber ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCurrentPage(pageNumber)}
+                >
+                  {pageNumber}
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
