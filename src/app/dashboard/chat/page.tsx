@@ -15,6 +15,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 
 // Mock user data enhanced with chat-specific fields
@@ -25,7 +26,7 @@ interface ChatUser extends User {
   unreadCount: number;
 }
 
-const mockUsers: ChatUser[] = [
+const initialMockUsers: ChatUser[] = [
   { id: 'user2', name: 'Alice Wonderland', email: 'alice@example.com', image: 'https://placehold.co/100x100.png?text=AW', isOnline: true, lastMessage: "Hey, are you free to chat?", lastMessageTimestamp: new Date(Date.now() - 5 * 60 * 1000), unreadCount: 2 },
   { id: 'user3', name: 'Bob The Builder', email: 'bob@example.com', image: 'https://placehold.co/100x100.png?text=BB', isOnline: false, lastMessage: "Sure, I'll check it out. Thanks!", lastMessageTimestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), unreadCount: 0 },
   { id: 'user4', name: 'Charlie Brown', email: 'charlie@example.com', image: 'https://placehold.co/100x100.png?text=CB', isOnline: true, lastMessage: "Haha, that's hilarious! 😂", lastMessageTimestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), unreadCount: 0 },
@@ -54,20 +55,49 @@ const getInitials = (name?: string | null) => {
 export default function ChatPage() {
   const router = useRouter();
   const { user: currentUser } = useAuth();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<ChatUser | null>(null);
+  const [users, setUsers] = useState<ChatUser[]>(initialMockUsers);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
+  // Effect to simulate a user coming online
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const offlineUsers = users.filter(u => !u.isOnline);
+      if (offlineUsers.length > 0) {
+        const randomOfflineUser = offlineUsers[Math.floor(Math.random() * offlineUsers.length)];
+        
+        // Update the user's status in the main list
+        setUsers(currentUsers => 
+          currentUsers.map(u => 
+            u.id === randomOfflineUser.id ? { ...u, isOnline: true } : u
+          )
+        );
+
+        // Show a notification toast
+        toast({
+          title: "User Online",
+          description: `${randomOfflineUser.name} is now online.`,
+        });
+      }
+    }, 3000); // 3-second delay to simulate a real-time event
+
+    return () => clearTimeout(timer);
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once when the component mounts
+
+
   const filteredUsers = useMemo(() => {
-    return mockUsers.filter(user =>
+    return users.filter(user =>
         user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchTerm.toLowerCase())
       ).sort((a, b) => b.lastMessageTimestamp.getTime() - a.lastMessageTimestamp.getTime());
-  }, [searchTerm]);
+  }, [searchTerm, users]);
   
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -120,8 +150,8 @@ export default function ChatPage() {
     <div className="flex h-screen p-4 gap-4">
       {/* Left Panel: User List */}
       <Card className={cn(
-        "w-full md:max-w-sm flex-shrink-0 flex-col shadow-lg",
-        selectedUser ? "hidden md:flex" : "flex"
+        "w-full flex-shrink-0 flex-col shadow-lg",
+        selectedUser ? "hidden md:flex md:max-w-sm" : "flex"
       )}>
         <CardHeader className="border-b flex flex-row items-center justify-between">
             <div className="flex items-center">
