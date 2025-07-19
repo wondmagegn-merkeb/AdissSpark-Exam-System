@@ -32,7 +32,18 @@ const initialMockUsers: ChatUser[] = [
   { id: 'user4', name: 'Charlie Brown', email: 'charlie@example.com', image: 'https://placehold.co/100x100.png?text=CB', isOnline: true, lastMessage: "Haha, that's hilarious! 😂", lastMessageTimestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), unreadCount: 0, studentType: 'high_school', gradeLevel: 'Grade 11', institutionName: 'Black Lion High School' },
   { id: 'user5', name: 'Diana Prince', email: 'diana@example.com', image: 'https://placehold.co/100x100.png?text=DP', isOnline: false, lastMessage: "Okay, sounds good. Let's sync up tomorrow.", lastMessageTimestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), unreadCount: 5, studentType: 'university', department: 'Archaeology', institutionName: 'Axum University' },
   { id: 'user6', name: 'Edward Scissorhands', email: 'edward@example.com', image: 'https://placehold.co/100x100.png?text=ES', isOnline: true, lastMessage: "You sent an attachment.", lastMessageTimestamp: new Date(Date.now() - 30 * 60 * 1000), unreadCount: 0, studentType: 'preparatory_school', gradeLevel: 'Grade 12', institutionName: 'Finishing Touch Academy' },
+  { id: 'user7', name: 'Frankenstein Monster', email: 'frank@example.com', image: 'https://placehold.co/100x100.png?text=FM', isOnline: false, lastMessage: "I'll be there in 10.", lastMessageTimestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), unreadCount: 0, studentType: 'university', department: 'Electrical Engineering', institutionName: 'Gondar University' },
+  { id: 'user8', name: 'Grace Hopper', email: 'grace@example.com', image: 'https://placehold.co/100x100.png?text=GH', isOnline: true, lastMessage: "Can you review my code?", lastMessageTimestamp: new Date(Date.now() - 15 * 60 * 1000), unreadCount: 1, studentType: 'university', department: 'Software Engineering', institutionName: 'Adama Science and Technology University' },
+  { id: 'user9', name: 'Harry Potter', email: 'harry@example.com', image: 'https://placehold.co/100x100.png?text=HP', isOnline: true, lastMessage: "Did you finish the assignment?", lastMessageTimestamp: new Date(Date.now() - 50 * 60 * 1000), unreadCount: 0, studentType: 'high_school', gradeLevel: 'Grade 10', institutionName: 'St. Joseph School' },
+  { id: 'user10', name: 'Ivy Valentine', email: 'ivy@example.com', image: 'https://placehold.co/100x100.png?text=IV', isOnline: false, lastMessage: "See you later!", lastMessageTimestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), unreadCount: 0, studentType: 'college', department: 'Fashion Design', institutionName: 'Next Fashion Design College' },
+  { id: 'user11', name: 'Jack Sparrow', email: 'jack@example.com', image: 'https://placehold.co/100x100.png?text=JS', isOnline: true, lastMessage: "Where's the rum?", lastMessageTimestamp: new Date(Date.now() - 2 * 60 * 1000), unreadCount: 3, studentType: 'primary_school', gradeLevel: 'Grade 6', institutionName: 'Hillside School' },
+  { id: 'user12', name: 'Kratos Aurion', email: 'kratos@example.com', image: 'https://placehold.co/100x100.png?text=KA', isOnline: false, lastMessage: "Affirmative.", lastMessageTimestamp: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), unreadCount: 0, studentType: 'university', department: 'History', institutionName: 'Bahir Dar University' },
+  { id: 'user13', name: 'Lara Croft', email: 'lara@example.com', image: 'https://placehold.co/100x100.png?text=LC', isOnline: true, lastMessage: "I found the artifact!", lastMessageTimestamp: new Date(Date.now() - 12 * 60 * 60 * 1000), unreadCount: 0, studentType: 'university', department: 'Archaeology', institutionName: 'Axum University' },
+  { id: 'user14', name: 'Master Chief', email: 'chief@example.com', image: 'https://placehold.co/100x100.png?text=MC', isOnline: true, lastMessage: "I need a weapon.", lastMessageTimestamp: new Date(Date.now() - 20 * 60 * 1000), unreadCount: 1, studentType: 'college', department: 'Mechanical Engineering', institutionName: 'Admas University' },
+  { id: 'user15', name: 'Naruto Uzumaki', email: 'naruto@example.com', image: 'https://placehold.co/100x100.png?text=NU', isOnline: false, lastMessage: "Believe it!", lastMessageTimestamp: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000), unreadCount: 0, studentType: 'secondary_school', gradeLevel: 'Grade 9', institutionName: 'Cathedral School' },
+  { id: 'user16', name: 'Optimus Prime', email: 'optimus@example.com', image: 'https://placehold.co/100x100.png?text=OP', isOnline: true, lastMessage: "Autobots, roll out!", lastMessageTimestamp: new Date(Date.now() - 1 * 60 * 1000), unreadCount: 1, studentType: 'university', department: 'Mechanical Engineering', institutionName: 'Jimma University' },
 ];
+
 
 interface ChatMessage {
   id: string;
@@ -108,10 +119,17 @@ export default function ChatPage() {
 
 
   const filteredUsers = useMemo(() => {
-    return users.filter(user =>
-        user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-      ).sort((a, b) => b.lastMessageTimestamp.getTime() - a.lastMessageTimestamp.getTime());
+    return users.filter(user => {
+        const search = searchTerm.toLowerCase();
+        return (
+            user.name?.toLowerCase().includes(search) ||
+            user.email?.toLowerCase().includes(search) ||
+            user.studentType?.toLowerCase().replace(/_/g, ' ').includes(search) ||
+            user.department?.toLowerCase().includes(search) ||
+            user.institutionName?.toLowerCase().includes(search) ||
+            user.gradeLevel?.toLowerCase().includes(search)
+        );
+      }).sort((a, b) => b.lastMessageTimestamp.getTime() - a.lastMessageTimestamp.getTime());
   }, [searchTerm, users]);
   
   useEffect(() => {
