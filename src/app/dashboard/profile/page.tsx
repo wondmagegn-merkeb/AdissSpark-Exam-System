@@ -39,6 +39,7 @@ export default function ProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const isStudent = user?.role === 'student';
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -70,6 +71,8 @@ export default function ProfilePage() {
     });
     setIsEditing(false);
   };
+
+  const watchedStudentType = form.watch("studentType");
 
   return (
     <div className="container mx-auto py-8">
@@ -117,49 +120,54 @@ export default function ProfilePage() {
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" {...form.register("email")} disabled className="mt-1 bg-muted/50 cursor-not-allowed" />
               </div>
-              <div>
-                <Label htmlFor="studentType">Student Type</Label>
-                 <Controller
-                    name="studentType"
-                    control={form.control}
-                    render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value} disabled={!isEditing}>
-                        <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Select student type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                        {STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM.map(type => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
+              
+              {isStudent && (
+                <>
+                    <div>
+                        <Label htmlFor="studentType">Student Type</Label>
+                        <Controller
+                            name="studentType"
+                            control={form.control}
+                            render={({ field }) => (
+                            <Select onValueChange={field.onChange} value={field.value} disabled={!isEditing}>
+                                <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Select student type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                {STUDENT_TYPES_ORDERED_FOR_REGISTRATION_FORM.map(type => (
+                                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            )}
+                        />
+                    </div>
+                    {(watchedStudentType === 'University' || watchedStudentType === 'College') && (
+                        <>
+                            <div>
+                                <Label htmlFor="institutionName">Institution Name</Label>
+                                <Input id="institutionName" {...form.register("institutionName")} disabled={!isEditing} className="mt-1" />
+                            </div>
+                            <div>
+                                <Label htmlFor="department">Department</Label>
+                                <Input id="department" {...form.register("department")} disabled={!isEditing} className="mt-1" />
+                            </div>
+                        </>
                     )}
-                />
-              </div>
-               {(user?.studentType === 'university' || user?.studentType === 'college') && (
-                <>
-                    <div>
-                        <Label htmlFor="institutionName">Institution Name</Label>
-                        <Input id="institutionName" {...form.register("institutionName")} disabled={!isEditing} className="mt-1" />
-                    </div>
-                    <div>
-                        <Label htmlFor="department">Department</Label>
-                        <Input id="department" {...form.register("department")} disabled={!isEditing} className="mt-1" />
-                    </div>
+                    {(watchedStudentType && ['Primary School', 'Secondary School', 'High School', 'Preparatory School'].includes(watchedStudentType)) && (
+                        <>
+                            <div>
+                                <Label htmlFor="institutionName">School Name</Label>
+                                <Input id="institutionName" {...form.register("institutionName")} disabled={!isEditing} className="mt-1" />
+                            </div>
+                            <div>
+                                <Label htmlFor="gradeLevel">Grade Level</Label>
+                                <Input id="gradeLevel" {...form.register("gradeLevel")} disabled={!isEditing} className="mt-1" />
+                            </div>
+                        </>
+                    )}
                 </>
-               )}
-               {(user?.studentType?.includes('school')) && (
-                <>
-                    <div>
-                        <Label htmlFor="institutionName">School Name</Label>
-                        <Input id="institutionName" {...form.register("institutionName")} disabled={!isEditing} className="mt-1" />
-                    </div>
-                    <div>
-                        <Label htmlFor="gradeLevel">Grade Level</Label>
-                        <Input id="gradeLevel" {...form.register("gradeLevel")} disabled={!isEditing} className="mt-1" />
-                    </div>
-                </>
-               )}
+              )}
             </div>
             {isEditing && (
               <div className="flex justify-end pt-4">
