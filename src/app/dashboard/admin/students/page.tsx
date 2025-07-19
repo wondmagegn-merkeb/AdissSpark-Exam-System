@@ -11,21 +11,21 @@ import { PlusCircle, Edit, Trash2, UserRound, ArrowUpDown } from "lucide-react";
 import type { User, StudentTypeFromRegistrationFormKey } from "@/lib/types"; 
 import { withAdminAuth } from "@/components/auth/withAdminAuth";
 
-const mockStudents: (User & { role: 'student', lastLogin?: Date })[] = [
-  { id: "usr2", name: "Fatuma Ali", email: "fatuma@example.com", image: "https://placehold.co/100x100.png?text=FA", role: "student", studentType: "high_school", gradeLevel: "Grade 11", lastLogin: new Date(2024, 6, 21) },
-  { id: "usr4", name: "Jane Smith", email: "jane.smith@example.com", role: "student", studentType: "primary_school", gradeLevel: "Grade 5", lastLogin: new Date(2024, 6, 22) },
-  { id: "usr5", name: "Carlos Rodriguez", email: "carlos@example.com", image: "https://placehold.co/100x100.png?text=CR", role: "student", studentType: "university", department: "Computer Science", institutionName: "Addis Ababa University", lastLogin: new Date(2024, 6, 23) },
-  { id: "usr6", name: "Aisha Ahmed", email: "aisha@example.com", role: "student", studentType: "college", department: "Marketing", institutionName: "Unity College", lastLogin: new Date(2024, 6, 24) },
-  { id: "usr9", name: "Bereket T.", email: "bereket@example.com", role: "student", studentType: "preparatory_school", gradeLevel: "Grade 12", lastLogin: new Date(2024, 6, 25) },
-  { id: "usr10", name: "Sofia D.", email: "sofia@example.com", role: "student", studentType: "secondary_school", gradeLevel: "Grade 10", lastLogin: new Date(2024, 6, 26) },
-  { id: "usr11", name: "Michael B.", email: "michael@example.com", image: "https://placehold.co/100x100.png?text=MB", role: "student", studentType: "university", department: "Electrical Engineering", institutionName: "Bahir Dar University", lastLogin: new Date(2024, 6, 27) },
-  { id: "usr14", name: "Liya Getachew", email: "liya.g@example.com", role: "student", studentType: "university", department: "Medicine", institutionName: "Gondar University", lastLogin: new Date(2024, 6, 28) },
-  { id: "usr15", name: "Samuel Hailu", email: "samuel.h@example.com", image: "https://placehold.co/100x100.png?text=SH", role: "student", studentType: "college", department: "Accounting", institutionName: "Admas University", lastLogin: new Date(2024, 6, 29) },
-  { id: "usr16", name: "Hana Tesfaye", email: "hana.t@example.com", role: "student", studentType: "high_school", gradeLevel: "Grade 12", lastLogin: new Date(2024, 6, 30) },
-  { id: "usr17", name: "Yosef Lemma", email: "yosef.l@example.com", role: "student", studentType: "preparatory_school", gradeLevel: "Grade 11", lastLogin: new Date(2024, 7, 1) },
+const mockStudents: (User & { role: 'student' })[] = [
+  { id: "usr2", name: "Fatuma Ali", email: "fatuma@example.com", image: "https://placehold.co/100x100.png?text=FA", role: "student", studentType: "high_school", gradeLevel: "Grade 11" },
+  { id: "usr4", name: "Jane Smith", email: "jane.smith@example.com", role: "student", studentType: "primary_school", gradeLevel: "Grade 5" },
+  { id: "usr5", name: "Carlos Rodriguez", email: "carlos@example.com", image: "https://placehold.co/100x100.png?text=CR", role: "student", studentType: "university", department: "Computer Science", institutionName: "Addis Ababa University" },
+  { id: "usr6", name: "Aisha Ahmed", email: "aisha@example.com", role: "student", studentType: "college", department: "Marketing", institutionName: "Unity College" },
+  { id: "usr9", name: "Bereket T.", email: "bereket@example.com", role: "student", studentType: "preparatory_school", gradeLevel: "Grade 12" },
+  { id: "usr10", name: "Sofia D.", email: "sofia@example.com", role: "student", studentType: "secondary_school", gradeLevel: "Grade 10" },
+  { id: "usr11", name: "Michael B.", email: "michael@example.com", image: "https://placehold.co/100x100.png?text=MB", role: "student", studentType: "university", department: "Electrical Engineering", institutionName: "Bahir Dar University" },
+  { id: "usr14", name: "Liya Getachew", email: "liya.g@example.com", role: "student", studentType: "university", department: "Medicine", institutionName: "Gondar University" },
+  { id: "usr15", name: "Samuel Hailu", email: "samuel.h@example.com", image: "https://placehold.co/100x100.png?text=SH", role: "student", studentType: "college", department: "Accounting", institutionName: "Admas University" },
+  { id: "usr16", name: "Hana Tesfaye", email: "hana.t@example.com", role: "student", studentType: "high_school", gradeLevel: "Grade 12" },
+  { id: "usr17", name: "Yosef Lemma", email: "yosef.l@example.com", role: "student", studentType: "preparatory_school", gradeLevel: "Grade 11" },
 ];
 
-type SortableStudentKeys = keyof (User & { lastLogin?: Date });
+type SortableStudentKeys = keyof User;
 const ITEMS_PER_PAGE = 5;
 
 const getInitials = (name?: string | null) => {
@@ -121,9 +121,6 @@ function ManageStudentsPage() {
               <TableHead onClick={() => requestSort('institutionName')} className="cursor-pointer group hover:bg-muted/50">
                 <div className="flex items-center">Institution {renderSortIcon('institutionName')}</div>
               </TableHead>
-              <TableHead onClick={() => requestSort('lastLogin')} className="cursor-pointer group hover:bg-muted/50">
-                <div className="flex items-center">Last Login {renderSortIcon('lastLogin')}</div>
-              </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -152,9 +149,6 @@ function ManageStudentsPage() {
                 <TableCell>
                   {student.institutionName || 'N/A'}
                 </TableCell>
-                 <TableCell>
-                  {student.lastLogin ? student.lastLogin.toLocaleDateString() : 'N/A'}
-                </TableCell>
                 <TableCell className="text-right">
                   <Button variant="outline" size="sm" className="mr-2">
                     <Edit className="mr-1 h-3 w-3" /> Edit
@@ -167,7 +161,7 @@ function ManageStudentsPage() {
             ))}
             {paginatedStudents.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   No students found.
                 </TableCell>
               </TableRow>
