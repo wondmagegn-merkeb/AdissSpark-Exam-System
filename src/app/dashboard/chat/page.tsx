@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { MessageSquare, Search, LayoutDashboard, Send, User as UserIcon, ArrowLeft, Building, Mail, GraduationCap } from 'lucide-react';
+import { MessageSquare, Search, LayoutDashboard, Send, User as UserIcon, ArrowLeft, Building, Mail, GraduationCap, Hand } from 'lucide-react';
 import type { User } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -43,6 +43,8 @@ interface ChatMessage {
   isCurrentUser: boolean;
 }
 
+type ChatPermissionStatus = 'unknown' | 'accepted';
+
 const getInitials = (name?: string | null) => {
   if (!name) return "U";
   const names = name.split(' ');
@@ -66,6 +68,8 @@ export default function ChatPage() {
   const [selectedUser, setSelectedUser] = useState<ChatUser | null>(null);
   const [users, setUsers] = useState<ChatUser[]>(initialMockUsers);
   const [isProfileViewActive, setIsProfileViewActive] = useState(false);
+  const [chatPermissionStatus, setChatPermissionStatus] = useState<ChatPermissionStatus>('unknown');
+
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -116,16 +120,50 @@ export default function ChatPage() {
     }
   }, [messages]);
 
+  const getAcceptedChats = (): string[] => {
+    if (!currentUser) return [];
+    const key = `chat_permissions_${currentUser.id}`;
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : [];
+  };
+
+  const setChatAsAccepted = (otherUserId: string) => {
+    if (!currentUser) return;
+    const key = `chat_permissions_${currentUser.id}`;
+    const accepted = getAcceptedChats();
+    if (!accepted.includes(otherUserId)) {
+      accepted.push(otherUserId);
+      localStorage.setItem(key, JSON.stringify(accepted));
+    }
+  };
+
   const handleSelectUser = (user: ChatUser) => {
     setSelectedUser(user);
-    setIsProfileViewActive(false); // Always show chat first when selecting a new user
+    setIsProfileViewActive(false); 
     setUsers(currentUsers => currentUsers.map(u => u.id === user.id ? { ...u, unreadCount: 0 } : u));
     setMessages([]); 
+
+    const acceptedChats = getAcceptedChats();
+    if (acceptedChats.includes(user.id)) {
+      setChatPermissionStatus('accepted');
+    } else {
+      setChatPermissionStatus('unknown');
+    }
+  };
+
+  const handleStartConversation = () => {
+    if (!selectedUser) return;
+    setChatAsAccepted(selectedUser.id);
+    setChatPermissionStatus('accepted');
+    toast({
+      title: `Conversation with ${selectedUser.name} started!`,
+      description: "You can now send messages.",
+    });
   };
 
   const handleSendMessage = (e: FormEvent) => {
     e.preventDefault();
-    if (input.trim() === '' || !currentUser || !selectedUser) return;
+    if (input.trim() === '' || !currentUser || !selectedUser || chatPermissionStatus !== 'accepted') return;
 
     setIsLoading(true);
     const newMessage: ChatMessage = {
@@ -306,7 +344,7 @@ export default function ChatPage() {
                           </div>
                       </div>
                   </div>
-                 ) : (
+                 ) : chatPermissionStatus === 'accepted' ? (
                     <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
                       <div className="space-y-6">
                       {messages.map((msg) => (
@@ -347,6 +385,17 @@ export default function ChatPage() {
                           ))}
                       </div>
                    </ScrollArea>
+                 ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                      <Hand className="h-16 w-16 text-primary mb-4" />
+                      <h3 className="text-xl font-semibold text-foreground">Start the Conversation</h3>
+                      <p className="text-muted-foreground mt-2 max-w-xs">
+                          You haven't chatted with {selectedUser.name} before. Click the button below to start the conversation.
+                      </p>
+                      <Button className="mt-6" onClick={handleStartConversation}>
+                          Start Conversation
+                      </Button>
+                  </div>
                  )}
             </CardContent>
             {!isProfileViewActive && (
@@ -355,7 +404,7 @@ export default function ChatPage() {
                         <Textarea
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        placeholder={`Message ${selectedUser.name || ''}...`}
+                        placeholder={chatPermissionStatus === 'accepted' ? `Message ${selectedUser.name || ''}...` : 'Start the conversation to send a message.'}
                         className="flex-grow resize-none"
                         rows={1}
                         onKeyDown={(e) => {
@@ -364,9 +413,9 @@ export default function ChatPage() {
                             handleSendMessage(e as any);
                             }
                         }}
-                        disabled={isLoading}
+                        disabled={isLoading || chatPermissionStatus !== 'accepted'}
                         />
-                        <Button type="submit" disabled={!input.trim() || isLoading}>
+                        <Button type="submit" disabled={!input.trim() || isLoading || chatPermissionStatus !== 'accepted'}>
                             {isLoading ? <div className="h-4 w-4 border-2 border-background border-t-transparent rounded-full animate-spin mr-2"></div> : <Send className="mr-2 h-4 w-4" />}
                             Send
                         </Button>
@@ -385,3 +434,6 @@ export default function ChatPage() {
     </div>
   );
 }
+
+
+    
