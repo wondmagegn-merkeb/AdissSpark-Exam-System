@@ -65,31 +65,38 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // Effect to simulate a user coming online
+  // Effect to simulate receiving a new message
   useEffect(() => {
     const timer = setTimeout(() => {
-      const offlineUsers = users.filter(u => !u.isOnline);
-      if (offlineUsers.length > 0) {
-        const randomOfflineUser = offlineUsers[Math.floor(Math.random() * offlineUsers.length)];
+      // Pick a random user to send a message (that isn't the current selected user)
+      const potentialSenders = users.filter(u => u.id !== selectedUser?.id);
+      if (potentialSenders.length > 0) {
+        const randomSender = potentialSenders[Math.floor(Math.random() * potentialSenders.length)];
+        const newMessage = "Just checking in, let me know when you're free!";
         
-        // Update the user's status in the main list
+        // Update the user's state in the main list
         setUsers(currentUsers => 
           currentUsers.map(u => 
-            u.id === randomOfflineUser.id ? { ...u, isOnline: true } : u
+            u.id === randomSender.id ? { 
+              ...u, 
+              lastMessage: newMessage,
+              lastMessageTimestamp: new Date(),
+              unreadCount: u.unreadCount + 1,
+            } : u
           )
         );
 
         // Show a notification toast
         toast({
-          title: "User Online",
-          description: `${randomOfflineUser.name} is now online.`,
+          title: `New Message from ${randomSender.name}`,
+          description: newMessage,
         });
       }
-    }, 3000); // 3-second delay to simulate a real-time event
+    }, 5000); // 5-second delay to simulate a real-time event
 
     return () => clearTimeout(timer);
      // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run only once when the component mounts
+  }, [selectedUser]); // Rerun if the selected user changes
 
 
   const filteredUsers = useMemo(() => {
@@ -107,9 +114,9 @@ export default function ChatPage() {
 
   const handleSelectUser = (user: ChatUser) => {
     setSelectedUser(user);
-    setMessages([]); // Clear previous messages
-    // In a real app, you would fetch the message history for this user here.
-    // For now, we'll just show an empty chat.
+    // When a user is selected, mark their messages as read
+    setUsers(currentUsers => currentUsers.map(u => u.id === user.id ? { ...u, unreadCount: 0 } : u));
+    setMessages([]); 
   };
 
   const handleSendMessage = (e: FormEvent) => {
@@ -128,6 +135,10 @@ export default function ChatPage() {
     setMessages(prevMessages => [...prevMessages, newMessage]);
     setInput('');
 
+    // Update the last message in the user list
+    setUsers(currentUsers => currentUsers.map(u => u.id === selectedUser.id ? { ...u, lastMessage: `You: ${input.trim()}`, lastMessageTimestamp: new Date() } : u));
+
+
     // Simulate a reply from the other user for demonstration
     setTimeout(() => {
       if(selectedUser) { // Check if user is still selected
@@ -140,6 +151,8 @@ export default function ChatPage() {
           isCurrentUser: false,
         };
         setMessages(prevMessages => [...prevMessages, replyMessage]);
+         // Update the last message in the user list with the reply
+        setUsers(currentUsers => currentUsers.map(u => u.id === selectedUser.id ? { ...u, lastMessage: replyMessage.text, lastMessageTimestamp: new Date() } : u));
       }
       setIsLoading(false);
     }, 1000);
