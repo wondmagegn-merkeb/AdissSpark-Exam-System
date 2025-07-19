@@ -52,6 +52,9 @@ const mockResources: Resource[] = [
   { id: 'res11', title: 'Advanced Software Engineering', type: 'book', description: 'Covers advanced topics in software engineering for CS students.', subjectOrCourse: 'Software Engineering', isPremium: true, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'software engineering' },
   { id: 'res12', title: 'Ethiopian Grade 5 Mathematics', type: 'note', description: 'Notes based on Ethiopian Grade 5 curriculum.', subjectOrCourse: 'Grade 5 Mathematics', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'primary math' },
   { id: 'res13', title: 'Networking Essentials Guide', type: 'book', description: 'A guide for college students on networking.', subjectOrCourse: 'Networking Essentials', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'computer networking' },
+  { id: 'res14', title: 'Constitutional Law Video Series', type: 'video', description: 'An introductory video series on Ethiopian Constitutional Law.', subjectOrCourse: 'Ethiopian Law', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'law justice' },
+  { id: 'res15', title: 'Human Anatomy Atlas (Premium)', type: 'book', description: 'A detailed atlas of human anatomy for medical students.', subjectOrCourse: 'Human Anatomy', isPremium: true, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'anatomy model' },
+  { id: 'res16', title: 'Effective Business Communication', type: 'note', description: 'Notes on improving communication skills in a business environment for college students.', subjectOrCourse: 'Business Communication', isPremium: false, imageUrl: 'https://placehold.co/600x400.png', contentUrl: '#', dataAiHint: 'business meeting' },
 ];
 
 const getResourceTypeIcon = (type: Resource['type']) => {
@@ -292,4 +295,5 @@ export default function ResourcesPage() {
     </div>
   );
 }
+
 
