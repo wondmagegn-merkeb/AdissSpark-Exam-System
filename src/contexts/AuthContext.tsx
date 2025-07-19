@@ -65,7 +65,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (email: string) => {
-    // Mock role assignment: one admin, everyone else is a student
     const role = email.toLowerCase() === 'admin@example.com' ? 'admin' : 'student';
 
     const mockUser: User = {
@@ -73,15 +72,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         name: role === 'admin' ? 'Admin User' : email.split('@')[0],
         role: role,
-        // Other fields can be populated from a stored profile if needed
     };
     setUser(mockUser);
     localStorage.setItem('examPrepUser', JSON.stringify(mockUser));
-    router.push('/dashboard');
+    
+    // Redirect to the appropriate dashboard
+    if (role === 'admin') {
+      router.push('/dashboard/admin');
+    } else {
+      router.push('/dashboard');
+    }
   };
 
   const register = (data: RegisterData) => {
-    // Map form student type (e.g., "Primary School") to storage student type (e.g., "primary_school")
     const userStudentTypeForStorage = data.studentType.toLowerCase().replace(/ /g, '_') as User['studentType'];
 
     const newUser: User = {
@@ -120,7 +123,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         break;
     }
 
-    // Add 'Other' institution to admin list as inactive
     if (customInstitutionNameEntered && mappedInstitutionType) {
       try {
         const storedInstitutions = localStorage.getItem(INSTITUTIONS_STORAGE_KEY);
@@ -135,8 +137,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: `inst-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
             name: customInstitutionNameEntered,
             type: mappedInstitutionType,
-            context: 'Added via registration', // Default context
-            status: 'inactive', // Default status
+            context: 'Added via registration',
+            status: 'inactive',
           };
           institutions.push(newInstitutionEntry);
           localStorage.setItem(INSTITUTIONS_STORAGE_KEY, JSON.stringify(institutions));

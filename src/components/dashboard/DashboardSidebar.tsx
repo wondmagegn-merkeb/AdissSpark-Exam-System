@@ -34,13 +34,13 @@ const userNavItems: NavItem[] = [
 ];
 
 const adminNavItems: NavItem[] = [
+  { title: 'Admin Dashboard', href: '/dashboard/admin', icon: LayoutDashboard },
   { title: 'Manage Staff', href: '/dashboard/admin/users', icon: UserCog }, 
   { title: 'Manage Students', href: '/dashboard/admin/students', icon: UserRound }, 
   { title: 'Manage Institutions', href: '/dashboard/admin/universities', icon: Building },
   { title: 'Manage Departments & Grades', href: '/dashboard/admin/departments', icon: BookCopy },
   { title: 'Manage Courses & Subjects', href: '/dashboard/admin/courses', icon: ListChecks },
   { title: 'Manage Exams', href: '/dashboard/admin/exams', icon: EditIconLucide },
-  // The "Manage Global Questions" link was associated with HelpCircle, removing it.
   { title: 'Manage Resources', href: '/dashboard/admin/resources', icon: Library },
   { title: 'Manage Agents', href: '/dashboard/admin/agents', icon: Cpu },
   { title: 'Manage Feedback', href: '/dashboard/admin/feedback', icon: Archive },
@@ -58,7 +58,7 @@ export function DashboardSidebar() {
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
-          {mainNavItems.map((item) => (
+          {!isAdmin && mainNavItems.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 asChild
@@ -80,7 +80,6 @@ export function DashboardSidebar() {
         
         {isAdmin && (
           <>
-            <SidebarSeparator />
             <SidebarMenu>
                 <SidebarMenuItem>
                      <div className="px-2 py-1 text-xs font-semibold text-sidebar-foreground/70 flex items-center">
@@ -92,7 +91,7 @@ export function DashboardSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname.startsWith(item.href)} 
+                    isActive={pathname === item.href || (item.href !== '/dashboard/admin' && pathname.startsWith(item.href))}
                     tooltip={item.title}
                   >
                     <Link href={item.href}>
@@ -171,7 +170,6 @@ export function DashboardSidebar() {
   );
 }
 
-// Re-adding Card components locally as they are used here.
 const Card = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={`rounded-lg border shadow-sm ${className}`}
