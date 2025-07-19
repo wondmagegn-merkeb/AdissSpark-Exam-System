@@ -86,6 +86,26 @@ export default function ChatPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Effect to handle textarea auto-resizing
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'; // Reset height to recalculate
+      const scrollHeight = textareaRef.current.scrollHeight;
+      // Estimate line height (can be refined)
+      const lineHeight = parseFloat(getComputedStyle(textareaRef.current).lineHeight);
+      const maxHeight = lineHeight * 3; // Max 3 lines
+      
+      if (scrollHeight > maxHeight) {
+        textareaRef.current.style.height = `${maxHeight}px`;
+        textareaRef.current.style.overflowY = 'auto';
+      } else {
+        textareaRef.current.style.height = `${scrollHeight}px`;
+        textareaRef.current.style.overflowY = 'hidden';
+      }
+    }
+  }, [input]);
 
   // Effect to simulate receiving a new message
   useEffect(() => {
@@ -132,11 +152,15 @@ export default function ChatPage() {
       }).sort((a, b) => b.lastMessageTimestamp.getTime() - a.lastMessageTimestamp.getTime());
   }, [searchTerm, users]);
   
+  // Effect to scroll to the bottom of the chat
   useEffect(() => {
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+      const scrollElement = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      }
     }
-  }, [messages]);
+  }, [messages, selectedUser]);
 
   const getAcceptedChats = (): string[] => {
     if (!currentUser) return [];
@@ -424,18 +448,19 @@ export default function ChatPage() {
                 <form onSubmit={handleSendMessage} className="p-4 border-t bg-background">
                     <div className="flex items-center gap-2">
                         <Textarea
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder={chatPermissionStatus === 'accepted' ? `Message ${selectedUser.name || ''}...` : 'Start the conversation to send a message.'}
-                        className="flex-grow resize-none"
-                        rows={1}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSendMessage(e as any);
-                            }
-                        }}
-                        disabled={isLoading || chatPermissionStatus !== 'accepted'}
+                          ref={textareaRef}
+                          value={input}
+                          onChange={(e) => setInput(e.target.value)}
+                          placeholder={chatPermissionStatus === 'accepted' ? `Message ${selectedUser.name || ''}...` : 'Start the conversation to send a message.'}
+                          className="flex-grow resize-none overflow-hidden"
+                          rows={1}
+                          onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSendMessage(e as any);
+                              }
+                          }}
+                          disabled={isLoading || chatPermissionStatus !== 'accepted'}
                         />
                         <Button type="submit" disabled={!input.trim() || isLoading || chatPermissionStatus !== 'accepted'}>
                             {isLoading ? <div className="h-4 w-4 border-2 border-background border-t-transparent rounded-full animate-spin mr-2"></div> : <Send className="mr-2 h-4 w-4" />}
