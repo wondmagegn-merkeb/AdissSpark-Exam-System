@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import type { NavItem } from '@/lib/types';
-import { LayoutDashboard, Library, FileText as FileTextIconLucide, User, Settings, LogOut, CreditCard, MessageSquare, Building, BookCopy, ListChecks, Edit as EditIconLucide, ShieldCheck, Users, MessageSquarePlus, Archive, UserCog, UserRound } from 'lucide-react';
+import { LayoutDashboard, Library, FileText as FileTextIconLucide, User, Settings, LogOut, CreditCard, MessageSquare, Building, BookCopy, ListChecks, Edit as EditIconLucide, ShieldCheck, Users, MessageSquarePlus, Archive, UserCog, UserRound, CheckSquare } from 'lucide-react';
 
 const mainNavItems: NavItem[] = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -35,6 +35,7 @@ const adminNavItems: NavItem[] = [
   { title: 'Admin Dashboard', href: '/dashboard/admin', icon: LayoutDashboard },
   { title: 'Manage Staff', href: '/dashboard/admin/users', icon: UserCog }, 
   { title: 'Manage Students', href: '/dashboard/admin/students', icon: UserRound }, 
+  { title: 'Manage Subscriptions', href: '/dashboard/admin/subscriptions', icon: CheckSquare },
   { title: 'Manage Institutions', href: '/dashboard/admin/universities', icon: Building },
   { title: 'Manage Departments & Grades', href: '/dashboard/admin/departments', icon: BookCopy },
   { title: 'Manage Courses & Subjects', href: '/dashboard/admin/courses', icon: ListChecks },

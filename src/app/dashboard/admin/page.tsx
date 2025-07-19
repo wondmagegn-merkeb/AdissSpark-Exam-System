@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { withAdminAuth } from "@/components/auth/withAdminAuth";
-import { ArrowRight, UserCog, UserRound, Building, BookCopy, ListChecks, Edit as EditIconLucide, Library, Archive, Users, CreditCard, FileText } from "lucide-react";
+import { ArrowRight, UserCog, UserRound, Building, BookCopy, ListChecks, Edit as EditIconLucide, Library, Archive, Users, CreditCard, FileText, CheckSquare } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const adminFeatures = [
   { title: 'Manage Staff', href: '/dashboard/admin/users', icon: UserCog, description: "Add, edit, or remove administrators and instructors." },
   { title: 'Manage Students', href: '/dashboard/admin/students', icon: UserRound, description: "View and manage student user accounts." },
+  { title: 'Manage Subscriptions', href: '/dashboard/admin/subscriptions', icon: CheckSquare, description: "View and manage user subscription plans." },
   { title: 'Manage Institutions', href: '/dashboard/admin/universities', icon: Building, description: "Control the list of schools and universities." },
   { title: 'Manage Depts & Grades', href: '/dashboard/admin/departments', icon: BookCopy, description: "Organize academic departments and grade levels." },
   { title: 'Manage Courses & Subjects', href: '/dashboard/admin/courses', icon: ListChecks, description: "Define courses and subjects for resources." },

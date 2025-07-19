@@ -151,3 +151,12 @@ export interface CourseOrSubjectEntry {
   educationalLevel: StudentTypeFromRegistrationForm; 
   departmentOrGradeName?: string; 
 }
+
+export interface Subscription {
+  id: string;
+  userId: string;
+  plan: 'monthly' | 'yearly' | 'none';
+  status: 'active' | 'canceled' | 'expired' | 'inactive';
+  startDate: Date;
+  endDate: Date;
+}
